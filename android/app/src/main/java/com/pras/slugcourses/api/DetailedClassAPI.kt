@@ -72,7 +72,7 @@ data class SecondarySection(
     val meetings: List<Meeting>
 )
 
-suspend fun APIResponse(term: String, courseNum: String) {
+suspend fun APIResponse(term: String, courseNum: String): CourseInfo {
     val client = HttpClient(CIO)
     val url = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/${term}/${courseNum}"
     val response = client.get(url).body<String>()
@@ -80,4 +80,5 @@ suspend fun APIResponse(term: String, courseNum: String) {
     val courseInfo: CourseInfo = Json.decodeFromString(response)
 
     Log.d(TAG, courseInfo.toString())
+    return courseInfo
 }
