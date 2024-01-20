@@ -41,7 +41,7 @@ def populate():
             # Access the 'class_nbr' key
             class_nbr = value.get('class_nbr')
             if class_nbr not in addedNums:
-                course = (termToQuarterName(term), str(class_nbr))
+                course = (term, str(class_nbr))
                 classNums.append(course)
                 addedNums.add(class_nbr)
 
@@ -65,6 +65,7 @@ def populate():
             if (courseName) not in unique_results:
                 unique_results.add(courseName)
                 course = Course(
+                    termToQuarterName(detailedCourse.get('strm')),
                     detailedCourse.get('acad_career'),
                     detailedCourse.get('subject'),
                     detailedCourse.get('catalog_nbr'),
@@ -85,21 +86,21 @@ def populate():
     print("array created")
     print(detailedInfo)
 
-    picklefile = open("cache/literallyeverything", mode="wb")
+    picklefile = open("backend/updatedclasses", mode="wb")
     pickle.dump(detailedInfo, picklefile)
     picklefile.close()    
 
 
-    jsonfile = open("cache/literallyeverything.json", mode="w")
+    jsonfile = open("backend/updatedclasses.json", mode="w")
     json.dump(detailedInfo, jsonfile)
     jsonfile.close()
 
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
     document_embedder = SentenceTransformersDocumentEmbedder(
-        model_name_or_path="BAAI/bge-large-en-v1.5")
+        model="BAAI/bge-large-en-v1.5")
     document_embedder.warm_up()
     documents_with_embeddings = document_embedder.run(documents)
-    picklefile = open("cache/embeddings", mode="wb")
+    picklefile = open("backend/updated", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()

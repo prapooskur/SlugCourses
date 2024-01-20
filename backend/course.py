@@ -1,5 +1,6 @@
 class Course:
-    def __init__(self, type, subject, number, title, description, gened, requirements, notes):
+    def __init__(self, term, type, subject, number, title, description, gened, requirements, notes):
+        self.term = term
         self.type = type
         self.subject = subject
         self.number = number
