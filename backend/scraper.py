@@ -2,13 +2,14 @@ import requests, json
 from bs4 import BeautifulSoup
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
-MAX_RESULTS = "2000"
+PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
+MAX_RESULTS = "1"
 
 
-def queryPisa():
+def queryPisa(term : str) -> list[dict]:
     info = {
         "action": "results",
-        "binds[:term]": "2240",
+        "binds[:term]": term,
         "binds[:reg_status]": "all",
         "binds[:subject]": "",
         "binds[:catalog_nbr_op]": "",
@@ -54,10 +55,11 @@ def queryPisa():
             "url": panel.select("a")[0]['href'].strip(),
             "status": panel.select("h2 .sr-only")[0].text.strip()
         }
+
+        pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
+        section["gened"] = pisaApiResponse["primary_section"]["gened"]
+
         sections.append(section)
 
 
     return sections
-
-
-#queryPisa()
