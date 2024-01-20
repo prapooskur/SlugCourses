@@ -4,13 +4,19 @@ on:
   workflow_dispatch:
   push:
     # only build if app files were modified
-    paths-ignore:
-      - '*.md'
-      - '.github/**'
-      - 'assets/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'metadata/**'
+    #paths-ignore:
+    #  - '*.md'
+    #  - '.github/**'
+    #  - 'assets/**'
+    #  - '.gitignore'
+    #  - 'LICENSE'
+    #  - 'metadata/**'
+    #  - 'backend/**'
+    paths:
+      - 'android'
+      - '!android/.idea'
+      - '!android/app/.gitignore'
+
 defaults:
       run:
         working-directory: ./android
