@@ -11,12 +11,13 @@ on:
       - '.gitignore'
       - 'LICENSE'
       - 'metadata/**'
+      
+defaults:
+      run:
+        working-directory: ./android
 
 jobs:
   build-app:
-    defaults:
-      run:
-        working-directory: ./android
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -63,13 +64,6 @@ jobs:
         with:
           name: app-build
           path: app/build/outputs/apk/release/app-release.apk
-      
-#      - name: Upload apk to releases
-#        uses: softprops/action-gh-release@v1
-#        with:
-#          tag_name: 0.${{github.run_number}}
-#          name: SlugMenu v0.${{github.run_number}}
-#          files: app/build/outputs/apk/release/app-release.apk
 
 permissions:
   contents: write
