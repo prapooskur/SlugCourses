@@ -78,7 +78,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
 
         if gened:
             pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
-            section["gened"] = pisaApiResponse["primary_section"]["gened"]
+            section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
 
         sections.append(section)
 
