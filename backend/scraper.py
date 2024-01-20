@@ -2,6 +2,7 @@ import requests, json, sys, os
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
+from tqdm import tqdm # optional, shows progress bar
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
 PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
@@ -40,7 +41,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     doc = BeautifulSoup(response.text, 'html.parser')
 
     sections = []
-    for panel in doc.select(".panel.panel-default.row"):
+    for panel in tqdm(doc.select(".panel.panel-default.row")):
         locations = len(panel.select(".fa-location-arrow"))
         summer = len(panel.select(".fa-calendar")) != 0
 
@@ -76,7 +77,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
             "status": panel.select("h2 .sr-only")[0].text.strip()
         }
 
-        if gened:
+        if True:
             pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
             section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
 
