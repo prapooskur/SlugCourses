@@ -4,10 +4,9 @@ import android.util.Log
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
-import io.github.jan.supabase.supabaseJson
 import kotlinx.serialization.Serializable
-import java.util.Locale.filter
 
 private const val TAG = "SupabaseAPI"
 @Serializable
@@ -16,7 +15,7 @@ data class Course(
     val term: Int,
     val department: String,
     val course_number: String,
-    val section_number: Int,
+    val section_number: String,
     val instructor: String,
     val description: String,
     val location: String,
@@ -31,12 +30,27 @@ data class Course(
     val gen_ed: String,
 )
 
+enum class Status {
+    OPEN,
+    CLOSED,
+    WAITLIST,
+    ALL
+}
+
+enum class Type {
+    ASYNC,
+    SYNC,
+    HYBRID,
+    IN_PERSON,
+}
+
 suspend fun SupabaseQuery(
     term: Int = 2240,
+    status: Status = Status.ALL,
     department: String = "",
     courseNumber: String = "",
     description: String = "",
-    ge: String = "",
+    ge: List<String> = listOf(),
     days: String = "",
     acadCareer: String = "",
     asynchronous: Boolean = true,
@@ -50,53 +64,45 @@ suspend fun SupabaseQuery(
     ) {
         install(Postgrest)
     }
-    val courseList = when {
-        department.isNotBlank() && courseNumber.isNotBlank() -> {
-            supabase.from("courses").select() {
-                filter {
-                    eq("term", term)
-                    eq("department", department)
-                    eq("courseNumber", courseNumber)
-                }
-            }.decodeList<Course>()
 
+    val courseList = supabase.from("courses").select() {
+        filter {
+            eq("term", term)
+            if(status == Status.OPEN) {
+                eq("status", "Open")
+            }
+            if(department.isNotBlank()) {
+                eq("department", department)
+            }
+            if(courseNumber.isNotBlank()) {
+                eq("course_number", courseNumber)
+            }
+            if(description.isNotBlank()) {
+                textSearch(
+                    column = "description",
+                    query = description,
+                    config = "english",
+                    textSearchType = TextSearchType.PLAINTO
+                )
+            }
+            if(ge.isNotEmpty()) {
+                isIn("gen_ed", ge)
+            }
+            if(!asynchronous) {
+                filterNot("type", FilterOperator.IS, "Asynchronous Online")
+            }
+            if(!hybrid) {
+                filterNot("type", FilterOperator.IS, "Hybrid")
+            }
+            if (!synchronous) {
+                filterNot("type", FilterOperator.IS, "Synchronous Online")
+            }
+            if (!inPerson) {
+                filterNot("type", FilterOperator.IS, "In Person")
+            }
         }
-        department.isNotBlank() -> {
-            supabase.from("courses").select() {
-                filter {
-                    eq("term", term)
-                    eq("department", department)
-                }
-            }.decodeList<Course>()
-        }
-        courseNumber.isNotBlank() -> {
-            supabase.from("courses").select() {
-                filter {
-                    eq("term", term)
-                    eq("courseNumber", courseNumber)
-                }
-            }.decodeList<Course>()
-        }
-        description.isNotBlank() -> {
-            supabase.from("courses").select() {
-                filter {
-                    textSearch(
-                        column = "description",
-                        query = description,
-                        config = "english",
-                        textSearchType = TextSearchType.PLAINTO
-                    )
-                }
-            }.decodeList<Course>()
-        }
-        else -> {
-            supabase.from("courses").select() {
-                filter {
-                    eq("term", term)
-                }
-            }.decodeList<Course>()
-        }
-    }
+    }.decodeList<Course>()
+
     Log.d(TAG, courseList.toString())
     return courseList
 
