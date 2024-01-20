@@ -1,12 +1,11 @@
-import requests, json
+import requests, json, sys
 from bs4 import BeautifulSoup
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
 PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
 MAX_RESULTS = "1"
 
-
-def queryPisa(term : str) -> list[dict]:
+def queryPisa(term: str, gened: bool = False) -> list[dict]:
     info = {
         "action": "results",
         "binds[:term]": term,
@@ -56,10 +55,23 @@ def queryPisa(term : str) -> list[dict]:
             "status": panel.select("h2 .sr-only")[0].text.strip()
         }
 
-        pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
-        section["gened"] = pisaApiResponse["primary_section"]["gened"]
+        if gened:
+            pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
+            section["gened"] = pisaApiResponse["primary_section"]["gened"]
 
         sections.append(section)
 
 
-    return sections
+    for section in sections:
+        print()
+
+match(len(sys.argv)):
+    case 1:
+        print("Run with args pls")
+    case 2:
+        queryPisa(sys.argv[1], False)
+    case _:
+        if (sys.argv[2] == True):
+            queryPisa(sys.argv[1], True)
+        else:
+            queryPisa[sys.argv[1], False]
