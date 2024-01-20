@@ -1,11 +1,15 @@
-import requests, json, sys
+import requests, json, sys, os
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+from supabase import create_client, Client
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
 PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
-MAX_RESULTS = "1"
+MAX_RESULTS = "2000"
 
 def queryPisa(term: str, gened: bool = False) -> list[dict]:
+    load_dotenv()
+
     info = {
         "action": "results",
         "binds[:term]": term,
@@ -40,17 +44,34 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         locations = len(panel.select(".fa-location-arrow"))
         summer = len(panel.select(".fa-calendar")) != 0
 
+        name = panel.select("a")[0].text.replace("\xa0\xa0\xa0", ' ').strip()
+
+        course = name.split(" - ")
+        primary = course[0].split(" ", maxsplit=1)
+        secondary = course[1].split(" ", maxsplit=1)
+
+        department = primary[0].strip()
+        course_number = primary[1].strip()
+
+        section_number = secondary[0].strip()
+        description = secondary[1].strip()
+        
+
         section = {
-            "name": panel.select("a")[0].text.replace("\xa0\xa0\xa0", ' ').strip(),
             "id": int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
+            "term": term,
+            "department": department,
+            "course_number": course_number,
+            "section_number": section_number,
+            "description": description,
             "instructor": panel.select(".col-xs-6:nth-child(2)")[0].text.split(": ")[1].replace(",", ", ").strip(),
             "location": panel.select(".col-xs-6:nth-child(1)")[1].text.split(": ", 1)[1].strip(),
             "time": panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")[1].strip() if len(panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")) > 1 else "None",
-            "location2": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
-            "time2": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if locations > 1 else "None",
-            "count": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
-            "mode": panel.select("b")[0].text.strip(),
-            "summerSession": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if summer else "None",
+            "alt_location": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
+            "alt_time": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if locations > 1 else "None",
+            "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
+            "type": panel.select("b")[0].text.strip(),
+            "summer_session": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if summer else "None",
             "url": panel.select("a")[0]['href'].strip(),
             "status": panel.select("h2 .sr-only")[0].text.strip()
         }
@@ -61,9 +82,15 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
 
         sections.append(section)
 
+    
+    url: str = os.environ.get("SUPABASE_URL")
+    key: str = os.environ.get("SUPABASE_KEY")
+    supabase: Client = create_client(url, key)
 
-    for section in sections:
-        print()
+    supabase.table("courses").upsert(sections).execute()
+            
+
+        
 
 match(len(sys.argv)):
     case 1:
@@ -74,4 +101,4 @@ match(len(sys.argv)):
         if (sys.argv[2] == True):
             queryPisa(sys.argv[1], True)
         else:
-            queryPisa[sys.argv[1], False]
+            queryPisa(sys.argv[1], False)
