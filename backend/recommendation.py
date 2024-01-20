@@ -1,4 +1,4 @@
-import sys, pickle, os, json, asyncio
+import sys, pickle, os, json, asyncio, re
 from haystack import Pipeline, Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.document_stores.types import DuplicatePolicy
@@ -10,6 +10,7 @@ from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.prompt_builder import PromptBuilder
 from dotenv import load_dotenv
 from populate_embeddings import populate_embeddings
+from supabase import create_client, client
 
 
 
@@ -29,6 +30,7 @@ async def GetRecommendations(userPrompt : str) -> str:
     If you recommend graduate level courses, separate undergraduate and graduate level classes into two sections.
     If there are no graduate level courses in your recommendation, keep the courses in one list.
     Your response must be formatted in a bullet point list with a blank line after each bullet point.
+    You must include the class's full name in your response.
     If you choose to have bullet point descriptions for each class, make sure each line is in a spartan tone.
     '''
 
@@ -41,22 +43,16 @@ async def GetRecommendations(userPrompt : str) -> str:
     embedding_retriever = InMemoryEmbeddingRetriever(document_store = document_store)
 
     bm25_retriever = InMemoryBM25Retriever(document_store=document_store)
-
     document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
-
     prompt_builder = PromptBuilder(template=prompt_template)
     llm = GoogleAIGeminiGenerator(model="gemini-pro", api_key=apiKey)
 
 
-    #print("creating pipeline...")
     query_pipeline = Pipeline()
     query_pipeline.add_component("text_embedder", text_embedder)
     query_pipeline.add_component("embedding_retriever", embedding_retriever)
-
     query_pipeline.add_component("bm25_retriever", bm25_retriever)
-
     query_pipeline.add_component("joiner", document_joiner)
-
     query_pipeline.add_component("prompt_builder", prompt_builder)
     query_pipeline.add_component("llm", llm)
 
@@ -78,8 +74,36 @@ async def GetRecommendations(userPrompt : str) -> str:
 
     recommendations = str(results["llm"]["answers"]).replace("\\n", "\n")
 
-    return recommendations
+    classRegex = re.compile("[A-Z]{3,4}\s\d{1,3}[A-Z]?")
+    matches = list(set(re.findall(classRegex, recommendations)))
+    # print("classes found:----------")
+    # print(matches)
+    # print("---------------------")
 
+    key = os.getenv("SUPAKEY")
+    url = os.getenv("SUPAURL")
+    supabase = create_client(url, key, options=client.ClientOptions(
+        postgrest_client_timeout=10,
+        storage_client_timeout=10
+    ))
+
+    for match in matches:
+        department = match.split(' ')[0]
+        catalogNum = match.split(' ')[1]
+        response = supabase.table("courses").select("id").eq("department", department).eq("course_number", catalogNum).execute()
+        #print(response)
+        try:
+            classID = response.data[0]["id"]
+        except:
+            print(f"Warning: {department} {catalogNum} does not exist in database.")
+        else:
+            recommendations = recommendations.replace(match, f"[{department} {catalogNum}]({classID})")
+
+
+
+    #print(response)
+
+    return recommendations
 
 
 # thing = asyncio.run(GetRecommendations("Recommend me classes about machine learning"))
