@@ -11,7 +11,6 @@ on:
       - '.gitignore'
       - 'LICENSE'
       - 'metadata/**'
-      
 defaults:
       run:
         working-directory: ./android
@@ -20,7 +19,6 @@ jobs:
   build-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Set up JDK 19
         uses: actions/setup-java@v3
         with:
@@ -29,17 +27,16 @@ jobs:
           cache: 'gradle'
 
       - uses: actions/checkout@v3
+
       - name: Retrieve the secret and decode it to a file
         env:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
         run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
 
       - name: Setup Gradle
-        working-directory: .
         run: chmod +x ./gradlew
 
       - name: Build app
-        working-directory: .
         run: ./gradlew buildRelease
 
       - name: Sign app
@@ -47,7 +44,6 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.keystore_password }}
           KEY_ALIAS: ${{ secrets.key_alias }}
           KEY_PASSWORD: ${{ secrets.key_password }}
-        working-directory: .
         run: |
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
