@@ -64,8 +64,8 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         #edge cases
 
         #ignore credit by petitions
-        if section_number == "CBP":
-            continue
+        #if section_number == "CBP":
+        #    continue
         
 
         section = {
