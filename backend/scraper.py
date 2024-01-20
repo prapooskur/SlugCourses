@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
 from tqdm import tqdm # optional, shows progress bar
+import concurrent.futures
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
 PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
@@ -42,6 +43,9 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
 
     sections = []
     for panel in tqdm(doc.select(".panel.panel-default.row")):
+
+       
+
         locations = len(panel.select(".fa-location-arrow"))
         summer = len(panel.select(".fa-calendar")) != 0
 
@@ -56,6 +60,12 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
 
         section_number = secondary[0].strip()
         description = secondary[1].strip()
+
+        #edge cases
+
+        #ignore credit by petitions
+        if section_number == "CBP":
+            continue
         
 
         section = {
@@ -92,7 +102,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
             
 
         
-
+'''
 match(len(sys.argv)):
     case 1:
         print("Run with args pls")
@@ -103,3 +113,9 @@ match(len(sys.argv)):
             queryPisa(sys.argv[1], True)
         else:
             queryPisa(sys.argv[1], False)
+'''
+
+term_list = [2238, 2232, 2230, 2228]
+
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    results = list(executor.map(lambda term: queryPisa(str(term), True), term_list))
