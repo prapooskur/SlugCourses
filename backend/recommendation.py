@@ -17,8 +17,6 @@ async def GetRecommendations(userPrompt : str) -> str:
     load_dotenv()
     apiKey = os.getenv("KEY")
 
-    updateCache = False
-
     prompt_template = '''
     You are a bot that makes recommendations on what class a user should take.
 
@@ -34,34 +32,6 @@ async def GetRecommendations(userPrompt : str) -> str:
     If you choose to have bullet point descriptions for each class, make sure each line is in a spartan tone.
     '''
 
-
-    # if (updateCache):
-    #     print("loading files...")
-    #     pickle_text = open("backend/updatedclasses", mode="rb")
-    #     documents_text = pickle.load(pickle_text)
-    #     pickle_text.close()
-
-    #     pickle_embeddings = open("backend/updated", mode="rb")
-    #     documents_with_embeddings = pickle.load(pickle_embeddings)
-    #     pickle_embeddings.close()
-
-    #     print("writing documents to store...")
-    #     document_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-    #     #print(type(documents_with_embeddings[0]))
-    #     document_store.write_documents(documents_with_embeddings["documents"]) #failed here
-
-    #     # documents = []
-    #     # print(documents_text)
-    #     # for i in documents_text:
-    #     #     documents.append(Document(content=str(i)))
-    #     # document_store.write_documents(documents_text, DuplicatePolicy.SKIP) #documents -> documents_text
-
-    #     print("writing document store to backend...")
-    #     document_file = open("backend/updatedclasses", mode="wb")
-    #     documents_text = pickle.dump(document_store, document_file)
-    #     document_file.close()
-    # else:
-        #print("loading document backend")
     document_file = open("backend/updatedclasses", mode="rb")
     document_store = pickle.load(document_file)
     document_file.close()
@@ -87,8 +57,6 @@ async def GetRecommendations(userPrompt : str) -> str:
 
     query_pipeline.add_component("joiner", document_joiner)
 
-    #query_pipeline.add_component("ranker", ranker)
-
     query_pipeline.add_component("prompt_builder", prompt_builder)
     query_pipeline.add_component("llm", llm)
 
@@ -98,9 +66,7 @@ async def GetRecommendations(userPrompt : str) -> str:
     query_pipeline.connect("joiner", "prompt_builder.documents")
     query_pipeline.connect("prompt_builder", "llm")
 
-    #print("asking question...")
-    # Ask a question
-    #query = "Recommend me courses about machine learning" #sys.argv[-1]
+
     print(userPrompt)
     results = query_pipeline.run(
         {
@@ -111,12 +77,10 @@ async def GetRecommendations(userPrompt : str) -> str:
     )
 
     recommendations = str(results["llm"]["answers"]).replace("\\n", "\n")
-    with open("shit.txt", "w") as file:
-        file.write(json.dumps(recommendations, indent=4))
 
     return recommendations
 
 
 
-thing = asyncio.run(GetRecommendations("Recommend me classes about machine learning"))
-print(thing)
+# thing = asyncio.run(GetRecommendations("Recommend me classes about machine learning"))
+# print(thing)
