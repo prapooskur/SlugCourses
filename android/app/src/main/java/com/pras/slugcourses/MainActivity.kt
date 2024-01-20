@@ -150,6 +150,13 @@ fun Init(startDestination: String) {
                         HomeScreen(navController = navController)
                     }
                     composable(
+                        "results/{term}/{query}/{status}/{type}/{gened}",
+                        enterTransition = { fadeIn() },
+                        exitTransition = { fadeOut() }
+                    ) { backStackEntry ->
+                        ResultsScreen(navController = navController)
+                    }
+                    composable(
                         "chat",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }

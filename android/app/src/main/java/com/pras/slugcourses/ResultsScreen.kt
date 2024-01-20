@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.pras.slugcourses.api.Course
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.SupabaseQuery
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun ResultsScreen(
+    navController: NavController,
     term: Int,
     query: String,
     status: Status,
