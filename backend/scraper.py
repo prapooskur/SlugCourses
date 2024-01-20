@@ -77,7 +77,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
             "status": panel.select("h2 .sr-only")[0].text.strip()
         }
 
-        if True:
+        if gened:
             pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
             section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
 
@@ -99,7 +99,7 @@ match(len(sys.argv)):
     case 2:
         queryPisa(sys.argv[1], False)
     case _:
-        if (sys.argv[2] == True):
+        if (sys.argv[2] == "True"):
             queryPisa(sys.argv[1], True)
         else:
             queryPisa(sys.argv[1], False)

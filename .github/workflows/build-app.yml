@@ -1,0 +1,71 @@
+name: Build and Sign App
+run-name: Building and signing app
+on:
+  workflow_dispatch:
+  push:
+    # only build if app files were modified
+    #paths-ignore:
+    #  - '*.md'
+    #  - '.github/**'
+    #  - 'assets/**'
+    #  - '.gitignore'
+    #  - 'LICENSE'
+    #  - 'metadata/**'
+    #  - 'backend/**'
+    paths:
+      - 'android/**'
+      - '!android/.idea/**'
+      - '!android/app/.gitignore'
+
+defaults:
+      run:
+        working-directory: ./android
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 19
+        uses: actions/setup-java@v3
+        with:
+          java-version: '19'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Retrieve the secret and decode it to a file
+        env:
+          KEYSTORE_B64: ${{ secrets.keystore_b64 }}
+        run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
+
+      - name: Setup Gradle
+        run: chmod +x ./gradlew
+
+      - name: Build app
+        run: ./gradlew buildRelease
+
+      - name: Sign app
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.keystore_password }}
+          KEY_ALIAS: ${{ secrets.key_alias }}
+          KEY_PASSWORD: ${{ secrets.key_password }}
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+
+      - name: "Deleting keystore file"
+        run: rm $GITHUB_WORKSPACE/signing-key.jks
+
+      
+      - name: Upload apk as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-build
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+permissions:
+  contents: write
