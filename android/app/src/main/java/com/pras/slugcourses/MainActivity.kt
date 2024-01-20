@@ -8,8 +8,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pras.slugcourses.api.APIResponse
 import com.pras.slugcourses.ui.theme.SlugCoursesTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,6 +25,9 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Greeting("Android")
+                    LaunchedEffect(Unit) {
+                        APIResponse("2240", "30047")
+                    }
                 }
             }
         }
