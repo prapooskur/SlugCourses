@@ -39,7 +39,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.pras.slugcourses.api.Status
+import com.pras.slugcourses.api.Type
 import com.pras.slugcourses.ui.theme.SlugCoursesTheme
+import kotlinx.serialization.json.Json
 
 private const val TAG = "MainActivity"
 
@@ -154,7 +157,27 @@ fun Init(startDestination: String) {
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
-                        ResultsScreen(navController = navController)
+                        val term = backStackEntry.arguments?.getString("term")?.toInt() ?: 2240
+                        val query = backStackEntry.arguments?.getString("query") ?: ""
+                        val status = Json.decodeFromString<Status>(backStackEntry.arguments?.getString("status") ?: "[]")
+                        val type = Json.decodeFromString<List<Type>>(backStackEntry.arguments?.getString("type") ?: "[]")
+                        val gened = Json.decodeFromString<List<String>>(backStackEntry.arguments?.getString("gened") ?: "[]")
+                        ResultsScreen(
+                            navController = navController,
+                            term = term,
+                            query = query ?: "",
+                            status = status,
+                            type = type,
+                            genEd = gened
+                        )
+                    }
+                    composable(
+                        "detailed/{courseNumber}",
+                        enterTransition = { fadeIn() },
+                        exitTransition = { fadeOut() }
+                    ) { backStackEntry ->
+                        val courseNumber = backStackEntry.arguments?.getString("courseNumber") ?: ""
+                        DetailedResultsScreen(navController = navController, courseNumber = courseNumber)
                     }
                     composable(
                         "chat",

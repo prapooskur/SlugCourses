@@ -10,13 +10,17 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.CourseInfo
 import com.pras.slugcourses.ui.elements.CollapsingLargeTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailedResultsScreen(courseInfo: CourseInfo) {
+fun DetailedResultsScreen(
+    navController: NavHostController,
+    courseNumber: String
+) {
     val courseName = "${courseInfo.primary_section.subject} ${courseInfo.primary_section.catalog_nbr}"
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState(),
