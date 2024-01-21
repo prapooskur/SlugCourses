@@ -10,9 +10,8 @@ Like students at every university, the four of us have to sign up for courses at
 * It is difficult to navigate through and search for classes
 * The interface was clearly designed to be navigated with a mouse and not a touch screen
 
-//gif of searching for a class currently
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="home screen grid view">
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="pisa current mobile interface">
 
 
 We believe that we could make an improved version of the class search website's mobile interface making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
