@@ -311,6 +311,7 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE),
             shape = MaterialTheme.shapes.medium
         ) {
+
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -326,6 +327,11 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                 }
                 Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 courseInfo.secondary_sections.forEachIndexed { index, section ->
+                    val emoji = when (section.enrl_status) {
+                        "Open" -> "\uD83D\uDFE2"
+                        "Waitlisted" -> "\uD83D\uDFE1"
+                        else -> "\uD83D\uDFE6"
+                    }
                     section.meetings.forEachIndexed { index, meeting ->
                         Spacer(Modifier.height(4.dp))
                         Row(Modifier.fillMaxWidth()) {
@@ -347,6 +353,12 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                                 } else {
                                     "Instructors: ${meeting.instructors.joinToString(", ") { it.name }}"
                                 },
+                                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                            )
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(
+                                "$emoji Enrolled: ${section.enrl_total}/${section.capacity}",
                                 modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                             )
                         }
