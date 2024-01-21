@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -107,7 +108,7 @@ fun ResultsScreen(
     val department = query.substringBefore(" ")
     val courseNumber = query.substringAfter(" ")
 
-
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
 
@@ -116,21 +117,27 @@ fun ResultsScreen(
 
         if (useDepartment)  Log.d(TAG, "Using department")
         if (useCourseNumber)  Log.d(TAG, "Using course number")
-        withContext(Dispatchers.IO) {
-            response = supabaseQuery(
-                term = term,
-                status = status,
-                department = if (useDepartment) department.uppercase() else "",
-                courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
-                query = if (!useDepartment && !useCourseNumber) query else "",
-                ge = genEd,
-                asynchronous = type.contains(Type.ASYNC_ONLINE),
-                hybrid = type.contains(Type.HYBRID),
-                synchronous = type.contains(Type.SYNC_ONLINE),
-                inPerson = type.contains(Type.IN_PERSON),
-                searchType = searchType,
-            )
-            dataLoaded = true
+
+        try {
+            withContext(Dispatchers.IO) {
+                response = supabaseQuery(
+                    term = term,
+                    status = status,
+                    department = if (useDepartment) department.uppercase() else "",
+                    courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
+                    query = if (!useDepartment && !useCourseNumber) query else "",
+                    ge = genEd,
+                    asynchronous = type.contains(Type.ASYNC_ONLINE),
+                    hybrid = type.contains(Type.HYBRID),
+                    synchronous = type.contains(Type.SYNC_ONLINE),
+                    inPerson = type.contains(Type.IN_PERSON),
+                    searchType = searchType,
+                )
+                dataLoaded = true
+            }
+        }  catch (e: Exception) {
+            Log.d(TAG, e.toString())
+            ShortToast("Error: ${e}", context)
         }
     }
 }

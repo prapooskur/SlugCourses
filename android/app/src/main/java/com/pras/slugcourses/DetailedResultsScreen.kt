@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
@@ -71,12 +72,18 @@ fun DetailedResultsScreen(
     ) }
 
     var dataLoaded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            Log.d(TAG, "term: $term, courseNumber: $courseNumber")
-            courseInfo = classAPIResponse(term, courseNumber)
-            dataLoaded = true
+        try {
+            withContext(Dispatchers.IO) {
+                Log.d(TAG, "term: $term, courseNumber: $courseNumber")
+                courseInfo = classAPIResponse(term, courseNumber)
+                dataLoaded = true
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error: ${e.message}")
+            ShortToast("Error: ${e.message}", context)
         }
     }
 
