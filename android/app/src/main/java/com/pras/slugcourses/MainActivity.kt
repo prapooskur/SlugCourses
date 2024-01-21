@@ -182,7 +182,7 @@ fun Init(startDestination: String) {
                         )
                     }
                     composable(
-                        route = "detailed/{term}/{courseNumber}",
+                        route = "detailed/{term}/{courseNumber}/{url}",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
@@ -190,7 +190,8 @@ fun Init(startDestination: String) {
 
                         val term = backStackEntry.arguments?.getString("term") ?: "2240"
                         val courseNumber = backStackEntry.arguments?.getString("courseNumber") ?: ""
-                        DetailedResultsScreen(navController = navController, term = term, courseNumber = courseNumber)
+                        val url = backStackEntry.arguments?.getString("url") ?: "https://pisa.ucsc.edu/class_search"
+                        DetailedResultsScreen(navController = navController, term = term, courseNumber = courseNumber, url = url)
                     }
                     composable(
                         route = "chat",

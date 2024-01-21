@@ -47,6 +47,8 @@ fun ResultsScreen(
     var response by remember { mutableStateOf(listOf<Course>()) }
     var dataLoaded by remember { mutableStateOf(false) }
 
+    val uriHandler = LocalUriHandler.current
+
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState(),
         canScroll = { true }
@@ -56,7 +58,7 @@ fun ResultsScreen(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             CollapsingLargeTopBar(
-                titleText = if (query.isNotBlank()) "Results for \"$query\"" else "Results",
+                titleText = if (query.isNotBlank()) "Results for \"${query.trim()}\"" else "Results",
                 navController = navController,
                 scrollBehavior = scrollBehavior,
             )
@@ -71,8 +73,8 @@ fun ResultsScreen(
                     items(response.size) { course ->
                         CourseCard(
                             course = response[course],
-                            uriHandler = LocalUriHandler.current,
-                            navController = navController
+                            uriHandler = uriHandler,
+                            navController = navController,
                         )
                     }
                 } else {

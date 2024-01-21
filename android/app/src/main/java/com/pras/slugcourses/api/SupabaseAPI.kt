@@ -104,7 +104,7 @@ suspend fun supabaseQuery(
             }
         }
         order(column = "department", order = Order.ASCENDING)
-        order(column = "course_number", order = Order.ASCENDING)
+
     }.decodeList<Course>()
 
     Log.d(TAG, courseList.toString())
