@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -86,7 +87,7 @@ fun DetailedResultsScreen(
         },
         content = {paddingValues ->
             LazyColumn(
-                Modifier.padding(paddingValues),
+                Modifier.padding(paddingValues).fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (dataLoaded) {
@@ -108,30 +109,38 @@ fun DetailedResultsScreen(
     )
 }
 
+private val ELEV_VALUE = 4.dp
+private val PADDING_VALUE = 16.dp
+
 @Composable
 fun CourseDetailBox(courseInfo: CourseInfo) {
     Box(
         Modifier
             .padding(12.dp)
-            .fillMaxWidth()) {
+            .fillMaxWidth()
+    ) {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE),
             shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)) {
+                    .padding(PADDING_VALUE - 4.dp)
+            ) {
                 Row {
                     Text(
                         text = "Course Details",
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 24.sp
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
-                Divider()
+                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp, end = 4.dp)) {
                         Text("Status: ${courseInfo.primary_section.enrl_status}")
                         Text("Credits: ${courseInfo.primary_section.credits}")
                         if (courseInfo.primary_section.gened.isNotBlank()) {
@@ -149,7 +158,6 @@ fun CourseDetailBox(courseInfo: CourseInfo) {
                         } else {
                             Text("Waitlist: Closed")
                         }
-
                     }
                 }
 
@@ -162,19 +170,35 @@ fun CourseDetailBox(courseInfo: CourseInfo) {
 fun CourseDescriptionBox(courseInfo: CourseInfo) {
     Box(
         Modifier
-            .padding(16.dp)
+            .padding(12.dp)
             .fillMaxWidth()
     ) {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE),
             shape = MaterialTheme.shapes.medium
         ) {
-            Row(Modifier.padding(16.dp)) {
-                Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
-                Divider(thickness = 2.dp)
-                Text(courseInfo.primary_section.description)
-            }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(PADDING_VALUE - 4.dp)
+            ) {
+                Row {
+                    Text(
+                        text = "Course Details",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    )
+                }
+                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        courseInfo.primary_section.description,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    )
+                }
 
+            }
         }
     }
 }
@@ -183,12 +207,16 @@ fun CourseDescriptionBox(courseInfo: CourseInfo) {
 fun CourseMeetingsBox(courseInfo: CourseInfo) {
     Box(
         Modifier
-            .padding(16.dp)
+            .padding(PADDING_VALUE)
             .fillMaxWidth()) {
         Surface(
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE)
         ) {
+            Row(Modifier.fillMaxWidth()) {
+                Text("Meetings", fontWeight = FontWeight.SemiBold, fontSize = 24.sp)
 
+            }
         }
     }
 }
