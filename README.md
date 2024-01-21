@@ -22,21 +22,25 @@ Among other things, we also realized was that finding classes among the 1500+ co
 
 The app we created allows users to search for classes intuitively in a simple and easy to navigate interface.
 
-//gif of searching for a class
+
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/search%20for%20cse%20100.gif?token=GHSAT0AAAAAACNEB4YKHNOCL26SAKTVI6UKZNNKKLQ" width=30% height=30% alt="searhing for a class">
+
 
 The results page presents information in a similarly easy-to-read manner. Tapping on any result brings up a more detailed results page. If the user still wants even more details, they can tap on a button to take them to Pisa's page for it.
 
-//gif of tapping on result, then tapping on pisa button
+
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/result%20to%20pisa.gif?token=GHSAT0AAAAAACNEB4YKX3HN53QZYM5ZE2ROZNNKLFA" width=30% height=30% alt="result to pisa">
+
 
 Advanced filters on the main search page also allow for more fine tuned results.
 
-//gif of using filters to get a class result
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/ge%20filter%20search.gif?token=GHSAT0AAAAAACNEB4YLWR7EOFOWV7HAZ7G4ZNNKMLA" width=30% height=30% alt="result to pisa">
+
 
 The integrated LLM-based chatbot can be talked to via a button on the bottom navigation bar. It can be asked questions about courses to take.
 
-//gif of switching to chat and asking it a question
 
-//maybe another gif of asking it a second question
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/llm%20response.gif?token=GHSAT0AAAAAACNEB4YKS6WCKMTIZLAO4FBMZNNKN4A" width=30% height=30% alt="llm response">
 
 
 ## How we built it
@@ -76,10 +80,6 @@ Another challenge we ran into was turning Gemini's response into a proper API. B
 ## Accomplishments that we're proud of
 
 We're really proud of the UI/UX of the app. The mobile experience is significantly improved over the website. The UI was modernized to be more aesthetically pleasing, and content is presented in a easily digestible manner. The UX is markedly enhanced with proper support for phones and touch screen devices. It up to date with modern UI principles (we follow Google's Material Design 3 guidelines) and was designed with modern UI prototyping tools such as Figma. It is also integrated with a lot of common touch screen actions such as swiping to the left of the screen to go back the previous screen. 
-
-//photo of market research
-
-//gif of prototype using Figma
 
 We are also incredibly proud of the LLM integration. It was a massive undertaking to delve into the realm of large language models, and especially something as complicated as retrieval-augmented generation. By creating our own pipeline instead of going with a cloud solution, we learned an incredible amount of information about the underlying workings of language models and retrieval pipelines.
 
