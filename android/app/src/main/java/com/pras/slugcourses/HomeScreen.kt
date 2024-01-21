@@ -96,7 +96,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             val termList = termMap.keys.toList()
             var selectedTermIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenu(
-                modifier = Modifier.weight(.5f).padding(end = 8.dp),
+                modifier = Modifier
+                    .weight(.5f)
+                    .padding(end = 8.dp),
                 label = "Term",
                 items = termList,
                 selectedIndex = selectedTermIndex,
@@ -104,7 +106,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             )
             //var selectedGenEdIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenuMultiSelect(
-                modifier = Modifier.weight(.3f).padding(start = 8.dp),
+                modifier = Modifier
+                    .weight(.35f)
+                    .padding(start = 8.dp),
                 label = "Gen Ed",
                 items = genEdList,
                 displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0].toString() else "Multi",
@@ -117,9 +121,43 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                         selectedGenEdList.remove(itemName)
                     }
                 }
-
             )
         }
-    }
 
+        Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
+            val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
+            var selectedTypeIndex by remember { mutableIntStateOf(0) }
+            val selectedTimeList = remember { mutableStateListOf<String>() }
+            LargeDropdownMenuMultiSelect(
+                modifier = Modifier
+                    .weight(.5f)
+                    .padding(end = 8.dp),
+                label = "Type",
+                items = typeList,
+                displayLabel = if (selectedTimeList.size == 1) selectedTimeList[0] else "Multiple",
+                selectedItems = selectedTimeList,
+                onItemSelected = { index, _ ->
+                    selectedTimeList.add(typeList[index])
+                },
+                onItemRemoved = { _, itemName ->
+                    if (itemName in selectedTimeList) {
+                        selectedTimeList.remove(itemName)
+                    }
+                }
+            )
+            var selectedStatusIndex by remember { mutableIntStateOf(0) }
+            LargeDropdownMenu(
+                modifier = Modifier
+                    .weight(.35f)
+                    .padding(start = 8.dp),
+                label = "Status",
+                items = listOf("Open", "All"),
+                selectedIndex = selectedStatusIndex,
+                onItemSelected = { index, _ -> selectedStatusIndex = index },
+            )
+        }
+
+
+
+    }
 }

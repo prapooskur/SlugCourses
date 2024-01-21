@@ -103,6 +103,9 @@ suspend fun supabaseQuery(
                 filterNot("type", FilterOperator.IS, "In Person")
             }
         }
+        if (department.isNotBlank()) {
+            order(column = "course_number", order = Order.ASCENDING)
+        }
         order(column = "department", order = Order.ASCENDING)
 
     }.decodeList<Course>()

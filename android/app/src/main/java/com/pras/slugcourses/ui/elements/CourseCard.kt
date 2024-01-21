@@ -63,14 +63,14 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
                 SectionSubtitle(painterResource(R.drawable.chat_filled), course.location)
             }
             SectionSubtitle(painterResource(R.drawable.chat_filled), course.time)
-            if (course.alt_location != "Not Found") {
+            if (course.alt_location != "None") {
                 if (course.alt_location.contains("Online") || course.alt_location.contains("Remote Instruction")) {
                     SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_location)
                 } else {
                     SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_location)
                 }
             }
-            if (course.alt_time != "Not Found") {
+            if (course.alt_time != "None") {
                 SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_time)
             }
             SectionSubtitle(painterResource(R.drawable.chat_filled), course.enrolled)
