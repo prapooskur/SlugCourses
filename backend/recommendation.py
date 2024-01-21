@@ -49,7 +49,7 @@ Write a couple brief bullet points per class you recommend. Include a brief summ
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-document_file = open("backend/updatedclasses", mode="rb")
+document_file = open("backend/cache/classdocuments", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
@@ -121,8 +121,21 @@ async def get_stream(userInput : str):
         #yield str(mergedDocs)
 
     #return StreamingResponse(stream_data())
+
+    docList = []
+    for i in mergedDocs["documents"]:
+        docList.append(docToDict(i))
+
+    print(docList)
+
     response_data = {
         "text": str(response.text),
-        "document_list": str(mergedDocs["documents"])
+        "document_list": docList
     }
     return json.dumps(response_data)
+
+
+def docToDict(doc) -> dict:
+    return {
+        "content": str(doc.content)
+    }
