@@ -7,7 +7,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -21,6 +24,10 @@ fun CollapsingLargeTopBar(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        rememberTopAppBarState(),
+        canScroll = { true }
+    )
     LargeTopAppBar(
         title = {
             Text(
@@ -41,5 +48,33 @@ fun CollapsingLargeTopBar(
             }
         },
         scrollBehavior = scrollBehavior,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BoringNormalTopBar(
+    titleText: String,
+    navController: NavController,
+) {
+    TopAppBar(
+        title = {
+            Text(
+                modifier = Modifier,
+                text = titleText,
+            )
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = {
+                    navController.navigateUp()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Back",
+                )
+            }
+        },
     )
 }

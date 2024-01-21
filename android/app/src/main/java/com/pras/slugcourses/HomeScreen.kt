@@ -67,7 +67,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 
     val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
     var selectedTypeIndex by remember { mutableIntStateOf(0) }
-    val selectedTimeList = remember { mutableStateListOf<String>() }
+    val selectedTimeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
 
     var selectedStatusIndex by remember { mutableIntStateOf(1) }
 

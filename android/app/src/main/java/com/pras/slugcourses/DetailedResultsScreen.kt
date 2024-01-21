@@ -46,7 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.CourseInfo
 import com.pras.slugcourses.api.PrimarySection
 import com.pras.slugcourses.api.classAPIResponse
-import com.pras.slugcourses.ui.elements.CollapsingLargeTopBar
+import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URLDecoder
@@ -89,10 +89,9 @@ fun DetailedResultsScreen(
         // custom insets necessary to render behind nav bar
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
-            CollapsingLargeTopBar(
+            BoringNormalTopBar(
                 titleText = courseInfo.primary_section.title,
                 navController = navController,
-                scrollBehavior = scrollBehavior
             )
         },
         content = {paddingValues ->
