@@ -81,7 +81,7 @@ private const val TAG = "ChatScreen"
 fun ChatScreen() {
     Log.d(TAG, "ChatScreen")
     //todo pls fix
-    val message = remember { mutableStateOf("What classes should i take if i want to learn about machine learning?") }
+    val message = remember { mutableStateOf("") }
     val sendMessage = remember { mutableStateOf(false) }
     val response = remember { mutableStateOf("") }
     // user-facing chat list: contains user input and system responses
@@ -218,7 +218,8 @@ fun ChatMessageBar(input: MutableState<String>, sendMessage: MutableState<Boolea
             onValueChange = { input.value = it },
             singleLine = false,
             maxLines = 3,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            placeholder = { Text("Type a message...") },
         )
         Button(
             modifier = Modifier

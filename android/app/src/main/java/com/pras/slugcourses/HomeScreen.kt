@@ -1,13 +1,17 @@
 package com.pras.slugcourses
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
@@ -87,6 +91,25 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             onQueryChange = { searchText = it },
             active = false,
             onActiveChange = { searchActive = it },
+            placeholder = { Text("Search for classes...") },
+            trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
+                if(searchText.isEmpty()) {
+                    searchText = " "
+                }
+
+                //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
+                val status = Json.encodeToString(Status.ALL)
+                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val encodedType = Json.encodeToString(classType)
+                val geList = Json.encodeToString(selectedGenEdList.toList())
+                val searchType = when (selectedStatusIndex) {
+                    0 -> "Open"
+                    else -> "All"
+                }
+                navController.navigate(
+                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+                )
+            }) },
             onSearch = {
                 if(searchText.isEmpty()) {
                     searchText = " "
