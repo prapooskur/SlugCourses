@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.ClassAPIResponse
 import com.pras.slugcourses.api.CourseInfo
@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailedResultsScreen(
-    navController: NavHostController,
+    navController: NavController,
     term: String,
     courseNumber: String
 ) {

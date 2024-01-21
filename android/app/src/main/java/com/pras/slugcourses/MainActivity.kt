@@ -165,19 +165,20 @@ fun Init(startDestination: String) {
                         ResultsScreen(
                             navController = navController,
                             term = term,
-                            query = query ?: "",
+                            query = query,
                             status = status,
                             type = type,
                             genEd = gened
                         )
                     }
                     composable(
-                        "detailed/{courseNumber}",
+                        "detailed/{term}/{courseNumber}",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
+                        val term = backStackEntry.arguments?.getString("term") ?: "2240"
                         val courseNumber = backStackEntry.arguments?.getString("courseNumber") ?: ""
-                        DetailedResultsScreen(navController = navController, courseNumber = courseNumber)
+                        DetailedResultsScreen(navController = navController, term = term, courseNumber = courseNumber)
                     }
                     composable(
                         "chat",
