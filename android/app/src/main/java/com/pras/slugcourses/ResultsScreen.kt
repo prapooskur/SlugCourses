@@ -1,5 +1,6 @@
 package com.pras.slugcourses
 
+import android.util.Log
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,7 +29,7 @@ import com.pras.slugcourses.ui.elements.CourseCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-
+private const val TAG = "results"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +46,8 @@ fun ResultsScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState(),
-        canScroll = { true })
+        canScroll = { true }
+    )
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -82,10 +84,14 @@ fun ResultsScreen(
     val courseNumber = query.substringAfter(" ")
 
 
-    val useDepartment = (Regex("^[A-Za-z]{3}[A-Za-z]?\$").matches(department))
-    val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
 
     LaunchedEffect(Unit) {
+
+        val useDepartment = (Regex("^[A-Za-z]{3}[A-Za-z]?\$").matches(department))
+        val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
+
+        if (useDepartment)  Log.d(TAG, "Using department")
+        if (useCourseNumber)  Log.d(TAG, "Using course number")
         withContext(Dispatchers.IO) {
             response = supabaseQuery(
                 term = term,
