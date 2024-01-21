@@ -1,8 +1,12 @@
 package com.pras.slugcourses
 
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,8 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.CourseInfo
@@ -90,7 +96,9 @@ fun DetailedResultsScreen(
                     }
                 } else {
                     item {
-                        CircularProgressIndicator()
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
@@ -101,35 +109,69 @@ fun DetailedResultsScreen(
 
 @Composable
 fun CourseDetailBox(courseInfo: CourseInfo) {
-    Box(Modifier.padding(16.dp)) {
+    Box(
+        Modifier
+            .padding(16.dp)
+            .fillMaxWidth()) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Course Details")
+            Column(Modifier.fillMaxWidth()) {
+                Row {
+                    Column(modifier = Modifier.fillMaxWidth(0.5f)) {
+                        Text("Status: ${courseInfo.primary_section.enrl_status}")
+                        Text("Credits: ${courseInfo.primary_section.credits}")
+                        if (courseInfo.primary_section.gened.isNotBlank()) {
+                            Text("Gen Ed: ${courseInfo.primary_section.gened}")
+                        } else {
+                            Text("Gen Ed: None")
+                        }
+
+                    }
+                    Column(modifier = Modifier.fillMaxWidth(0.5f)) {
+                        Text("Enrolled: ${courseInfo.primary_section.enrl_total}")
+                        Text("Capacity: ${courseInfo.primary_section.capacity}")
+                        if(courseInfo.primary_section.waitlist_capacity != "0") {
+                            Text("Waitlisted: ${courseInfo.primary_section.waitlist_total}")
+                        } else {
+                            Text("Waitlist: Closed")
+                        }
+
+                    }
+                }
+                Row {
+                    Text("Course Details")
+                }
+            }
         }
     }
 }
 
 @Composable
 fun CourseDescriptionBox(courseInfo: CourseInfo) {
-    Box(Modifier.padding(16.dp)) {
+    Box(
+        Modifier
+            .padding(16.dp)
+            .fillMaxWidth()) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Description")
-            Divider()
-            Text(courseInfo.primary_section.description)
+            Text("Description\n\n", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
+            Divider(thickness = 2.dp)
+            Text("\n\n"+courseInfo.primary_section.description)
         }
     }
 }
 
 @Composable
 fun CourseMeetingsBox(courseInfo: CourseInfo) {
-    Box(Modifier.padding(16.dp)) {
+    Box(
+        Modifier
+            .padding(16.dp)
+            .fillMaxWidth()) {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
             shape = MaterialTheme.shapes.medium
         ) {
 
