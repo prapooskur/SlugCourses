@@ -89,6 +89,9 @@ fun ChatScreen() {
     // internal chat history: contains full history as a single string that can be sent to api for history
     val chatHistory = remember { mutableStateOf("") }
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        chatList.add(ChatMessage("Hello! I'm SlugBot, your personal assistant for all things UCSC. How can I help you today?", Author.SYSTEM))
+    }
     LaunchedEffect(sendMessage.value) {
         //todo pls fix
         try {
