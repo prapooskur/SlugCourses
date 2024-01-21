@@ -109,8 +109,10 @@ async def get_stream(userInput : str):
 
     def stream_data():
         for chunk in response:
-            yield chunk.text
-            time.sleep(1)
+            yield str({f"response": chunk.text})
+        
+        yield str({"eor": "||"})
+        yield str(mergedDocs)
 
     return StreamingResponse(stream_data())
 
