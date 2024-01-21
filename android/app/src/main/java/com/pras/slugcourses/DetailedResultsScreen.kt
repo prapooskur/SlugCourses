@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -111,15 +112,26 @@ fun DetailedResultsScreen(
 fun CourseDetailBox(courseInfo: CourseInfo) {
     Box(
         Modifier
-            .padding(16.dp)
+            .padding(12.dp)
             .fillMaxWidth()) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
             shape = MaterialTheme.shapes.medium
         ) {
-            Column(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)) {
                 Row {
-                    Column(modifier = Modifier.fillMaxWidth(0.5f)) {
+                    Text(
+                        text = "Course Details",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp
+                    )
+                }
+                Divider()
+                Row(Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text("Status: ${courseInfo.primary_section.enrl_status}")
                         Text("Credits: ${courseInfo.primary_section.credits}")
                         if (courseInfo.primary_section.gened.isNotBlank()) {
@@ -129,8 +141,8 @@ fun CourseDetailBox(courseInfo: CourseInfo) {
                         }
 
                     }
-                    Column(modifier = Modifier.fillMaxWidth(0.5f)) {
-                        Text("Enrolled: ${courseInfo.primary_section.enrl_total}")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Enrolled: ${courseInfo.primary_section.enrl_total}", overflow = TextOverflow.Ellipsis)
                         Text("Capacity: ${courseInfo.primary_section.capacity}")
                         if(courseInfo.primary_section.waitlist_capacity != "0") {
                             Text("Waitlisted: ${courseInfo.primary_section.waitlist_total}")
@@ -140,9 +152,7 @@ fun CourseDetailBox(courseInfo: CourseInfo) {
 
                     }
                 }
-                Row {
-                    Text("Course Details")
-                }
+
             }
         }
     }
@@ -153,14 +163,18 @@ fun CourseDescriptionBox(courseInfo: CourseInfo) {
     Box(
         Modifier
             .padding(16.dp)
-            .fillMaxWidth()) {
+            .fillMaxWidth()
+    ) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Description\n\n", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
-            Divider(thickness = 2.dp)
-            Text("\n\n"+courseInfo.primary_section.description)
+            Row(Modifier.padding(16.dp)) {
+                Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
+                Divider(thickness = 2.dp)
+                Text(courseInfo.primary_section.description)
+            }
+
         }
     }
 }
