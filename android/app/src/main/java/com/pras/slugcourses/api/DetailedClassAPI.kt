@@ -71,12 +71,14 @@ data class SecondarySection(
     val meetings: List<Meeting>
 )
 
+private val json = Json { ignoreUnknownKeys = true }
+
 suspend fun classAPIResponse(term: String, courseNum: String): CourseInfo {
     val client = HttpClient(CIO)
     val url = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/${term}/${courseNum}"
     val response = client.get(url).body<String>()
 
-    val courseInfo: CourseInfo = Json.decodeFromString(response)
+    val courseInfo: CourseInfo = json.decodeFromString(response)
 
     Log.d(TAG, courseInfo.toString())
     return courseInfo

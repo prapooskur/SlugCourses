@@ -199,7 +199,7 @@ fun Init(startDestination: String) {
                     ) {
                         currentDestination = "chat"
 
-                        ChatScreen(navController = navController)
+                        ChatScreen()
                     }
                 }
             }

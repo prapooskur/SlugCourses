@@ -1,4 +1,4 @@
-import pickle, os, re, asyncio, time
+import pickle, os, re, asyncio, time, json
 #from haystack import Pipeline
 from haystack.components.joiners.document_joiner import DocumentJoiner
 from haystack.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
@@ -107,40 +107,16 @@ async def get_stream(userInput : str):
     finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"], question=userInput)["prompt"]
 
     # (7) Send prompt to LLM
-    response = model.generate_content(finalizedPrompt, stream=True)
+    response = model.generate_content(finalizedPrompt)#, stream=True)
 
-    def stream_data():
-        for chunk in response:
-            yield str({f"response": chunk.text})
+    #def stream_data():
+        #for chunk in response:
+        #    yield str({f"response": chunk.text})
         
-        yield str({"eor": "||"})
-        yield str(mergedDocs)
+    #    yield json.dumps(response.text)
 
-    return StreamingResponse(stream_data())
+        #yield str({"eor": "||"})
+        #yield str(mergedDocs)
 
-
-    # recommendations = str(results["llm"]["answers"][0]).replace("\\n", "\n")
-
-    # classRegex = re.compile("[A-Z]{3,4}\s\d{1,3}[A-Z]?")
-    # matches = list(set(re.findall(classRegex, recommendations)))
-    # print("classes found:----------")
-    # print(matches)
-    # print("---------------------")
-
-
-    # supabase = create_client(supaUrl, supaKey, options=client.ClientOptions(
-    #     postgrest_client_timeout=10,
-    #     storage_client_timeout=10
-    # ))
-
-    # for match in matches:
-    #     department = match.split(' ')[0]
-    #     catalogNum = match.split(' ')[1]
-    #     response = supabase.table("courses").select("id").eq("department", department).eq("course_number", catalogNum).execute()
-    #     #print(response)
-    #     try:
-    #         classID = response.data[0]["id"]
-    #     except:
-    #         print(f"Warning: {department} {catalogNum} does not exist in database.")
-    #     else:
-    #         recommendations = recommendations.replace(match, f"[{department} {catalogNum}]({classID})"
+    #return StreamingResponse(stream_data())
+    return json.dumps(response.text)
