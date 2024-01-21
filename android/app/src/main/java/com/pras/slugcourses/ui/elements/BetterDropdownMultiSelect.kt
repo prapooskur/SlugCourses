@@ -61,14 +61,14 @@ fun <T> LargeDropdownMenuMultiSelect(
             onClick = onClick,
         )
     },
-    selectedIndex: Int,
+    displayLabel: String,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.height(IntrinsicSize.Min)) {
         OutlinedTextField(
             label = { Text(label) },
-            value = items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "",
+            value = displayLabel,
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {

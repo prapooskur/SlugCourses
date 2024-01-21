@@ -4,6 +4,7 @@ import android.util.Log
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import kotlinx.serialization.Serializable
@@ -102,6 +103,8 @@ suspend fun supabaseQuery(
                 filterNot("type", FilterOperator.IS, "In Person")
             }
         }
+        order(column = "department", order = Order.ASCENDING)
+        order(column = "course_number", order = Order.ASCENDING)
     }.decodeList<Course>()
 
     Log.d(TAG, courseList.toString())

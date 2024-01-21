@@ -48,11 +48,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 
     val searchOpen = rememberSaveable { mutableStateOf(false) }
 
-    val termChosen = remember { mutableStateOf("Winter 2024") }
-    val GEList = remember { mutableStateOf(listOf<String>()) }
-
     val showAdvanced = remember { mutableStateOf(false) }
 
+    val termChosen = remember { mutableStateOf("Winter 2024") }
     val termMap = mapOf(
         "Winter 2024" to "2240",
         "Fall 2023" to "2238",
@@ -60,6 +58,10 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
         "Winter 2023" to "2230",
         "Fall 2022" to "2228"
     )
+
+    val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
+    val selectedGenEdList = remember { mutableStateListOf<String>() }
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -80,9 +82,11 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 if(searchText.isEmpty()) {
                     searchText = " "
                 }
+
+                //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
                 val type = Json.encodeToString(listOf(Type.HYBRID, Type.ASYNC, Type.IN_PERSON, Type.SYNC))
-                val geList = Json.encodeToString(GEList.value)
+                val geList = Json.encodeToString(selectedGenEdList.toList())
                 navController.navigate(
                     "results/${termMap[termChosen.value]}/${searchText}/${status}/${type}/${geList}"
                 )
@@ -98,15 +102,12 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 selectedIndex = selectedTermIndex,
                 onItemSelected = { index, _ -> selectedTermIndex = index },
             )
-
-            val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
-            val selectedGenEdList = remember { mutableStateListOf<String>() }
-            var selectedGenEdIndex by remember { mutableIntStateOf(0) }
+            //var selectedGenEdIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenuMultiSelect(
                 modifier = Modifier.weight(.3f).padding(start = 8.dp),
                 label = "Gen Ed",
                 items = genEdList,
-                selectedIndex = selectedGenEdIndex,
+                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0].toString() else "Multi",
                 selectedItems = selectedGenEdList,
                 onItemSelected = { index, _ ->
                     selectedGenEdList.add(genEdList[index])
