@@ -12,6 +12,8 @@ Like students at every university, the four of us have to sign up for courses at
 
 //gif of searching for a class currently
 
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="home screen grid view">
+
 
 We believe that we could make an improved version of the class search website's mobile interface making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
 
