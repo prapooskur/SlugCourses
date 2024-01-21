@@ -100,6 +100,8 @@ async def get_stream(userInput : str):
     # (5) merge vector-based docs and keyword-based docs
     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
 
+    mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(min(len(mergedDocs["documents"]), 5))]
+
 
     # (6) put user input and list of documents into the prompt template
     # finalizedPrompt -> string
@@ -120,7 +122,7 @@ async def get_stream(userInput : str):
 
     #return StreamingResponse(stream_data())
     response_data = {
-        "text": response.text,
-        "document_list": mergedDocs["documents"]
+        "text": str(response.text),
+        "document_list": str(mergedDocs["documents"])
     }
     return json.dumps(response_data)
