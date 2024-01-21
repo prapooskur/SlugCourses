@@ -120,6 +120,7 @@ async def get_stream(userInput : str):
         #yield str(mergedDocs)
 
     #return StreamingResponse(stream_data())
+<<<<<<< HEAD
 
     docList = []
     for i in mergedDocs["documents"]:
@@ -136,3 +137,12 @@ def docToDict(doc) -> dict:
     return {
         "content": str(doc.content)
     }
+=======
+    print(response.text)
+
+    #response_data = {
+    #    "text": str(response.text),
+    #    "document_list": str(mergedDocs["documents"])
+    #}
+    return json.dumps(response.text)
+>>>>>>> de40774 (stuff)

@@ -19,8 +19,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +43,7 @@ import io.ktor.http.encodeURLPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 enum class Author {
     USER,
@@ -56,7 +57,7 @@ data class ChatMessage(
 
 @Serializable
 data class ChatResponse(
-    val response: String,
+    val text: String,
     //val documentList: List<String>,
 )
 
@@ -70,16 +71,21 @@ fun ChatScreen() {
     val message = remember { mutableStateOf("What classes should i take if i want to learn about machine learning? Respond in a spartan tone with little detail.") }
     val sendMessage = remember { mutableStateOf(false) }
     val response = remember { mutableStateOf("") }
+    // user-facing chat list: contains user input and system responses
     val chatList = remember { mutableStateListOf<ChatMessage>() }
+    // internal chat history: contains full history as a single string that can be sent to api for history
+    val chatHistory = remember { mutableStateOf("") }
     LaunchedEffect(sendMessage.value) {
         //todo pls fix
         withContext(Dispatchers.IO) {
             if (sendMessage.value) {
-                chatList.add(ChatMessage(message.value, Author.USER))
+                addChat(chatList, chatHistory, message.value, Author.USER)
+                //chatList.add(ChatMessage(message.value, Author.USER))
                 Log.d(TAG, message.value)
-                chatList.add(ChatMessage("|||", Author.SYSTEM))
-                queryChat(message.value, chatList)
+                val query = message.value
                 message.value = ""
+                chatList.add(ChatMessage("|||", Author.SYSTEM))
+                queryChat(query, chatList, chatHistory)
                 sendMessage.value = false
             }
         }
@@ -111,7 +117,31 @@ fun ChatScreen() {
 
 }
 
-suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>) {
+fun addChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, message: String, author: Author) {
+    when(author) {
+        Author.USER -> {
+            chatList.add(ChatMessage(message, Author.USER))
+            chatHistory.value += "USER: $message\n"
+        }
+        Author.SYSTEM -> {
+            Log.d(TAG, "ERROR: addChat called with Author.SYSTEM")
+        }
+    }
+}
+
+fun replaceChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, message: String, author: Author) {
+    when(author) {
+        Author.SYSTEM -> {
+            chatList[chatList.size-1] = (ChatMessage(message, Author.SYSTEM))
+            chatHistory.value += "ASSISTANT: $message\n"
+        }
+        Author.USER -> {
+            Log.d(TAG, "ERROR: addChat called with Author.USER")
+        }
+    }
+}
+
+suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>) {
     //todo pls fix
     val client = HttpClient(CIO) {
         //set timeout to 1 min
@@ -141,10 +171,13 @@ suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>) {
         Log.d(TAG, response.response)
     }
     */
-    val response = client.get(CHAT_URL + query.encodeURLPath()).body<String>()
-    //chatList.add(ChatMessage(response.replace("\\\\n","\n"), Author.SYSTEM))
-    //val oldMessage = chatList.last()
-    chatList[chatList.size-1] = ChatMessage(response.replace("\\\\n","\n"), Author.SYSTEM)
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
+    val response: String = client.get(CHAT_URL + chatHistory.value.encodeURLPath()).body()
+    val decodedResponse = json.decodeFromString<ChatResponse>(response)
+    chatList.add(ChatMessage(response, Author.SYSTEM))
+    replaceChat(chatList, chatHistory, decodedResponse.text, Author.SYSTEM)
 }
 
 
@@ -159,18 +192,17 @@ fun ChatMessageBar(input: MutableState<String>, sendMessage: MutableState<Boolea
         Modifier
             .padding(16.dp),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.Bottom
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        SearchBar(
+        OutlinedTextField(
             modifier = Modifier
-                .weight(.8f)
-                .padding(4.dp),
-            query = input.value,
-            onQueryChange = { input.value = it },
-            onSearch = { if (input.value.isNotBlank()) { sendMessage.value = true } },
-            active = false,
-            onActiveChange = { /* do nothing */ },
-        ) { /* do nothing */ }
+                .weight(.8f),
+            value = input.value,
+            onValueChange = { input.value = it },
+            singleLine = false,
+            maxLines = 5,
+            shape = RoundedCornerShape(16.dp)
+        )
         Button(
             modifier = Modifier
                 .weight(0.16f)
@@ -189,7 +221,7 @@ fun ChatMessageBar(input: MutableState<String>, sendMessage: MutableState<Boolea
                 }
             },
         ) {
-            Icon(Icons.Filled.Send, contentDescription = "Send message")
+            Icon(Icons.Filled.Send, contentDescription = "Send message", Modifier.fillMaxSize(.8f))
         }
     }
 }
