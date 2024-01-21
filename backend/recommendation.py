@@ -119,4 +119,8 @@ async def get_stream(userInput : str):
         #yield str(mergedDocs)
 
     #return StreamingResponse(stream_data())
-    return json.dumps(response.text)
+    response_data = {
+        "text": response.text,
+        "document_list": mergedDocs["documents"]
+    }
+    return json.dumps(response_data)
