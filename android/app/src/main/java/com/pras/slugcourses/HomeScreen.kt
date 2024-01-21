@@ -62,6 +62,15 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
     val selectedGenEdList = remember { mutableStateListOf<String>() }
 
+    val termList = termMap.keys.toList()
+    var selectedTermIndex by remember { mutableIntStateOf(0) }
+
+    val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
+    var selectedTypeIndex by remember { mutableIntStateOf(0) }
+    val selectedTimeList = remember { mutableStateListOf<String>() }
+
+    var selectedStatusIndex by remember { mutableIntStateOf(1) }
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -85,16 +94,19 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
-                val type = Json.encodeToString(listOf(Type.HYBRID, Type.ASYNC, Type.IN_PERSON, Type.SYNC))
+                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val encodedType = Json.encodeToString(classType)
                 val geList = Json.encodeToString(selectedGenEdList.toList())
+                val searchType = when (selectedStatusIndex) {
+                    0 -> "Open"
+                    else -> "All"
+                }
                 navController.navigate(
-                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${type}/${geList}"
+                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
                 )
             }
         ) { /* do nothing */ }
         Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
-            val termList = termMap.keys.toList()
-            var selectedTermIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenu(
                 modifier = Modifier
                     .weight(.5f)
@@ -125,9 +137,6 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
         }
 
         Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
-            val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-            var selectedTypeIndex by remember { mutableIntStateOf(0) }
-            val selectedTimeList = remember { mutableStateListOf<String>() }
             LargeDropdownMenuMultiSelect(
                 modifier = Modifier
                     .weight(.5f)
@@ -145,7 +154,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     }
                 }
             )
-            var selectedStatusIndex by remember { mutableIntStateOf(0) }
+
             LargeDropdownMenu(
                 modifier = Modifier
                     .weight(.35f)

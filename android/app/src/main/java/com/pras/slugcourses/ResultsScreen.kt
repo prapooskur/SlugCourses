@@ -42,7 +42,8 @@ fun ResultsScreen(
     query: String,
     status: Status,
     type: List<Type>,
-    genEd: List<String>
+    genEd: List<String>,
+    searchType: String
 ) {
     var response by remember { mutableStateOf(listOf<Course>()) }
     var dataLoaded by remember { mutableStateOf(false) }
@@ -108,6 +109,11 @@ fun ResultsScreen(
                 courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
                 query = if (!useDepartment && !useCourseNumber) query else "",
                 ge = genEd,
+                asynchronous = type.contains(Type.ASYNC_ONLINE),
+                hybrid = type.contains(Type.HYBRID),
+                synchronous = type.contains(Type.SYNC_ONLINE),
+                inPerson = type.contains(Type.IN_PERSON),
+                searchType = searchType,
             )
             dataLoaded = true
         }

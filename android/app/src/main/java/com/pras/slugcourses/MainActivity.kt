@@ -161,7 +161,7 @@ fun Init(startDestination: String) {
                         HomeScreen(navController = navController)
                     }
                     composable(
-                        route = "results/{term}/{query}/{status}/{type}/{gened}",
+                        route = "results/{term}/{query}/{status}/{type}/{gened}/{searchtype}",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
@@ -172,13 +172,16 @@ fun Init(startDestination: String) {
                         val status = Json.decodeFromString<Status>(backStackEntry.arguments?.getString("status") ?: "[]")
                         val type = Json.decodeFromString<List<Type>>(backStackEntry.arguments?.getString("type") ?: "[]")
                         val gened = Json.decodeFromString<List<String>>(backStackEntry.arguments?.getString("gened") ?: "[]")
+                        val searchType = backStackEntry.arguments?.getString("searchtype") ?: "All"
+
                         ResultsScreen(
                             navController = navController,
                             term = term,
                             query = query,
                             status = status,
                             type = type,
-                            genEd = gened
+                            genEd = gened,
+                            searchType = searchType
                         )
                     }
                     composable(

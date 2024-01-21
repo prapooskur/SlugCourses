@@ -32,6 +32,7 @@ data class Course(
     val gen_ed: String,
 )
 
+
 enum class Status {
     OPEN,
     CLOSED,
@@ -39,9 +40,11 @@ enum class Status {
     ALL
 }
 
+
+@Serializable
 enum class Type {
-    ASYNC,
-    SYNC,
+    ASYNC_ONLINE,
+    SYNC_ONLINE,
     HYBRID,
     IN_PERSON,
 }
@@ -58,7 +61,8 @@ suspend fun supabaseQuery(
     asynchronous: Boolean = true,
     hybrid: Boolean = true,
     synchronous: Boolean = true,
-    inPerson: Boolean = true
+    inPerson: Boolean = true,
+    searchType: String = "All",
 ): List<Course> {
     val supabase = createSupabaseClient(
         supabaseUrl = "https://cdmaojsmfcuyscmphhjk.supabase.co",
@@ -91,16 +95,19 @@ suspend fun supabaseQuery(
                 isIn("gen_ed", ge)
             }
             if(!asynchronous) {
-                filterNot("type", FilterOperator.IS, "Asynchronous Online")
+                filterNot("type", FilterOperator.NEQ, "Asynchronous Online")
             }
             if(!hybrid) {
-                filterNot("type", FilterOperator.IS, "Hybrid")
+                filterNot("type", FilterOperator.NEQ, "Hybrid")
             }
             if (!synchronous) {
-                filterNot("type", FilterOperator.IS, "Synchronous Online")
+                filterNot("type", FilterOperator.NEQ, "Synchronous Online")
             }
             if (!inPerson) {
-                filterNot("type", FilterOperator.IS, "In Person")
+                filterNot("type", FilterOperator.NEQ, "In Person")
+            }
+            if (searchType == "Open") {
+                filter("status", FilterOperator.IS, "Open")
             }
         }
         if (department.isNotBlank()) {
