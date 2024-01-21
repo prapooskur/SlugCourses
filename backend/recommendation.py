@@ -126,8 +126,6 @@ async def get_stream(userInput : str):
     for i in mergedDocs["documents"]:
         docList.append(docToDict(i))
 
-    print(docList)
-
     response_data = {
         "text": str(response.text),
         "document_list": docList
