@@ -97,7 +97,7 @@ fun ResultsScreen(
                 term = term,
                 status = status,
                 department = if (useDepartment) department.uppercase() else "",
-                courseNumber = if (useCourseNumber) courseNumber else "",
+                courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
                 query = if (!useDepartment && !useCourseNumber) query else "",
                 ge = genEd,
             )
