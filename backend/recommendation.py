@@ -40,6 +40,7 @@ document_file = open("backend/updatedclasses", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
+
 # set up embedders and retrievers
 query_instruction = "Represent this sentence for searching relevant passages:"
 text_embedder = SentenceTransformersTextEmbedder(model="BAAI/bge-large-en-v1.5", prefix = query_instruction)
@@ -68,7 +69,7 @@ query_pipeline.connect("prompt_builder", "llm")
 
 
 
-async def GetRecommendations(userPrompt : str, geminiKey : str, supaKey : str, supaUrl : str, query_pipeline : Pipeline) -> str:
+async def GetRecommendations(userPrompt : str, query_pipeline : Pipeline) -> str:
 
     print(userPrompt)
     results = query_pipeline.run(
@@ -112,10 +113,8 @@ async def GetRecommendations(userPrompt : str, geminiKey : str, supaKey : str, s
     return recommendations
 
 
-# thing = asyncio.run(GetRecommendations("Recommend me classes about machine learning"))
-# print(thing)
 
 @classRecommender.get("/")
 def response(prompt : str):
-    llmResponse = asyncio.run(GetRecommendations(prompt, geminiKey, supaKey, supaUrl, query_pipeline))
+    llmResponse = asyncio.run(GetRecommendations(prompt, query_pipeline))
     return {llmResponse}
