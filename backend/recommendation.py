@@ -42,8 +42,8 @@ Write a couple brief bullet points per class you recommend. Include a brief summ
 # Beware of the 7-stage [redacted] pipeline:
 # 1) Load data about all classes into document store
 # 2) Generate text embedding for user input
-# 3) Create a list of documents that match the input (vector/semantic based search) 
-# 4) Create a list of documents that match the input (keyword based search) 
+# 3) Create a list of documents that match the input (keyword based search) 
+# 4) Create a list of documents that match the input (vector/semantic based search) 
 # 5) Join vector/keyword documents into one list of documents, ranked by score
 # 6) Insert merged document list and user input into prompt
 # 7) Query LLM and return response. 
@@ -61,14 +61,14 @@ text_embedder = SentenceTransformersTextEmbedder(model="BAAI/bge-large-en-v1.5",
 text_embedder.warm_up()
 
 
-# (3) find documents based on documents (dense models)
-# embeddingDocs -> dictionary of documents
-embedding_retriever = InMemoryEmbeddingRetriever(document_store=document_store)
-
-
-# (4) find documents based on keyword matches (sparse models)
+# (3) find documents based on keyword matches (sparse models)
 # bm25Docs -> dictionary of documents
 bm25_retriever = InMemoryBM25Retriever(document_store=document_store)
+
+
+# (4) find documents based on documents (dense models)
+# embeddingDocs -> dictionary of documents
+embedding_retriever = InMemoryEmbeddingRetriever(document_store=document_store)
 
 
 # (5) merge embeddingDocs and bm25Docs via reciprocal rank fusion method
@@ -85,15 +85,14 @@ model = genai.GenerativeModel('gemini-pro')
 @classRecommender.get("/")
 async def get_stream(userInput : str):
 
-
     # (2) generate text embeddings based on user input
     textEmbeddings = text_embedder.run(userInput)
 
-    # (3) create embeddings (vector based document search)
-    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
-
-    # (4) keyword based document search
+    # (3) keyword based document search
     bm25Docs = bm25_retriever.run(query=userInput)
+
+    # (4) create embeddings for vector based document search
+    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
 
     # (5) merge vector-based docs and keyword-based docs
     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
