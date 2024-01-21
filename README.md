@@ -43,7 +43,12 @@ The integrated LLM-based chatbot can be talked to via a button on the bottom nav
 
 First, we set our sights on creating a database of all UCSC courses. To do this, we wrote a webscraper in Python that scraped the entire website for all 1,456 courses offered this quarter, as well as the 1000+ courses offered in each of the prior four quarters for a total of close to 6000 courses. We then pushed this to [Supabase](https://supabase.com/), a PostgresSQL database. In order to update the database with the most relevant information, the scraper is re-run at the top of every hour. Within the app itself, whenever a user searches for a course, this database is queried for the most relevant courses and all its information. 
 
-//screenshot of database and search results here
+
+<div>
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/database.png?token=GHSAT0AAAAAACNEB4YKNYNHEGD46ICC6PECZNNJ5GQ" width=100% height=30% alt="pisa current mobile interface">
+
+<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/search%20results.png?token=GHSAT0AAAAAACNEB4YLVEQNQYC23QKGYMQYZNNJ6FQ" width=30% height=30% alt="pisa current mobile interface">
+</div>
 
 Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or an imperative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implementing retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
 
