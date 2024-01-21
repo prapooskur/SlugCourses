@@ -31,27 +31,25 @@ These are the list of possible classes:
     {{ doc.content }}
 {% endfor %}
 Question: {{question}}
-Compile a recommendation to the user based on the list of possible classes and the user input.
+Compile a recommendation of the best classes from the list to the user based on the given list of possible classes and the user input.
 If you recommend graduate level courses, separate undergraduate and graduate level classes into two sections.
 If there are no graduate level courses in your recommendation, keep the courses in one list.
 Your response must be formatted in a bullet point list with a blank line after each bullet point.
 You must include the class's code and full name in your response.
-Write a a couple brief bullet points per class you recommend. Include a brief summary of prerequisites and any enrollment restrictions.
+Write a couple brief bullet points per class you recommend. Include a brief summary of prerequisites and any enrollment restrictions.
 '''
 
 # Beware of the 7-stage [redacted] pipeline:
 # 1) Load data about all classes into document store
 # 2) Generate text embedding for user input
-# 3) Create a list of documents that match the input (vector based search) 
+# 3) Create a list of documents that match the input (vector/semantic based search) 
 # 4) Create a list of documents that match the input (keyword based search) 
 # 5) Join vector/keyword documents into one list of documents, ranked by score
 # 6) Insert merged document list and user input into prompt
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-dirname = os.path.dirname(__file__)
-document_path = os.path.join(dirname, "cache/classdocuments")
-document_file = open(document_path, mode="rb")
+document_file = open("backend/updatedclasses", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
@@ -63,12 +61,12 @@ text_embedder = SentenceTransformersTextEmbedder(model="BAAI/bge-large-en-v1.5",
 text_embedder.warm_up()
 
 
-# (3) find documents based on documents (vector based)
+# (3) find documents based on documents (dense models)
 # embeddingDocs -> dictionary of documents
 embedding_retriever = InMemoryEmbeddingRetriever(document_store=document_store)
 
 
-# (4) find documents based on keyword matches
+# (4) find documents based on keyword matches (sparse models)
 # bm25Docs -> dictionary of documents
 bm25_retriever = InMemoryBM25Retriever(document_store=document_store)
 
