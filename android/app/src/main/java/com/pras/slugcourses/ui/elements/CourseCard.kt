@@ -21,15 +21,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.R
 import com.pras.slugcourses.api.Course
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseCard(course: Course, uriHandler: UriHandler) {
+fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavController) {
     val uri = "https://pisa.ucsc.edu/class_search/"+course.url
-    Card(onClick = { uriHandler.openUri(uri) },modifier = Modifier.padding(6.dp).widthIn(max=800.dp)) {
-        Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+    Card(onClick = {
+            navController.navigate("detailed/${course.term}/${course.id}")
+        },
+        modifier = Modifier
+            .padding(6.dp)
+            .widthIn(max = 800.dp))
+    {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)) {
             SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}")
             SectionSubtitle(Icons.Default.Person, course.instructor)
             if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
@@ -116,6 +126,7 @@ fun CoursePreview() {
             override fun openUri(uri: String) {
 
             }
-        }
+        },
+        navController = rememberNavController()
     )
 }

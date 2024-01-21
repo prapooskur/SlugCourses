@@ -1,5 +1,6 @@
 package com.pras.slugcourses
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,8 @@ import com.pras.slugcourses.ui.elements.CollapsingLargeTopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val TAG = "DetailedResults"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailedResultsScreen(
@@ -53,6 +56,7 @@ fun DetailedResultsScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
+            Log.d(TAG, "term: $term, courseNumber: $courseNumber")
             courseInfo = classAPIResponse(term, courseNumber)
             dataLoaded = true
         }

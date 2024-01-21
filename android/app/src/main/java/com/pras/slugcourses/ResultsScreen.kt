@@ -69,6 +69,7 @@ fun ResultsScreen(
                         CourseCard(
                             course = response[course],
                             uriHandler = LocalUriHandler.current,
+                            navController = navController
                         )
                     }
                 } else {
