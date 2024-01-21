@@ -39,30 +39,39 @@ You must include the class's code and full name in your response.
 Write a a couple brief bullet points per class you recommend. Include a brief summary of prerequisites and any enrollment restrictions.
 '''
 
+# Beware of the 7-stage [redacted] pipeline:
+# 1) Load data about all classes into document store
+# 2) Generate text embedding for user input
+# 3) Create a list of documents that match the input (vector based search) 
+# 4) Create a list of documents that match the input (keyword based search) 
+# 5) Join vector/keyword documents into one list of documents, ranked by score
+# 6) Insert merged document list and user input into prompt
+# 7) Query LLM and return response. 
 
-# load documents into store
+# (1) load documents into store
 document_file = open("backend/updatedclasses", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
-# create text embeddings for instruction
+
+# (2) create text embeddings for instruction
 # textEmbeddings -> a list of floats
 query_instruction = "Represent this sentence for searching relevant passages:"
 text_embedder = SentenceTransformersTextEmbedder(model="BAAI/bge-large-en-v1.5", prefix=query_instruction)
 text_embedder.warm_up()
 
 
-# find documents based on documents (vector based)
+# (3) find documents based on documents (vector based)
 # embeddingDocs -> dictionary of documents
 embedding_retriever = InMemoryEmbeddingRetriever(document_store=document_store)
 
 
-# find documents based on keyword matches
+# (4) find documents based on keyword matches
 # bm25Docs -> dictionary of documents
 bm25_retriever = InMemoryBM25Retriever(document_store=document_store)
 
 
-# merge embeddingDocs and bm25Docs via reciprocal rank fusion method
+# (5) merge embeddingDocs and bm25Docs via reciprocal rank fusion method
 # mergedDocs -> list of documents 
 document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
@@ -77,24 +86,25 @@ model = genai.GenerativeModel('gemini-pro')
 async def get_stream(userInput : str):
 
 
-    # generate text embeddings based on user input
+    # (2) generate text embeddings based on user input
     textEmbeddings = text_embedder.run(userInput)
 
-    # create embeddings (vector based document search)
+    # (3) create embeddings (vector based document search)
     embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
 
-    # keyword based document search
+    # (4) keyword based document search
     bm25Docs = bm25_retriever.run(query=userInput)
 
-    # merge vector-based docs and keyword-based docs
+    # (5) merge vector-based docs and keyword-based docs
     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
 
 
-    # put user input and list of documents into the prompt template
+    # (6) put user input and list of documents into the prompt template
     # finalizedPrompt -> string
     prompt_builder = PromptBuilder(template=prompt_template)
     finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"], question=userInput)["prompt"]
 
+    # (7) Send prompt to LLM
     response = model.generate_content(finalizedPrompt, stream=True)
 
     def stream_data():
