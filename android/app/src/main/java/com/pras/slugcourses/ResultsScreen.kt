@@ -96,7 +96,7 @@ fun ResultsScreen(
             response = supabaseQuery(
                 term = term,
                 status = status,
-                department = if (useDepartment) department else "",
+                department = if (useDepartment) department.uppercase() else "",
                 courseNumber = if (useCourseNumber) courseNumber else "",
                 query = if (!useDepartment && !useCourseNumber) query else "",
                 ge = genEd,

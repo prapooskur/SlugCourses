@@ -30,7 +30,7 @@ fun CourseCard(course: Course, uriHandler: UriHandler) {
     val uri = "https://pisa.ucsc.edu/class_search/"+course.url
     Card(onClick = { uriHandler.openUri(uri) },modifier = Modifier.padding(6.dp).widthIn(max=800.dp)) {
         Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-            SectionTitle("${course.department} ${course.course_number} ${course.section_number} - ${course.short_name}")
+            SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}")
             SectionSubtitle(Icons.Default.Person, course.instructor)
             if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
                 SectionSubtitle(painterResource(R.drawable.chat_filled), course.location)
