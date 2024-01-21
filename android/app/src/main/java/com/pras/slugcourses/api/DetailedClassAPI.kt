@@ -19,28 +19,28 @@ data class CourseInfo(
 
 @Serializable
 data class PrimarySection(
-    val strm: String,
-    val session_code: String,
-    val class_nbr: String,
-    val component: String,
-    val acad_career: String,
-    val subject: String,
-    val class_section: String,
-    val start_date: String,
-    val end_date: String,
-    val capacity: String,
-    val enrl_total: String,
-    val waitlist_capacity: String,
-    val waitlist_total: String,
-    val enrl_status: String,
-    val credits: String,
-    val grading: String,
-    val title: String,
-    val title_long: String,
-    val description: String,
-    val gened: String,
-    val requirements: String,
-    val catalog_nbr: String
+    val strm: String = "",
+    val session_code: String = "",
+    val class_nbr: String = "",
+    val component: String = "",
+    val acad_career: String = "",
+    val subject: String = "",
+    val class_section: String = "",
+    val start_date: String = "",
+    val end_date: String = "",
+    val capacity: String = "",
+    val enrl_total: String = "",
+    val waitlist_capacity: String = "",
+    val waitlist_total: String = "",
+    val enrl_status: String = "",
+    val credits: String = "",
+    val grading: String = "",
+    val title: String = "",
+    val title_long: String = "",
+    val description: String = "",
+    val gened: String = "",
+    val requirements: String = "",
+    val catalog_nbr: String = "",
 )
 
 @Serializable
@@ -71,7 +71,7 @@ data class SecondarySection(
     val meetings: List<Meeting>
 )
 
-suspend fun APIResponse(term: String, courseNum: String): CourseInfo {
+suspend fun classAPIResponse(term: String, courseNum: String): CourseInfo {
     val client = HttpClient(CIO)
     val url = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/${term}/${courseNum}"
     val response = client.get(url).body<String>()

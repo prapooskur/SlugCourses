@@ -13,6 +13,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.pras.slugcourses.api.Status
+import com.pras.slugcourses.api.Type
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,23 +51,14 @@ fun HomeScreen(navController: NavController) {
             active = false,
             onActiveChange = { searchActive = it },
             onSearch = {
+                val status = Json.encodeToString(Status.ALL)
+                val type = Json.encodeToString(listOf(Type.HYBRID, Type.ASYNC, Type.IN_PERSON, Type.SYNC))
+                val gelist = Json.encodeToString(GEList.value)
                 navController.navigate(
-
+                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${type}/${gelist}"
                 )
             }
-        )
-        if (searchActive) {
-            SearchFilters(
-                searchAsyncOnline = searchAsyncOnline,
-                searchHybrid = searchHybrid,
-                searchSynchOnline = searchSynchOnline,
-                searchInPerson = searchInPerson,
-                searchOpen = searchOpen,
-                termChosen = termChosen,
-                GEList = GEList,
-                showAdvanced = showAdvanced
-            )
-        }
+        ) { /* do nothing */ }
     }
 
 }

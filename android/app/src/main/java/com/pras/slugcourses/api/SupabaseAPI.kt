@@ -44,7 +44,7 @@ enum class Type {
     IN_PERSON,
 }
 
-suspend fun SupabaseQuery(
+suspend fun supabaseQuery(
     term: Int = 2240,
     status: Status = Status.ALL,
     department: String = "",

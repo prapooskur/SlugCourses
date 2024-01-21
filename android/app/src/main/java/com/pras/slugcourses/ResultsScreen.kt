@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.pras.slugcourses.api.Course
 import com.pras.slugcourses.api.Status
-import com.pras.slugcourses.api.SupabaseQuery
+import com.pras.slugcourses.api.supabaseQuery
 import com.pras.slugcourses.api.Type
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -56,7 +56,7 @@ fun ResultsScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            response = SupabaseQuery(
+            response = supabaseQuery(
                 term = term,
                 status = status,
                 department = if (useDepartment) department else "",
