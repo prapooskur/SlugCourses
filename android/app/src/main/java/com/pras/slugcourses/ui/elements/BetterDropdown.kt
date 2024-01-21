@@ -90,6 +90,7 @@ fun <T> LargeDropdownMenu(
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(16.dp)
             ) {
                 val listState = rememberLazyListState()
                 if (selectedIndex > -1) {

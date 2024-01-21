@@ -4,6 +4,9 @@ plugins {
 
     //Serialization
     id("org.jetbrains.kotlin.plugin.serialization")
+
+    //KSP
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -30,6 +33,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -43,7 +47,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.5"
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
     packaging {
         resources {
@@ -82,6 +86,15 @@ dependencies {
     val supabaseVersion = "2.0.4"
     implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
+
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
+    ksp("androidx.room:room-compiler:$room_version")
+
+
 
 
 }

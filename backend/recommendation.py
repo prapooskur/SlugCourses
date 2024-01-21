@@ -24,20 +24,15 @@ supaUrl = os.getenv("SUPAURL")
 
 
 prompt_template = '''
-You are a bot that makes recommendations on what class a user should take.
-
-These are the list of possible classes:
+You are SlugBot, a helpful course assistant for UCSC students. 
+Given these documents, answer the question. 
+Assume the user is an undergraduate student and cannot take graduate classes without instructor permission.
+Documents:
 {% for doc in documents %}
     {{ doc.content }}
 {% endfor %}
 Question: {{question}}
-Compile a recommendation of the best classes from the list to the user based on the given list of possible classes and the user input.
-If you recommend graduate level courses, separate undergraduate and graduate level classes into two sections.
-If there are no graduate level courses in your recommendation, keep the courses in one list.
-Your response must be formatted in a bullet point list with a blank line after each bullet point.
-You must include the class's code and full name in your response.
-Write a couple brief bullet points per class you recommend. Include a brief summary of prerequisites and any enrollment restrictions.
-'''
+Answer:'''
 
 # Beware of the 7-stage [redacted] pipeline:
 # 1) Load data about all classes into document store
@@ -49,7 +44,7 @@ Write a couple brief bullet points per class you recommend. Include a brief summ
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-document_file = open("backend/cache/classdocuments", mode="rb")
+document_file = open("cache/classdocuments", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
@@ -98,8 +93,8 @@ async def get_stream(userInput : str):
     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
 
     # return only the top 5 results (or length of the list, whichever is shortest)
-    maxLength = min(len(mergedDocs["documents"]), 5)
-    mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(maxLength)]
+    #maxLength = min(len(mergedDocs["documents"]), 5)
+    #mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(maxLength)]
 
 
     # (6) put user input and list of documents into the prompt template
@@ -129,7 +124,8 @@ async def get_stream(userInput : str):
         "text": str(response.text),
         "document_list": docList
     }
-    return json.dumps(response_data)
+    return response_data
+    #return json.dumps([str(response.text), docList])
 
 
 def docToDict(doc) -> dict:

@@ -1,6 +1,8 @@
 package com.pras.slugcourses
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -33,6 +35,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -58,47 +61,62 @@ data class ChatMessage(
 @Serializable
 data class ChatResponse(
     val text: String,
-    //val documentList: List<String>,
+    val document_list: List<HaystackDocument>,
 )
+
+@Serializable
+data class HaystackDocument(
+    val content: String
+)
+
+fun ShortToast(text: String, context: Context) {
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+}
 
 //todo pls fix
 private const val CHAT_URL = "http://169.233.234.234:8000/?userInput="
 private const val TAG = "ChatScreen"
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen() {
     Log.d(TAG, "ChatScreen")
     //todo pls fix
-    val message = remember { mutableStateOf("What classes should i take if i want to learn about machine learning? Respond in a spartan tone with little detail.") }
+    val message = remember { mutableStateOf("What classes should i take if i want to learn about machine learning?") }
     val sendMessage = remember { mutableStateOf(false) }
     val response = remember { mutableStateOf("") }
     // user-facing chat list: contains user input and system responses
     val chatList = remember { mutableStateListOf<ChatMessage>() }
     // internal chat history: contains full history as a single string that can be sent to api for history
     val chatHistory = remember { mutableStateOf("") }
+    val context = LocalContext.current
     LaunchedEffect(sendMessage.value) {
         //todo pls fix
-        withContext(Dispatchers.IO) {
-            if (sendMessage.value) {
-                addChat(chatList, chatHistory, message.value, Author.USER)
-                //chatList.add(ChatMessage(message.value, Author.USER))
-                Log.d(TAG, message.value)
-                val query = message.value
-                message.value = ""
-                chatList.add(ChatMessage("|||", Author.SYSTEM))
-                queryChat(query, chatList, chatHistory)
-                sendMessage.value = false
+        try {
+            withContext(Dispatchers.IO) {
+                if (sendMessage.value) {
+                    addChat(chatList, chatHistory, message.value, Author.USER)
+                    //chatList.add(ChatMessage(message.value, Author.USER))
+                    Log.d(TAG, message.value)
+                    val query = message.value
+                    message.value = ""
+                    chatList.add(ChatMessage("|||", Author.SYSTEM))
+                    queryChat(query, chatList, chatHistory)
+                    sendMessage.value = false
+                }
             }
+        } catch (e: Exception) {
+            Log.d(TAG, e.toString())
+            ShortToast("Error: ${e.toString()}", context)
         }
     }
     Scaffold(
         content = { paddingValues ->
-            val asdf = paddingValues
             LazyColumn(
                 Modifier
                     .padding(paddingValues)
-                    .padding(4.dp)
-                    .padding(bottom = 96.dp)
-                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom
             ) {
                 items(chatList) { chat ->
                     Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
@@ -129,7 +147,7 @@ fun addChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<
     }
 }
 
-fun replaceChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, message: String, author: Author) {
+fun replaceChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, documentList: List<HaystackDocument>, message: String, author: Author) {
     when(author) {
         Author.SYSTEM -> {
             chatList[chatList.size-1] = (ChatMessage(message, Author.SYSTEM))
@@ -174,10 +192,9 @@ suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>, c
     val json = Json {
         ignoreUnknownKeys = true
     }
-    val response: String = client.get(CHAT_URL + chatHistory.value.encodeURLPath()).body()
-    val decodedResponse = json.decodeFromString<ChatResponse>(response)
-    chatList.add(ChatMessage(response, Author.SYSTEM))
-    replaceChat(chatList, chatHistory, decodedResponse.text, Author.SYSTEM)
+    val response = client.get(CHAT_URL + chatHistory.value.encodeURLPath())
+    val decodedResponse: ChatResponse = json.decodeFromString(response.body())
+    replaceChat(chatList, chatHistory, listOf<HaystackDocument>(), decodedResponse.text, Author.SYSTEM)
 }
 
 
@@ -200,7 +217,7 @@ fun ChatMessageBar(input: MutableState<String>, sendMessage: MutableState<Boolea
             value = input.value,
             onValueChange = { input.value = it },
             singleLine = false,
-            maxLines = 5,
+            maxLines = 3,
             shape = RoundedCornerShape(16.dp)
         )
         Button(

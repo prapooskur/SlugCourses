@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
 import com.pras.slugcourses.ui.elements.LargeDropdownMenu
+import com.pras.slugcourses.ui.elements.LargeDropdownMenuMultiSelect
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -69,6 +71,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     ) {
         Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
         SearchBar(
+            modifier = Modifier.padding(16.dp),
             query = searchText,
             onQueryChange = { searchText = it },
             active = false,
@@ -85,15 +88,35 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 )
             }
         ) { /* do nothing */ }
-        Row {
+        Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
             val termList = termMap.keys.toList()
-            var selectedIndex by remember { mutableIntStateOf(0) }
+            var selectedTermIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenu(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier.weight(.5f).padding(end = 8.dp),
                 label = "Term",
                 items = termList,
-                selectedIndex = selectedIndex,
-                onItemSelected = { index, _ -> selectedIndex = index },
+                selectedIndex = selectedTermIndex,
+                onItemSelected = { index, _ -> selectedTermIndex = index },
+            )
+
+            val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
+            val selectedGenEdList = remember { mutableStateListOf<String>() }
+            var selectedGenEdIndex by remember { mutableIntStateOf(0) }
+            LargeDropdownMenuMultiSelect(
+                modifier = Modifier.weight(.3f).padding(start = 8.dp),
+                label = "Gen Ed",
+                items = genEdList,
+                selectedIndex = selectedGenEdIndex,
+                selectedItems = selectedGenEdList,
+                onItemSelected = { index, _ ->
+                    selectedGenEdList.add(genEdList[index])
+                },
+                onItemRemoved = { _, itemName ->
+                    if (itemName in selectedGenEdList) {
+                        selectedGenEdList.remove(itemName)
+                    }
+                }
+
             )
         }
     }
