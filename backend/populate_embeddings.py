@@ -4,7 +4,7 @@ import requests
 import concurrent.futures
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Document
-from course import Course
+from backend.course import Course
 
 def termToQuarterName(term : str) -> str:
     match term:
