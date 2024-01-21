@@ -3,6 +3,7 @@ package com.pras.slugcourses.ui.elements
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -147,10 +149,20 @@ fun LargeDropdownMenuItem(
     }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
-        Box(modifier = Modifier
+        Row(modifier = Modifier
             .clickable(enabled) { onClick() }
             .fillMaxWidth()
-            .padding(16.dp)) {
+            .padding(16.dp)
+        ) {
+            val checkColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = "Selected",
+                modifier = Modifier
+                    .padding(end = 16.dp)
+                    .height(24.dp),
+                tint = checkColor
+            )
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleSmall,

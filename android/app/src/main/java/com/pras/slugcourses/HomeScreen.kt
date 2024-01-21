@@ -82,7 +82,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .offset(y = -(56).dp)
+            .offset(y = 15.dp)
     ) {
         Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
         SearchBar(
