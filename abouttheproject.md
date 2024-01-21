@@ -1,7 +1,6 @@
 ## Inspiration
 
-Like students at every university, the four of us have to sign up for courses at the start of each quarter. In order to determine what classes are offered or the status of classes we're interested in, we must use [Pisa](https://pisa.ucsc.edu/class_search/), UCSC's class search website. It does exactly what it says on the tin: it allows you to search for classes with a variety of filters, such as whether the class is open or waitlisted, the subject, the name of the class, the number of credits, etc. As a tool, it has numerous issues from a mobile interface standpoint:
-
+Like students at every university, the four of us have to sign up for courses at the start of each quarter. In order to determine what classes are offered or the status of classes we're interested in, we must use [Pisa](https://pisa.ucsc.edu/class_search/), UCSC's class search website. It does exactly what it says on the tin: allows you to search for classes with a variety of filters, such as whether the class is open or waitlisted, the subject, the name of the class, and the number of credits. As a tool, it has numerous issues from a mobile interface standpoint:
 
 * The mobile website is not user-friendly at all
 * It does not have a smooth and responsive design
@@ -14,9 +13,9 @@ Like students at every university, the four of us have to sign up for courses at
 <img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="pisa current mobile interface">
 
 
-We believe that we could make an improved version of the class search website's mobile interface making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
+We believe that we could make an improved version of the class search website's mobile interface, making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
 
-Among other things, we also realized was that finding classes amongst the 1500+ courses offered at UCSC every quarter was a challenge. Pisa does not offer any easy way of searching or comparing classes with natural language. In order to search for a class, you must have prior knowledge of the class in question ranging from its name, hosting department, catalogue number, or the professor in charge. To make this easier, we envisioned a chatbot powered by a large language model (LLM) which could use a technique called [retrieval-augmented generation](https://blogs.nvidia.com/blog/what-is-retrieval-augmented-generation/) to scan a database of UCSC courses and return the courses most relevant to a user's course. 
+Among other things, we also realized was that finding classes among the 1500+ courses offered at UCSC every quarter was a challenge. Pisa does not offer any easy way of searching or comparing classes with natural language. In order to search for a class, you must have prior knowledge of the class in question ranging from its name, department, catalog number, or the professor in charge. To make this easier, we envisioned a chatbot powered by a large language model (LLM) which could use a technique called [retrieval-augmented generation](https://blogs.nvidia.com/blog/what-is-retrieval-augmented-generation/) (RAG) to scan a database of UCSC courses and return the courses most relevant to a user's course. 
 
 
 ## What it does

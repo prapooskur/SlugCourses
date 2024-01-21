@@ -77,6 +77,9 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
                 SectionSubtitle(painterResource(R.drawable.clock), course.alt_time)
             }
             SectionSubtitle(painterResource(R.drawable.group), course.enrolled)
+            if (course.gen_ed.isNotBlank()) {
+                SectionSubtitle(painterResource(R.drawable.books), course.gen_ed)
+            }
         }
     }
 }

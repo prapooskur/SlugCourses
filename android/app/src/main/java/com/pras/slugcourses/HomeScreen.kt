@@ -1,11 +1,14 @@
 package com.pras.slugcourses
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -25,10 +28,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.Status
@@ -84,7 +87,13 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             .background(MaterialTheme.colorScheme.surface)
             .offset(y = 15.dp)
     ) {
-        Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
+        //Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
+        Image(
+            painterResource(R.drawable.slug),
+            contentDescription = "Slug Courses",
+            contentScale = ContentScale.Inside,
+            modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(0.25f)
+        )
         SearchBar(
             modifier = Modifier.padding(16.dp),
             query = searchText,
@@ -144,9 +153,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 modifier = Modifier
                     .weight(.35f)
                     .padding(start = 8.dp),
-                label = "Gen Ed",
+                label = "GE",
                 items = genEdList,
-                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0].toString() else "Multi",
+                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0] else if (selectedGenEdList.size == 0) "" else "Multi",
                 selectedItems = selectedGenEdList,
                 onItemSelected = { index, _ ->
                     selectedGenEdList.add(genEdList[index])
