@@ -59,7 +59,7 @@ Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://bl
     * Prompt was specifically engineered to make Gemini returns its recommendations in a specific and consistent format with only relevant information
 7. Query Gemini LLM with final prompt and return response. 
 
-Once we got the pipeline running, we used the Python FastAPI and Uvicorn libraries in order to create an API endpoint such that the app could send it the user's query and get back Gemini's response. 
+Once we got the pipeline running, we used the Python FastAPI and Uvicorn libraries to create an API endpoint that the app could use to send the user's query and get back Gemini's response. 
 
 
 ## Challenges we ran into
@@ -76,47 +76,20 @@ We're really proud of the UI/UX of the app. The mobile experience is significant
 
 //gif of prototype using Figma
 
-We are also incredibly proud of the LLM integration. It was a massive undertaking to delve into the realm of large language models, and especially something as complicated as retrieval-augmented generation. Understanding document generation a
+We are also incredibly proud of the LLM integration. It was a massive undertaking to delve into the realm of large language models, and especially something as complicated as retrieval-augmented generation. By creating our own pipeline instead of going with a cloud solution, we learned an incredible amount of information about the underlying workings of language models and retrieval pipelines.
 
 
 ## What we learned
 
 We definitely learned a lot of stuff. We learned to work with a proper cloud SQL database for our backend data and how to integrate it with webscraped data. We also learned a lot about how LLMs could be used to search documents in addition to simple conversations. We also learned the complexity and depth of UX/UI design on Figma. We also learned a lot about app development and integrating it with all of our complex moving parts. 
 
-webscraping/database stuff
-
-ai/using llms for document retrieval
-
-apps (love kotlin)
-
-
 ## What's next for SlugCourses
 
 There are numerous future features and improvements that we can make to SlugCourses. This include the following:
 
 * Refine the current search functionality
-* Improving the functionality of the Chatbot
+* Improving the functionality of the chatbot
 * Create an integration using Rate My Professor
-* Develop an iOS version of the app
+* Develop iOS/iPadOS and desktop versions of the app
 
 This experience was invaluable and taught us a lot about app development, user interface design, and natural language processing. We are proud of what we have accomplished and we hope to continue working on SlugCourses to make it even better for UCSC students. 
-.
-
-.
-
-.
-
-.
-
-.
-
-.
-
-.
-
-.
-
--------ignore this-----------------------------
-
-
-We used Python to write a web scraper that grabbed the data of every single class offered at UCSC for the past six quarters and entered it into Supabase, a PostgreSQL database. We also used Python to write a backend API that used the Haystack library to query our database of class data and perform retrieval augmented generation to grab the most classes most relevant to the user's query. These were fed into Gemini, which we prompt engineered to return a bullet point list of the top classes, along with some basic information about each class (description, prerequisites, enrollment restrictions, etc). The data from the database and the Haystack/Gemini API was fed into the Android app, which was written in Kotlin, where it is displayed to the user in an aesthetically pleasing and easy to navigate UI.
