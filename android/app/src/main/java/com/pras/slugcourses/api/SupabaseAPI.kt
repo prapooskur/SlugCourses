@@ -17,7 +17,7 @@ data class Course(
     val course_number: String,
     val section_number: String,
     val instructor: String,
-    val description: String,
+    val short_name: String,
     val location: String,
     val time: String,
     val alt_location: String,
@@ -49,7 +49,7 @@ suspend fun supabaseQuery(
     status: Status = Status.ALL,
     department: String = "",
     courseNumber: String = "",
-    description: String = "",
+    query: String = "",
     ge: List<String> = listOf(),
     days: String = "",
     acadCareer: String = "",
@@ -77,10 +77,10 @@ suspend fun supabaseQuery(
             if(courseNumber.isNotBlank()) {
                 eq("course_number", courseNumber)
             }
-            if(description.isNotBlank()) {
+            if(query.isNotBlank()) {
                 textSearch(
-                    column = "description",
-                    query = description,
+                    column = "short_name",
+                    query = query,
                     config = "english",
                     textSearchType = TextSearchType.PLAINTO
                 )

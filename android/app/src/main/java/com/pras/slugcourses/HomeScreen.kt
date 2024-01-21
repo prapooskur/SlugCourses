@@ -51,6 +51,9 @@ fun HomeScreen(navController: NavController) {
             active = false,
             onActiveChange = { searchActive = it },
             onSearch = {
+                if(searchText.isEmpty()) {
+                    searchText = " "
+                }
                 val status = Json.encodeToString(Status.ALL)
                 val type = Json.encodeToString(listOf(Type.HYBRID, Type.ASYNC, Type.IN_PERSON, Type.SYNC))
                 val gelist = Json.encodeToString(GEList.value)

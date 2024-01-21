@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.pras.slugcourses.api.ClassAPIResponse
 import com.pras.slugcourses.api.CourseInfo
 import com.pras.slugcourses.api.PrimarySection
+import com.pras.slugcourses.api.classAPIResponse
 import com.pras.slugcourses.ui.elements.CollapsingLargeTopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,7 +41,7 @@ fun DetailedResultsScreen(
     var dataLoaded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            courseInfo = ClassAPIResponse(term, courseNumber)
+            courseInfo = classAPIResponse(term, courseNumber)
             dataLoaded = true
         }
     }
