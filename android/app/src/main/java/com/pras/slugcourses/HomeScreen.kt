@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -89,8 +91,8 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
         Image(
             painterResource(R.drawable.slug),
             contentDescription = "Slug Courses",
-            contentScale = ContentScale.Crop,
-            //modifier = Modifier.fillMaxSize(0.4f)
+            contentScale = ContentScale.Inside,
+            modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(0.25f)
         )
         SearchBar(
             modifier = Modifier.padding(16.dp),
@@ -151,9 +153,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 modifier = Modifier
                     .weight(.35f)
                     .padding(start = 8.dp),
-                label = "Gen Ed",
+                label = "GE",
                 items = genEdList,
-                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0].toString() else "Multi",
+                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0] else if (selectedGenEdList.size == 0) "" else "Multi",
                 selectedItems = selectedGenEdList,
                 onItemSelected = { index, _ ->
                     selectedGenEdList.add(genEdList[index])
