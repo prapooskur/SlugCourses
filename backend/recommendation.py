@@ -98,7 +98,9 @@ async def get_stream(userInput : str):
     # (5) merge vector-based docs and keyword-based docs
     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
 
-    mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(min(len(mergedDocs["documents"]), 5))]
+    # return only the top 5 results (or length of the list, whichever is shortest)
+    maxLength = min(len(mergedDocs["documents"]), 5)
+    mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(maxLength)]
 
 
     # (6) put user input and list of documents into the prompt template
