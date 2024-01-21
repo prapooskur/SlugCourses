@@ -1,13 +1,17 @@
 package com.pras.slugcourses
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
@@ -62,6 +66,15 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
     val selectedGenEdList = remember { mutableStateListOf<String>() }
 
+    val termList = termMap.keys.toList()
+    var selectedTermIndex by remember { mutableIntStateOf(0) }
+
+    val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
+    var selectedTypeIndex by remember { mutableIntStateOf(0) }
+    val selectedTimeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
+
+    var selectedStatusIndex by remember { mutableIntStateOf(1) }
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -78,6 +91,25 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             onQueryChange = { searchText = it },
             active = false,
             onActiveChange = { searchActive = it },
+            placeholder = { Text("Search for classes...") },
+            trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
+                if(searchText.isEmpty()) {
+                    searchText = " "
+                }
+
+                //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
+                val status = Json.encodeToString(Status.ALL)
+                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val encodedType = Json.encodeToString(classType)
+                val geList = Json.encodeToString(selectedGenEdList.toList())
+                val searchType = when (selectedStatusIndex) {
+                    0 -> "Open"
+                    else -> "All"
+                }
+                navController.navigate(
+                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+                )
+            }) },
             onSearch = {
                 if(searchText.isEmpty()) {
                     searchText = " "
@@ -85,18 +117,23 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
-                val type = Json.encodeToString(listOf(Type.HYBRID, Type.ASYNC, Type.IN_PERSON, Type.SYNC))
+                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val encodedType = Json.encodeToString(classType)
                 val geList = Json.encodeToString(selectedGenEdList.toList())
+                val searchType = when (selectedStatusIndex) {
+                    0 -> "Open"
+                    else -> "All"
+                }
                 navController.navigate(
-                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${type}/${geList}"
+                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
                 )
             }
         ) { /* do nothing */ }
         Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
-            val termList = termMap.keys.toList()
-            var selectedTermIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenu(
-                modifier = Modifier.weight(.5f).padding(end = 8.dp),
+                modifier = Modifier
+                    .weight(.5f)
+                    .padding(end = 8.dp),
                 label = "Term",
                 items = termList,
                 selectedIndex = selectedTermIndex,
@@ -104,7 +141,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             )
             //var selectedGenEdIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenuMultiSelect(
-                modifier = Modifier.weight(.3f).padding(start = 8.dp),
+                modifier = Modifier
+                    .weight(.35f)
+                    .padding(start = 8.dp),
                 label = "Gen Ed",
                 items = genEdList,
                 displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0].toString() else "Multi",
@@ -117,9 +156,40 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                         selectedGenEdList.remove(itemName)
                     }
                 }
-
             )
         }
-    }
 
+        Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
+            LargeDropdownMenuMultiSelect(
+                modifier = Modifier
+                    .weight(.5f)
+                    .padding(end = 8.dp),
+                label = "Type",
+                items = typeList,
+                displayLabel = if (selectedTimeList.size == 1) selectedTimeList[0] else "Multiple",
+                selectedItems = selectedTimeList,
+                onItemSelected = { index, _ ->
+                    selectedTimeList.add(typeList[index])
+                },
+                onItemRemoved = { _, itemName ->
+                    if (itemName in selectedTimeList) {
+                        selectedTimeList.remove(itemName)
+                    }
+                }
+            )
+
+            LargeDropdownMenu(
+                modifier = Modifier
+                    .weight(.35f)
+                    .padding(start = 8.dp),
+                label = "Status",
+                items = listOf("Open", "All"),
+                selectedIndex = selectedStatusIndex,
+                onItemSelected = { index, _ -> selectedStatusIndex = index },
+            )
+        }
+
+
+
+    }
 }

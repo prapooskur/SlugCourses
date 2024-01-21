@@ -28,6 +28,7 @@ import com.pras.slugcourses.R
 import com.pras.slugcourses.api.Course
 import java.net.URLEncoder
 
+
 enum class Status {
     OPEN,
     CLOSED,
@@ -58,22 +59,24 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
             SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}", status)
             SectionSubtitle(Icons.Default.Person, course.instructor)
             if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
-                SectionSubtitle(painterResource(R.drawable.chat_filled), course.location)
+                SectionSubtitle(painterResource(R.drawable.videocam), course.location)
             } else {
-                SectionSubtitle(painterResource(R.drawable.chat_filled), course.location)
+                SectionSubtitle(painterResource(R.drawable.location_on), course.location)
             }
-            SectionSubtitle(painterResource(R.drawable.chat_filled), course.time)
-            if (course.alt_location != "Not Found") {
+            if (course.time.isNotBlank()) {
+                SectionSubtitle(painterResource(R.drawable.clock), course.time)
+            }
+            if (course.alt_location != "None") {
                 if (course.alt_location.contains("Online") || course.alt_location.contains("Remote Instruction")) {
-                    SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_location)
+                    SectionSubtitle(painterResource(R.drawable.videocam), course.alt_location)
                 } else {
-                    SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_location)
+                    SectionSubtitle(painterResource(R.drawable.location_on), course.alt_location)
                 }
             }
-            if (course.alt_time != "Not Found") {
-                SectionSubtitle(painterResource(R.drawable.chat_filled), course.alt_time)
+            if (course.alt_time != "None") {
+                SectionSubtitle(painterResource(R.drawable.clock), course.alt_time)
             }
-            SectionSubtitle(painterResource(R.drawable.chat_filled), course.enrolled)
+            SectionSubtitle(painterResource(R.drawable.group), course.enrolled)
         }
     }
 }

@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -21,13 +23,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.pras.slugcourses.api.Course
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
 import com.pras.slugcourses.api.supabaseQuery
-import com.pras.slugcourses.ui.elements.CollapsingLargeTopBar
+import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import com.pras.slugcourses.ui.elements.CourseCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,7 +46,8 @@ fun ResultsScreen(
     query: String,
     status: Status,
     type: List<Type>,
-    genEd: List<String>
+    genEd: List<String>,
+    searchType: String
 ) {
     var response by remember { mutableStateOf(listOf<Course>()) }
     var dataLoaded by remember { mutableStateOf(false) }
@@ -57,10 +62,9 @@ fun ResultsScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
-            CollapsingLargeTopBar(
+            BoringNormalTopBar(
                 titleText = if (query.isNotBlank()) "Results for \"${query.trim()}\"" else "Results",
                 navController = navController,
-                scrollBehavior = scrollBehavior,
             )
         },
         content = {
@@ -70,13 +74,25 @@ fun ResultsScreen(
                     .padding(it)
             ) {
                 if (dataLoaded) {
-                    items(response.size) { course ->
-                        CourseCard(
-                            course = response[course],
-                            uriHandler = uriHandler,
-                            navController = navController,
-                        )
+                    if (response.isNotEmpty()) {
+                        items(response.size) { course ->
+                            CourseCard(
+                                course = response[course],
+                                uriHandler = uriHandler,
+                                navController = navController,
+                            )
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = "No classes found for your search.",
+                                fontSize = 24.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.offset(y = (240).dp)
+                            )
+                        }
                     }
+
                 } else {
                     item {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
@@ -108,6 +124,11 @@ fun ResultsScreen(
                 courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
                 query = if (!useDepartment && !useCourseNumber) query else "",
                 ge = genEd,
+                asynchronous = type.contains(Type.ASYNC_ONLINE),
+                hybrid = type.contains(Type.HYBRID),
+                synchronous = type.contains(Type.SYNC_ONLINE),
+                inPerson = type.contains(Type.IN_PERSON),
+                searchType = searchType,
             )
             dataLoaded = true
         }
