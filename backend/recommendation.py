@@ -49,7 +49,7 @@ Write a a couple brief bullet points per class you recommend. Include a brief su
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-document_file = open("backend/updatedclasses", mode="rb")
+document_file = open("cache/classdocuments", mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
