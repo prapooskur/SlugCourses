@@ -74,10 +74,10 @@ suspend fun supabaseQuery(
                 eq("status", "Open")
             }
             if(department.isNotBlank()) {
-                eq("department", department)
+                eq("department", department.uppercase())
             }
             if(courseNumber.isNotBlank()) {
-                eq("course_number", courseNumber)
+                eq("course_number", courseNumber.uppercase())
             }
             if(query.isNotBlank()) {
                 textSearch(
