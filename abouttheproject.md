@@ -1,18 +1,21 @@
 ## Inspiration
 
-Like students at every university, the four of us have to sign up for courses at the start of each quarter. In order to determine what classes are offered or the status of classes we're interested in, we must use [Pisa](https://pisa.ucsc.edu/class_search/), UCSC's class search website. It does exactly what it says on the tin: it allows you to search for classes with a variety of filters, such as whether the class is open or waitlisted, the subject, the name of the class, the number of credits, etc. The useability on desktop is decent, however, there are numerous issues with the mobile website:
+Like students at every university, the four of us have to sign up for courses at the start of each quarter. In order to determine what classes are offered or the status of classes we're interested in, we must use [Pisa](https://pisa.ucsc.edu/class_search/), UCSC's class search website. It does exactly what it says on the tin: it allows you to search for classes with a variety of filters, such as whether the class is open or waitlisted, the subject, the name of the class, the number of credits, etc. As a tool, it has numerous issues from a mobile interface standpoint:
 
 
 * The mobile website is not user-friendly at all
 * It does not have a smooth and responsive design
+* The design lacks an ease of use for those with accessibility issues
 * It does not follow the best practices of mobile usability
-* It is difficult to navigate and search for classes with
+* It is difficult to navigate through and search for classes
 * The interface was clearly designed to be navigated with a mouse and not a touch screen
 
+//gif of searching for a class currently
 
-As such, we believed that we could make an improved version of the class search website's mobile interface that would the expectations and preferences of the mobile users who want to access the UCSC catalogue anytime and anywhere. 
 
-Another thing we realized was that finding classes to take from the 1500+ courses offered at UCSC every quarter was a challenge. Pisa does not offer any easy way of searching for classes with natural language. In order to search for a class, you must already know its name, or department, or catalogue number, or the professor who teaches it. In order to make this easier, we envisioned a chatbot powered by a large language model (LLM) which could use a technique called [retrieval-augmented generation](https://blogs.nvidia.com/blog/what-is-retrieval-augmented-generation/) to scan a database of UCSC courses and return the courses most relevant to a user's course. 
+We believe that we could make an improved version of the class search website's mobile interface making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
+
+Among other things, we also realized was that finding classes amongst the 1500+ courses offered at UCSC every quarter was a challenge. Pisa does not offer any easy way of searching or comparing classes with natural language. In order to search for a class, you must have prior knowledge of the class in question ranging from its name, hosting department, catalogue number, or the professor in charge. To make this easier, we envisioned a chatbot powered by a large language model (LLM) which could use a technique called [retrieval-augmented generation](https://blogs.nvidia.com/blog/what-is-retrieval-augmented-generation/) to scan a database of UCSC courses and return the courses most relevant to a user's course. 
 
 
 ## What it does
@@ -36,19 +39,13 @@ The integrated LLM-based chatbot can be talked to via a button on the bottom nav
 //maybe another gif of asking it a second question
 
 
-
-
-
-
-
-
 ## How we built it
 
 First, we set our sights on creating a database of all UCSC courses. To do this, we wrote a webscraper in Python that scraped the entire website for all 1,456 courses offered this quarter, as well as the 1000+ courses offered in each of the prior four quarters for a total of close to 6000 courses. We then pushed this to [Supabase](https://supabase.com/), a PostgresSQL database. In order to update the database with the most relevant information, the scraper is re-run at the top of every hour. Within the app itself, whenever a user searches for a course, this database is queried for the most relevant courses and all its information. 
 
 //screenshot of database and search results here
 
-Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or a declarative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implementing retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
+Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or an imperative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implementing retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
 
 1. Load data about all classes into document storage 
 2. Generate text embedding for user input
@@ -73,14 +70,18 @@ Another challenge we ran into was turning Gemini's response into a proper API. B
 
 ## Accomplishments that we're proud of
 
-We're really proud of the UI/UX of the app. The mobile experience is significantly improved over the website. The UI was modernized to be more aesthetically pleasing, and content is presented in a easily digestible manner. The UX is markedly enhanced with proper support for phones and touch screen devices. It is also integrated with a lot of common touch screen actions such as swiping to the left of the screen to go back the previous screen. 
+We're really proud of the UI/UX of the app. The mobile experience is significantly improved over the website. The UI was modernized to be more aesthetically pleasing, and content is presented in a easily digestible manner. The UX is markedly enhanced with proper support for phones and touch screen devices. It up to date with modern UI principles (we follow Google's Material Design 3 guidelines) and was designed with modern UI prototyping tools such as Figma. It is also integrated with a lot of common touch screen actions such as swiping to the left of the screen to go back the previous screen. 
+
+//photo of market research
+
+//gif of prototype using Figma
 
 We are also incredibly proud of the LLM integration. It was a massive undertaking to delve into the realm of large language models, and especially something as complicated as retrieval-augmented generation. Understanding document generation a
 
 
 ## What we learned
 
-We definitely learned a lot of stuff. We learned to work with a proper cloud SQL database for our backend data and how to integrate it with webscraped data. We also learned a lot about how LLMs could be used to search documents in addition to simple conversations. We also learned a lot about app development and integrating it with all of our complex moving parts. 
+We definitely learned a lot of stuff. We learned to work with a proper cloud SQL database for our backend data and how to integrate it with webscraped data. We also learned a lot about how LLMs could be used to search documents in addition to simple conversations. We also learned the complexity and depth of UX/UI design on Figma. We also learned a lot about app development and integrating it with all of our complex moving parts. 
 
 webscraping/database stuff
 
@@ -91,10 +92,14 @@ apps (love kotlin)
 
 ## What's next for SlugCourses
 
-death
+There are numerous future features and improvements that we can make to SlugCourses. This include the following:
 
-being sold to advaith to break into ~~china~~ the ios market
+* Refine the current search functionality
+* Improving the functionality of the Chatbot
+* Create an integration using Rate My Professor
+* Develop an iOS version of the app
 
+This experience was invaluable and taught us a lot about app development, user interface design, and natural language processing. We are proud of what we have accomplished and we hope to continue working on SlugCourses to make it even better for UCSC students. 
 .
 
 .
