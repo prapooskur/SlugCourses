@@ -18,6 +18,7 @@ data class Course(
     val section_number: String,
     val instructor: String,
     val short_name: String,
+    val name: String,
     val location: String,
     val time: String,
     val alt_location: String,
@@ -79,7 +80,7 @@ suspend fun supabaseQuery(
             }
             if(query.isNotBlank()) {
                 textSearch(
-                    column = "short_name",
+                    column = "name",
                     query = query,
                     config = "english",
                     textSearchType = TextSearchType.PLAINTO

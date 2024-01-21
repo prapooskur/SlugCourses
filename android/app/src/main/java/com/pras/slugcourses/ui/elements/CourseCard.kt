@@ -110,6 +110,7 @@ fun CoursePreview() {
             "",
             "",
             "",
+            ""
         ),
         object : UriHandler {
             override fun openUri(uri: String) {

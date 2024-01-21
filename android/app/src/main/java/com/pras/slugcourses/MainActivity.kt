@@ -28,8 +28,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -111,6 +114,9 @@ const val FADETIME: Float = 200F
 @Composable
 fun Init(startDestination: String) {
     val navController = rememberNavController()
+
+    var currentDestination by remember { mutableStateOf(startDestination) }
+
     val index = remember { mutableIntStateOf(0) }
     val itemList = listOf(
         BottomNavigationItem(
@@ -146,17 +152,21 @@ fun Init(startDestination: String) {
                     exitTransition = { ExitTransition.None }
                 ) {
                     composable(
-                        "home",
+                        route = "home",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) {
+                        currentDestination = "home"
+
                         HomeScreen(navController = navController)
                     }
                     composable(
-                        "results/{term}/{query}/{status}/{type}/{gened}",
+                        route = "results/{term}/{query}/{status}/{type}/{gened}",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
+                        currentDestination = "results"
+
                         val term = backStackEntry.arguments?.getString("term")?.toInt() ?: 2240
                         val query = backStackEntry.arguments?.getString("query") ?: ""
                         val status = Json.decodeFromString<Status>(backStackEntry.arguments?.getString("status") ?: "[]")
@@ -172,26 +182,32 @@ fun Init(startDestination: String) {
                         )
                     }
                     composable(
-                        "detailed/{term}/{courseNumber}",
+                        route = "detailed/{term}/{courseNumber}",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) { backStackEntry ->
+                        currentDestination = "detailed"
+
                         val term = backStackEntry.arguments?.getString("term") ?: "2240"
                         val courseNumber = backStackEntry.arguments?.getString("courseNumber") ?: ""
                         DetailedResultsScreen(navController = navController, term = term, courseNumber = courseNumber)
                     }
                     composable(
-                        "chat",
+                        route = "chat",
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) {
+                        currentDestination = "chat"
+
                         ChatScreen(navController = navController)
                     }
                 }
             }
         },
         bottomBar = {
-            BottomNavigationBar(navController, itemList, index)
+            if (currentDestination == "home" || currentDestination == "chat") {
+                BottomNavigationBar(navController, itemList, index)
+            }
         }
     )
 }
