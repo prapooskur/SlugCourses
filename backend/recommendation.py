@@ -49,7 +49,9 @@ Write a a couple brief bullet points per class you recommend. Include a brief su
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-document_file = open("cache/classdocuments", mode="rb")
+dirname = os.path.dirname(__file__)
+document_path = os.path.join(dirname, "cache/classdocuments")
+document_file = open(document_path, mode="rb")
 document_store = pickle.load(document_file)
 document_file.close()
 
