@@ -107,7 +107,7 @@ suspend fun supabaseQuery(
                 filterNot("type", FilterOperator.NEQ, "In Person")
             }
             if (searchType == "Open") {
-                filter("status", FilterOperator.IS, "Open")
+                filter("status", FilterOperator.EQ, "Open")
             }
         }
         if (department.isNotBlank()) {
