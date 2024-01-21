@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,10 +89,11 @@ fun ChatScreen() {
             val asdf = paddingValues
             LazyColumn(
                 Modifier
-                    .statusBarsPadding()
+                    .padding(paddingValues)
                     .padding(4.dp)
                     .padding(bottom = 96.dp)
-                    .fillMaxSize()) {
+                    .fillMaxSize()
+            ) {
                 items(chatList) { chat ->
                     Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
                         when (chat.author) {
