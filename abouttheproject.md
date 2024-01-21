@@ -48,7 +48,7 @@ First, we set our sights on creating a database of all UCSC courses. To do this,
 
 //screenshot of database and search results here
 
-Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or a declarative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implements retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
+Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or a declarative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implementing retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
 
 1. Load data about all classes into document storage 
 2. Generate text embedding for user input
@@ -71,11 +71,12 @@ One of the hurdles we ran into was attempting to find ways to fine tune the LLM 
 
 Another challenge we ran into was turning Gemini's response into a proper API. Because Gemini returned its response in chunks at a time, we had two choices: either wait for it to return its *entire* response before handing the response to the app (which would be easier but result in longer wait times), or attempt to stream the response API to the app as the responses come in (harder, but would reduce wait times). We tried various methods of passing the responses to the app as it was returned from Gemini, such as chunking the data into separate JSON responses, but to no avail. Eventually, in the interest of time we decided to go with the former option of returning the response all at once so we could make the rest of the app function. 
 
-deserializing llm data from server to phone
-
 ## Accomplishments that we're proud of
 
-everything
+We're really proud of the UI/UX of the app. The mobile experience is significantly improved over the website. The UI was modernized to be more aesthetically pleasing, and content is presented in a easily digestible manner. The UX is markedly enhanced with proper support for phones and touch screen devices. It is also integrated with a lot of common touch screen actions such as swiping to the left of the screen to go back the previous screen. 
+
+We are also incredibly proud of the LLM integration. It was a massive undertaking to delve into the realm of large language models, and especially something as complicated as retrieval-augmented generation. Understanding document generation a
+
 
 ## What we learned
 
@@ -88,7 +89,7 @@ ai/using llms for document retrieval
 apps (love kotlin)
 
 
-## What's next for Slug Courses
+## What's next for SlugCourses
 
 death
 
