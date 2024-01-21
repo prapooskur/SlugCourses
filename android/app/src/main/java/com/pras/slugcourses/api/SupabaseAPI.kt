@@ -74,10 +74,10 @@ suspend fun supabaseQuery(
                 eq("status", "Open")
             }
             if(department.isNotBlank()) {
-                eq("department", department)
+                eq("department", department.uppercase())
             }
             if(courseNumber.isNotBlank()) {
-                eq("course_number", courseNumber)
+                eq("course_number", courseNumber.uppercase())
             }
             if(query.isNotBlank()) {
                 textSearch(
@@ -104,7 +104,7 @@ suspend fun supabaseQuery(
             }
         }
         order(column = "department", order = Order.ASCENDING)
-        order(column = "course_number", order = Order.ASCENDING)
+
     }.decodeList<Course>()
 
     Log.d(TAG, courseList.toString())

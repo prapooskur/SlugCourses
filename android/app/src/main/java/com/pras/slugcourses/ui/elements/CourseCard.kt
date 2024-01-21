@@ -1,5 +1,6 @@
 package com.pras.slugcourses.ui.elements
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,13 +26,27 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.R
 import com.pras.slugcourses.api.Course
+import java.net.URLEncoder
+
+enum class Status {
+    OPEN,
+    CLOSED,
+    WAITLIST,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavController) {
-    val uri = "https://pisa.ucsc.edu/class_search/"+course.url
+    val uri = URLEncoder.encode(course.url, "UTF-8")
+    Log.d("CourseCard", "CourseCard: $uri")
+    val status = when(course.status) {
+        "Open" -> Status.OPEN
+        "Closed" -> Status.CLOSED
+        "Waitlist" -> Status.WAITLIST
+        else -> Status.CLOSED
+    }
     Card(onClick = {
-            navController.navigate("detailed/${course.term}/${course.id}")
+            navController.navigate("detailed/${course.term}/${course.id}/${uri}")
         },
         modifier = Modifier
             .padding(6.dp)
@@ -40,7 +55,7 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)) {
-            SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}")
+            SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}", status)
             SectionSubtitle(Icons.Default.Person, course.instructor)
             if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
                 SectionSubtitle(painterResource(R.drawable.chat_filled), course.location)
@@ -66,12 +81,20 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
 
 
 @Composable
-fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp
-    )
+fun SectionTitle(title: String, status: Status) {
+    Row {
+        val emoji = when (status) {
+            Status.OPEN -> "\uD83D\uDFE2"
+            Status.CLOSED -> "\uD83D\uDFE6"
+            Status.WAITLIST -> "\uD83D\uDFE1"
+        }
+        Text(
+            text = "$emoji $title",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp
+        )
+    }
+
 }
 
 val ROW_PADDING = 4.dp
