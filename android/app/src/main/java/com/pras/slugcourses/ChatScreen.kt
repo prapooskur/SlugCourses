@@ -109,7 +109,7 @@ fun ChatScreen() {
             }
         } catch (e: Exception) {
             Log.d(TAG, e.toString())
-            ShortToast("Error: ${e}", context)
+            //ShortToast("Error: ${e}", context)
         }
     }
     Scaffold(

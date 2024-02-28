@@ -1,5 +1,6 @@
 package com.pras.slugcourses
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -54,24 +55,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val darkTheme = isSystemInDarkTheme()
-            DisposableEffect(isSystemInDarkTheme()) {
-                val lightScrim = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
-                val darkScrim = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
-                enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(
-                        android.graphics.Color.TRANSPARENT,
-                        android.graphics.Color.TRANSPARENT,
-                    ) { darkTheme },
-                    navigationBarStyle = SystemBarStyle.auto(
-                        lightScrim,
-                        darkScrim,
-                    ) { darkTheme },
-                )
-                onDispose {}
-            }
-
             SlugCoursesTheme {
+                val darkTheme = isSystemInDarkTheme()
+                DisposableEffect(darkTheme) {
+                    val lightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+                    val darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.auto(
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT,
+                        ) { darkTheme },
+                        navigationBarStyle = SystemBarStyle.auto(
+                            lightScrim,
+                            darkScrim,
+                        ) { darkTheme },
+                    )
+                    onDispose {}
+                }
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -167,7 +167,7 @@ fun Init(startDestination: String) {
                     ) { backStackEntry ->
                         currentDestination = "results"
 
-                        val term = backStackEntry.arguments?.getString("term")?.toInt() ?: 2240
+                        val term = backStackEntry.arguments?.getString("term")?.toInt() ?: 2242
                         val query = backStackEntry.arguments?.getString("query") ?: ""
                         val status = Json.decodeFromString<Status>(backStackEntry.arguments?.getString("status") ?: "[]")
                         val type = Json.decodeFromString<List<Type>>(backStackEntry.arguments?.getString("type") ?: "[]")

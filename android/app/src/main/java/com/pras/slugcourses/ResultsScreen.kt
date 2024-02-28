@@ -124,7 +124,7 @@ fun ResultsScreen(
                     term = term,
                     status = status,
                     department = if (useDepartment) department.uppercase() else "",
-                    courseNumber = if (useCourseNumber) courseNumber.uppercase() else "",
+                    courseNumber = if (useCourseNumber) courseNumber.toInt() else -1,
                     query = if (!useDepartment && !useCourseNumber) query else "",
                     ge = genEd,
                     asynchronous = type.contains(Type.ASYNC_ONLINE),

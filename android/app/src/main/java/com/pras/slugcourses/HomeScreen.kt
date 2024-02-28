@@ -1,5 +1,6 @@
 package com.pras.slugcourses
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,8 +58,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
 
     val showAdvanced = remember { mutableStateOf(false) }
 
-    val termChosen = remember { mutableStateOf("Winter 2024") }
+    val termChosen = remember { mutableStateOf("Spring 2024") }
     val termMap = mapOf(
+        "Spring 2024" to "2242",
         "Winter 2024" to "2240",
         "Fall 2023" to "2238",
         "Spring 2023" to "2232",
@@ -124,6 +126,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     searchText = " "
                 }
 
+                Log.d("SEARCH", termMap.getOrDefault(termChosen.value, "lol no"))
+                val term = termMap.getOrDefault(termChosen.value, "2242")
+
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
                 val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
@@ -134,7 +139,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     else -> "All"
                 }
                 navController.navigate(
-                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+                    "results/${term}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
                 )
             }
         ) { /* do nothing */ }

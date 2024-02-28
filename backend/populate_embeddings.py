@@ -1,35 +1,37 @@
-import pickle, json
+import pickle, json, sys
 from tqdm import trange, tqdm
 import requests
 import concurrent.futures
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Document
-from backend.course import Course
+from course import Course
 
 def termToQuarterName(term : str) -> str:
     match term:
+        case "2242":
+            return "Spring 2024"
         case "2240":
-            return "Winter Quarter 2024"
+            return "Winter 2024"
         case "2238":
-            return "Fall Quarter 2023"
+            return "Fall 2023"
         case "2234":
-            return "Summer Quarter 2023"
+            return "Summer 2023"
         case "2232":
-            return "Spring Quarter 2023"
+            return "Spring 2023"
         case "2230":
-            return "Winter Quarter 2023"
+            return "Winter 2023"
         case "2228":
-            return "Fall Quarter 2022"
+            return "Fall 2022"
         case "2224":
-            return "Summer Quarter 2022"
+            return "Summer 2022"
         case "2222":
-            return "Spring Quarter 2022"
+            return "Spring 2022"
 
 
 
 def populate():
     print("updating cache...")
-    terms = ["2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
+    terms = ["2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
     classNums = []
     addedNums = set()
     for term in terms:
@@ -86,12 +88,12 @@ def populate():
     print("array created")
     print(detailedInfo)
 
-    picklefile = open("backend/updatedclasses", mode="wb")
+    picklefile = open("cache/updatedclasses", mode="wb")
     pickle.dump(detailedInfo, picklefile)
     picklefile.close()    
 
 
-    jsonfile = open("backend/updatedclasses.json", mode="w")
+    jsonfile = open("cache/updatedclasses.json", mode="w")
     json.dump(detailedInfo, jsonfile)
     jsonfile.close()
 
@@ -101,6 +103,14 @@ def populate_embeddings(documents: list[Document]):
         model="BAAI/bge-large-en-v1.5")
     document_embedder.warm_up()
     documents_with_embeddings = document_embedder.run(documents)
-    picklefile = open("backend/updated", mode="wb")
+    picklefile = open("cache/updated", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-c":
+            print("Updating courses...")
+            populate()
+        elif sys.argv[1] == "-e":
+            print("Populating embeddings")

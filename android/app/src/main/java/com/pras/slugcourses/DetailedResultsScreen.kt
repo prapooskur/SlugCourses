@@ -83,7 +83,7 @@ fun DetailedResultsScreen(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}")
-            ShortToast("Error: ${e.message}", context)
+            //ShortToast("Error: ${e.message}", context)
         }
     }
 

@@ -19,11 +19,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.R
 import com.pras.slugcourses.api.Course
 import java.net.URLEncoder
@@ -56,7 +54,7 @@ fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavControl
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)) {
-            SectionTitle("${course.department} ${course.course_number} - ${course.section_number}: ${course.short_name}", status)
+            SectionTitle("${course.department} ${course.course_number}${course.course_letter} - ${course.section_number}: ${course.short_name}", status)
             SectionSubtitle(Icons.Default.Person, course.instructor)
             if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
                 SectionSubtitle(painterResource(R.drawable.videocam), course.location)
@@ -125,37 +123,4 @@ fun SectionSubtitle(icon: Painter, subtitle: String) {
             fontSize = 16.sp
         )
     }
-}
-
-@Preview
-@Composable
-fun CoursePreview() {
-    CourseCard(
-        Course(
-            1,
-            2240,
-            "Patrick Tantalo",
-            "Remote Instruction",
-            "MWF 10:00AM - 10:50AM",
-            "Remote Instruction",
-            "MWF 10:00AM - 10:50AM",
-            "0",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-        ),
-        object : UriHandler {
-            override fun openUri(uri: String) {
-
-            }
-        },
-        navController = rememberNavController()
-    )
 }

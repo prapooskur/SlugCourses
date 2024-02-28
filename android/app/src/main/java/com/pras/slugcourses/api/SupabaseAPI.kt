@@ -15,7 +15,8 @@ data class Course(
     val id: Int,
     val term: Int,
     val department: String,
-    val course_number: String,
+    val course_number: Int,
+    val course_letter: String,
     val section_number: String,
     val instructor: String,
     val short_name: String,
@@ -53,7 +54,8 @@ suspend fun supabaseQuery(
     term: Int = 2240,
     status: Status = Status.ALL,
     department: String = "",
-    courseNumber: String = "",
+    courseNumber: Int = -1,
+    courseLetter: String = "",
     query: String = "",
     ge: List<String> = listOf(),
     days: String = "",
@@ -71,24 +73,36 @@ suspend fun supabaseQuery(
         install(Postgrest)
     }
 
-    val courseList = supabase.from("courses").select() {
+
+    val courseList = supabase.from("courses").select {
+
         filter {
             eq("term", term)
+
             if(status == Status.OPEN) {
                 eq("status", "Open")
             }
             if(department.isNotBlank()) {
-                eq("department", department.lowercase().uppercase())
+                //val upperdept = department.uppercase()
+                //eq("department", upperdept)
+
+                ilike("department", department)
             }
-            if(courseNumber.isNotBlank()) {
-                eq("course_number", courseNumber.lowercase().uppercase())
+            if(courseNumber != -1) {
+                eq("course_number", courseNumber)
+            }
+            if(courseLetter.isNotBlank()) {
+                //val upperLetter = courseLetter.uppercase()
+                //eq("course_letter", upperLetter)
+
+                ilike("course_letter", courseLetter)
             }
             if(query.isNotBlank()) {
                 textSearch(
                     column = "name",
                     query = query,
                     config = "english",
-                    textSearchType = TextSearchType.PLAINTO
+                    textSearchType = TextSearchType.NONE
                 )
             }
             if(ge.isNotEmpty()) {
@@ -110,15 +124,21 @@ suspend fun supabaseQuery(
                 filter("status", FilterOperator.EQ, "Open")
             }
         }
+
+
+
         if (department.isNotBlank()) {
+            order(column = "course_letter", order = Order.ASCENDING)
             order(column = "course_number", order = Order.ASCENDING)
+        } else {
+            order(column = "department", order = Order.ASCENDING)
         }
-        order(column = "department", order = Order.ASCENDING)
+
+        //order(column = "course_number", order = Order.ASCENDING)
+        //order(column = "course_letter", order = Order.ASCENDING)
 
     }.decodeList<Course>()
 
     Log.d(TAG, courseList.toString())
     return courseList
-
-
 }

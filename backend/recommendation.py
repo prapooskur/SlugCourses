@@ -51,8 +51,8 @@ document_file.close()
 
 # (2) create text embeddings for instruction
 # textEmbeddings -> a list of floats
-query_instruction = "Represent this sentence for searching relevant passages:"
-text_embedder = SentenceTransformersTextEmbedder(model="BAAI/bge-large-en-v1.5", prefix=query_instruction)
+query_instruction = "Given a search query, retrieve relevant passages that answer the query"
+text_embedder = SentenceTransformersTextEmbedder(model="Salesforce/SFR-Embedding-Mistral", prefix=query_instruction)
 text_embedder.warm_up()
 
 
