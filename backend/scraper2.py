@@ -138,7 +138,7 @@ term_list = [2238, 2232, 2230, 2228, 2224]
 #with concurrent.futures.ThreadPoolExecutor() as executor:
 #    results = list(executor.map(lambda term: queryPisa(str(term), False), term_list))
 
-queryPisa("2242", True)
+queryPisa("2242", False)
 #queryPisa("2240")
 
 #for term in term_list:
