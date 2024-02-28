@@ -86,7 +86,7 @@ def populate():
 
     #detailedInfo.extend(result[-1] for result in results)
     print("array created")
-    print(detailedInfo)
+    #print(detailedInfo)
 
     picklefile = open("cache/updatedclasses", mode="wb")
     pickle.dump(detailedInfo, picklefile)
@@ -99,18 +99,32 @@ def populate():
 
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
-    document_embedder = SentenceTransformersDocumentEmbedder(
-        model="BAAI/bge-large-en-v1.5")
+    #document_embedder = SentenceTransformersDocumentEmbedder(model="BAAI/bge-large-en-v1.5")
+    document_embedder = SentenceTransformersDocumentEmbedder(model="WhereIsAI/UAE-Large-V1")
     document_embedder.warm_up()
     documents_with_embeddings = document_embedder.run(documents)
-    picklefile = open("cache/updated", mode="wb")
+    picklefile = open("cache/classembeddings", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "-c":
-            print("Updating courses...")
-            populate()
-        elif sys.argv[1] == "-e":
-            print("Populating embeddings")
+
+    if "-c" in sys.argv:
+        populate()
+
+    if "-e" in sys.argv:
+        file = open("cache/updatedclasses", mode="rb")
+        detailedInfo = pickle.load(file)
+        file.close()
+
+        # Write documents to InMemoryDocumentStore
+        documents = []
+        for i in detailedInfo:
+            documents.append(Document(content=str(i)))
+
+        doc_picklefile = open("cache/classdocument", mode="wb")
+        pickle.dump(documents, doc_picklefile)
+        
+        populate_embeddings(documents)
+            
+

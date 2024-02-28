@@ -13,6 +13,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 
 
@@ -62,6 +63,7 @@ fun BoringNormalTopBar(
             Text(
                 modifier = Modifier,
                 text = titleText,
+                overflow = TextOverflow.Ellipsis
             )
         },
         navigationIcon = {

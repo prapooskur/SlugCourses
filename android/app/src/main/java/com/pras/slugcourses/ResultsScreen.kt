@@ -35,6 +35,7 @@ import com.pras.slugcourses.api.supabaseQuery
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import com.pras.slugcourses.ui.elements.CourseCard
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
 private const val TAG = "results"
@@ -120,7 +121,7 @@ fun ResultsScreen(
 
         try {
             withContext(Dispatchers.IO) {
-                response = supabaseQuery(
+                val result = supabaseQuery(
                     term = term,
                     status = status,
                     department = if (useDepartment) department.uppercase() else "",
@@ -133,11 +134,17 @@ fun ResultsScreen(
                     inPerson = type.contains(Type.IN_PERSON),
                     searchType = searchType,
                 )
-                dataLoaded = true
+                if (isActive) {
+                    response = result
+                    dataLoaded = true
+                }
+
             }
         }  catch (e: Exception) {
-            Log.d(TAG, e.toString())
-            ShortToast("Error: ${e}", context)
+            if (isActive) {
+                Log.d(TAG, e.toString())
+                ShortToast("Error: ${e}", context)
+            }
         }
     }
 }

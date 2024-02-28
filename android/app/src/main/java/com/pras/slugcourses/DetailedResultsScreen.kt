@@ -97,7 +97,7 @@ fun DetailedResultsScreen(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             BoringNormalTopBar(
-                titleText = courseInfo.primary_section.title,
+                titleText = courseInfo.primary_section.title_long,
                 navController = navController,
             )
         },
