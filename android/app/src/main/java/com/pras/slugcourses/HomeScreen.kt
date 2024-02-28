@@ -108,6 +108,10 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     searchText = " "
                 }
 
+                Log.d("SEARCH", termMap.getOrDefault(termChosen.value, "lol no"))
+                val term = termMap.getOrDefault(termChosen.value, "2242")
+
+
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
                 val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
@@ -118,7 +122,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     else -> "All"
                 }
                 navController.navigate(
-                    "results/${termMap[termChosen.value]}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+                    "results/${term}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
                 )
             }) },
             onSearch = {

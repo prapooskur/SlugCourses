@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -163,7 +163,7 @@ fun CourseDetailBox(
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp),
                     )
                 }
-                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier
                         .weight(1f)
@@ -234,7 +234,7 @@ fun CourseDescriptionBox(
                         }
                     )
                 }
-                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth()) {
                     Text(
                         courseInfo.primary_section.description,
@@ -271,7 +271,7 @@ fun CourseMeetingsBox(courseInfo: CourseInfo) {
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
-                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 courseInfo.meetings.forEachIndexed { index, meeting ->
                     Spacer(Modifier.height(4.dp))
                     Row(Modifier.fillMaxWidth()) {
@@ -298,7 +298,7 @@ fun CourseMeetingsBox(courseInfo: CourseInfo) {
                     }
                     Spacer(Modifier.height(4.dp))
                     if (index != courseInfo.meetings.lastIndex) {
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
             }
@@ -331,7 +331,7 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
-                Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 courseInfo.secondary_sections.forEachIndexed { index, section ->
                     val emoji = when (section.enrl_status) {
                         "Open" -> "\uD83D\uDFE2"
@@ -373,7 +373,7 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
 
                     }
                     if (index != courseInfo.secondary_sections.lastIndex) {
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
             }
