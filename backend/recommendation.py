@@ -3,7 +3,7 @@ import pickle, os, re, asyncio, time, json
 from haystack.components.joiners.document_joiner import DocumentJoiner
 from haystack.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
 from haystack.components.embedders import SentenceTransformersTextEmbedder
-from google_ai_haystack.generators.gemini import GoogleAIGeminiGenerator
+from haystack_integrations.components.generators.google_ai import GoogleAIGeminiGenerator
 from haystack.components.builders.prompt_builder import PromptBuilder
 from supabase import create_client, client
 from dotenv import load_dotenv
