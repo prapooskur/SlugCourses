@@ -5,5 +5,5 @@ requests==2.31.0
 supabase==2.3.4
 tqdm==4.66.1
 haystack-ai @ git+https://github.com/deepset-ai/haystack.git@b8b8b5d5c64aa97108b957c9cfa9f4f0f4629153
-fastapi==0.109.0
+fastapi==0.110.0
 uvicorn==0.26.0
