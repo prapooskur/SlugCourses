@@ -49,7 +49,7 @@ bm25_store = pickle.load(bm25_file)
 bm25_file.close()
 
 embeddings_file = open("cache/classembeddings", mode="rb")
-embeddings_store = pickle.load(embeddings_file)
+embeddings_cache = pickle.load(embeddings_file)
 embeddings_file.close()
 
 
@@ -67,6 +67,8 @@ bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 
 # (4) find documents based on documents (dense models)
 # embeddingDocs -> dictionary of documents
+embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+document_store.write_documents(embeddings_cache['documents'])
 embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
