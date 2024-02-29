@@ -5,6 +5,7 @@ import concurrent.futures
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Document
 from course import Course
+from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 def termToQuarterName(term : str) -> str:
     match term:
@@ -117,14 +118,15 @@ if __name__ == "__main__":
         detailedInfo = pickle.load(file)
         file.close()
 
+        document_store = InMemoryDocumentStore()
         # Write documents to InMemoryDocumentStore
         documents = []
         for i in detailedInfo:
             documents.append(Document(content=str(i)))
 
-        doc_picklefile = open("cache/classdocument", mode="wb")
-        pickle.dump(documents, doc_picklefile)
+        document_store.write_documents(documents)
+
+        doc_picklefile = open("cache/classdocuments", mode="wb")
+        pickle.dump(document_store, doc_picklefile)
         
         populate_embeddings(documents)
-            
-
