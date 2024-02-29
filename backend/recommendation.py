@@ -69,7 +69,7 @@ bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 # (4) find documents based on documents (dense models)
 # embeddingDocs -> dictionary of documents
 embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-document_store.write_documents(embeddings_cache['documents'])
+embeddings_store.write_documents(embeddings_cache['documents'])
 embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
