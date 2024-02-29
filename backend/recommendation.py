@@ -44,26 +44,30 @@ Answer:'''
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-document_file = open("cache/classdocuments", mode="rb")
-document_store = pickle.load(document_file)
-document_file.close()
+bm25_file = open("cache/classdocuments", mode="rb")
+bm25_store = pickle.load(bm25_file)
+bm25_file.close()
+
+embeddings_file = open("cache/classembeddings", mode="rb")
+embeddings_store = pickle.load(embeddings_file)
+embeddings_file.close()
 
 
 # (2) create text embeddings for instruction
 # textEmbeddings -> a list of floats
-query_instruction = "Given a search query, retrieve relevant passages that answer the query"
-text_embedder = SentenceTransformersTextEmbedder(model="Salesforce/SFR-Embedding-Mistral", prefix=query_instruction)
+query_instruction = "Represent this sentence for searching relevant passages: "
+text_embedder = SentenceTransformersTextEmbedder(model="WhereIsAI/UAE-Large-V1", prefix=query_instruction)
 text_embedder.warm_up()
 
 
 # (3) find documents based on keyword matches (sparse models)
 # bm25Docs -> dictionary of documents
-bm25_retriever = InMemoryBM25Retriever(document_store=document_store)
+bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 
 
 # (4) find documents based on documents (dense models)
 # embeddingDocs -> dictionary of documents
-embedding_retriever = InMemoryEmbeddingRetriever(document_store=document_store)
+embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
 # (5) merge embeddingDocs and bm25Docs via reciprocal rank fusion method
