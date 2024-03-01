@@ -13,7 +13,7 @@ MAX_RESULTS = "2000"
 
 # takes in a single panel from BS4 and parses it into a dictionary
 # delegate used in the multithreading in queryPisa
-def parseSinglePanel(panel, term: str, gened: bool):
+def parseSinglePanel(panel, term: str, gened: bool) -> dict:
 
     locations = len(panel.select(".fa-location-arrow"))
     summer = len(panel.select(".fa-calendar")) != 0
@@ -47,24 +47,30 @@ def parseSinglePanel(panel, term: str, gened: bool):
     #ignore credit by petitions
     #if section_number == "CBP":
     #    continue
-    
+
+
+    # these elements are accessed multiple times
+    # store them in variables to reduce calls to select() (which is slow)
+    panelNthChild2 = panel.select(".col-xs-6:nth-child(2)")
+    panelNthChild4 = panel.select(".col-xs-6:nth-child(4)")[0]  
+    panelDivA = panel.select("div > a")[0].text
 
     section = {
-        "id": int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
+        "id": int(panelDivA) if panelDivA.isdigit() else 0,
         "term": term,
         "department": department,
         "course_number": course_number,
         "course_letter": course_letter,
         "section_number": section_number,
         "short_name": description,
-        "instructor": panel.select(".col-xs-6:nth-child(2)")[0].text.split(": ")[1].replace(",", ", ").strip(),
+        "instructor": panelNthChild2[0].text.split(": ")[1].replace(",", ", ").strip(),
         "location": panel.select(".col-xs-6:nth-child(1)")[1].text.split(": ", 1)[1].strip(),
-        "time": panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")[1].strip() if len(panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")) > 1 else "None",
+        "time": panelNthChild2[1].text.split(": ")[1].strip() if len(panelNthChild2[1].text.split(": ")) > 1 else "None",
         "alt_location": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
-        "alt_time": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if locations > 1 else "None",
+        "alt_time": panelNthChild4.text.split(": ")[1].strip() if locations > 1 else "None",
         "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
         "type": panel.select("b")[0].text.strip(),
-        "summer_session": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if summer else "None",
+        "summer_session": panelNthChild4.text.split(": ")[1].strip() if summer else "None",
         "url": panel.select("a")[0]['href'].strip(),
         "status": panel.select("h2 .sr-only")[0].text.strip()
     }
@@ -73,10 +79,11 @@ def parseSinglePanel(panel, term: str, gened: bool):
         #pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
         #section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
         pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
-        if "primary_section" in pisaApiResponse and "gened" in pisaApiResponse["primary_section"]:
-            section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
-        if "primary_section" in pisaApiResponse and "title_long" in pisaApiResponse["primary_section"]:
-            section["name"] = pisaApiResponse["primary_section"]["title_long"]
+        if "primary_section" in pisaApiResponse:
+            if "gened" in pisaApiResponse["primary_section"]:
+                section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
+            if "title_long" in pisaApiResponse["primary_section"]:
+                section["name"] = pisaApiResponse["primary_section"]["title_long"]
 
     return section
 
