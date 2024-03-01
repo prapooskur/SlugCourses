@@ -1,5 +1,5 @@
 import requests, json, sys, os, re, time, concurrent.futures
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from multiprocessing import Pool
@@ -110,11 +110,14 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         "rec_start": "0",
         "rec_dur": MAX_RESULTS
     }
-
-    response = requests.post(URL, data=info)
-    doc = BeautifulSoup(response.text, 'html.parser') # need to find a way to speed this up. currently, it takes ~20 seconds to make the BS4 object on my laptop
-
     sections = []
+
+    time.time()
+    response = requests.post(URL, data=info)
+    strainedSoup = SoupStrainer(class_="panel panel-default row") # doesnt help much tbh
+    doc = BeautifulSoup(response.content, features='lxml', parse_only=strainedSoup)
+    print(f"Time to make BS4 object: {time.time() - startTime} seconds")
+
     panels = doc.select(".panel.panel-default.row")
     
     with ThreadPoolExecutor() as executor:
