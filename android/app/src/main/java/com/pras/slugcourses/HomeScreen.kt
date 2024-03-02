@@ -1,6 +1,5 @@
 package com.pras.slugcourses
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,16 +48,6 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     var searchText by rememberSaveable { mutableStateOf("") }
     var searchActive by rememberSaveable { mutableStateOf(false) }
 
-    val searchAsyncOnline = rememberSaveable { mutableStateOf(true) }
-    val searchHybrid = rememberSaveable { mutableStateOf(true) }
-    val searchSynchOnline = rememberSaveable { mutableStateOf(true) }
-    val searchInPerson = rememberSaveable { mutableStateOf(true) }
-
-    val searchOpen = rememberSaveable { mutableStateOf(false) }
-
-    val showAdvanced = remember { mutableStateOf(false) }
-
-    val termChosen = remember { mutableStateOf("Spring 2024") }
     val termMap = mapOf(
         "Spring 2024" to "2242",
         "Winter 2024" to "2240",
@@ -75,8 +64,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     var selectedTermIndex by remember { mutableIntStateOf(0) }
 
     val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-    var selectedTypeIndex by remember { mutableIntStateOf(0) }
-    val selectedTimeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
+    val selectedTypeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
 
     var selectedStatusIndex by remember { mutableIntStateOf(1) }
 
@@ -108,13 +96,11 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     searchText = " "
                 }
 
-                Log.d("SEARCH", termMap.getOrDefault(termChosen.value, "lol no"))
-                val term = termMap.getOrDefault(termChosen.value, "2242")
-
+                val term = termMap.values.toList()[selectedTermIndex]
 
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
-                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
                 val encodedType = Json.encodeToString(classType)
                 val geList = Json.encodeToString(selectedGenEdList.toList())
                 val searchType = when (selectedStatusIndex) {
@@ -130,12 +116,11 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     searchText = " "
                 }
 
-                Log.d("SEARCH", termMap.getOrDefault(termChosen.value, "lol no"))
-                val term = termMap.getOrDefault(termChosen.value, "2242")
+                val term = termMap.values.toList()[selectedTermIndex]
 
                 //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
                 val status = Json.encodeToString(Status.ALL)
-                val classType: List<Type> = selectedTimeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+                val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
                 val encodedType = Json.encodeToString(classType)
                 val geList = Json.encodeToString(selectedGenEdList.toList())
                 val searchType = when (selectedStatusIndex) {
@@ -157,7 +142,6 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 selectedIndex = selectedTermIndex,
                 onItemSelected = { index, _ -> selectedTermIndex = index },
             )
-            //var selectedGenEdIndex by remember { mutableIntStateOf(0) }
             LargeDropdownMenuMultiSelect(
                 modifier = Modifier
                     .weight(.35f)
@@ -184,14 +168,14 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                     .padding(end = 8.dp),
                 label = "Type",
                 items = typeList,
-                displayLabel = if (selectedTimeList.size == 1) selectedTimeList[0] else "Multiple",
-                selectedItems = selectedTimeList,
+                displayLabel = if (selectedTypeList.size == 1) selectedTypeList[0] else "Multiple",
+                selectedItems = selectedTypeList,
                 onItemSelected = { index, _ ->
-                    selectedTimeList.add(typeList[index])
+                    selectedTypeList.add(typeList[index])
                 },
                 onItemRemoved = { _, itemName ->
-                    if (itemName in selectedTimeList) {
-                        selectedTimeList.remove(itemName)
+                    if (itemName in selectedTypeList) {
+                        selectedTypeList.remove(itemName)
                     }
                 }
             )

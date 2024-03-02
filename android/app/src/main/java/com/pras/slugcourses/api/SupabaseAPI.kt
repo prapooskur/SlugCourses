@@ -52,7 +52,7 @@ enum class Type {
 }
 
 suspend fun supabaseQuery(
-    term: Int = 2240,
+    term: Int = 2242,
     status: Status = Status.ALL,
     department: String = "",
     courseNumber: Int = -1,

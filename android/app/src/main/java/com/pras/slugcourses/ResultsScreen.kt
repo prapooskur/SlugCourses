@@ -104,7 +104,7 @@ fun ResultsScreen(
 
     LaunchedEffect(Unit) {
 
-        val useDepartment = (Regex("^[A-Za-z]{2,3}$").matches(department))
+        val useDepartment = (Regex("^[A-Za-z]{2,4}$").matches(department))
         val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
 
         if (useDepartment)  Log.d(TAG, "Using department")
