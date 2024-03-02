@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,22 +31,22 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.http.encodeURLPath
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 enum class Author {
     USER,
@@ -61,7 +61,6 @@ data class ChatMessage(
 @Serializable
 data class ChatResponse(
     val text: String,
-    val document_list: List<HaystackDocument>,
 )
 
 @Serializable
@@ -74,21 +73,20 @@ fun ShortToast(text: String, context: Context) {
 }
 
 //todo pls fix
-private const val CHAT_URL = "http://169.233.234.234:8000/?userInput="
+private const val CHAT_BASE_URL = BuildConfig.chatUrl
+private const val CHAT_URL = "${CHAT_BASE_URL}/?userInput="
 private const val TAG = "ChatScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen() {
     Log.d(TAG, "ChatScreen")
     //todo pls fix
-    val message = remember { mutableStateOf("") }
+    val message = rememberSaveable { mutableStateOf("") }
     val sendMessage = remember { mutableStateOf(false) }
-    val response = remember { mutableStateOf("") }
     // user-facing chat list: contains user input and system responses
     val chatList = remember { mutableStateListOf<ChatMessage>() }
     // internal chat history: contains full history as a single string that can be sent to api for history
     val chatHistory = remember { mutableStateOf("") }
-    val context = LocalContext.current
     LaunchedEffect(Unit) {
         chatList.add(ChatMessage("Hello! I'm SlugBot, your personal assistant for all things UCSC. How can I help you today?", Author.SYSTEM))
     }
@@ -142,7 +140,7 @@ fun addChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<
     when(author) {
         Author.USER -> {
             chatList.add(ChatMessage(message, Author.USER))
-            chatHistory.value += "USER: $message\n"
+            //chatHistory.value += "USER: $message\n"
         }
         Author.SYSTEM -> {
             Log.d(TAG, "ERROR: addChat called with Author.SYSTEM")
@@ -150,11 +148,11 @@ fun addChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<
     }
 }
 
-fun replaceChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, documentList: List<HaystackDocument>, message: String, author: Author) {
+fun replaceChat(chatList: SnapshotStateList<ChatMessage>, chatHistory: MutableState<String>, documentList: List<HaystackDocument>, message: MutableState<String>, author: Author) {
     when(author) {
         Author.SYSTEM -> {
-            chatList[chatList.size-1] = (ChatMessage(message, Author.SYSTEM))
-            chatHistory.value += "ASSISTANT: $message\n"
+            chatList[chatList.size-1] = (ChatMessage(message.value, Author.SYSTEM))
+            //chatHistory.value += "ASSISTANT: $message\n"
         }
         Author.USER -> {
             Log.d(TAG, "ERROR: addChat called with Author.USER")
@@ -171,33 +169,27 @@ suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>, c
         }
     }
 
-    var buffer = ""
+    val response = mutableStateOf<String>("")
 
-    /*
     client.prepareGet(CHAT_URL + query.encodeURLPath()) .execute { httpResponse ->
         val channel: ByteReadChannel = httpResponse.body()
         while (!channel.isClosedForRead) {
-            val packet = channel.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
-            while (!packet.isEmpty) {
-                val bytes = packet.readBytes()
-                buffer+=String(bytes)
-                Log.d(TAG, String(bytes))
+            val line = channel.readUTF8Line(99999) ?: continue
+
+            if (line.isBlank()) {
+                response.value+="\n"
+            } else {
+                response.value+=line
+                if (!channel.isClosedForRead) {
+                    response.value+="\n"
+                }
             }
+
+            chatList[chatList.size-1] = (ChatMessage(response.value, Author.SYSTEM))
+            Log.d(TAG, line)
         }
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        val response = json.decodeFromString<ChatResponse>(buffer.replace("\'", "\""))
-        chatList.add(ChatMessage(response.response.replace("\\n","\n"), Author.SYSTEM))
-        Log.d(TAG, response.response)
+
     }
-    */
-    val json = Json {
-        ignoreUnknownKeys = true
-    }
-    val response = client.get(CHAT_URL + chatHistory.value.encodeURLPath())
-    val decodedResponse: ChatResponse = json.decodeFromString(response.body())
-    replaceChat(chatList, chatHistory, listOf<HaystackDocument>(), decodedResponse.text, Author.SYSTEM)
 }
 
 
@@ -242,7 +234,7 @@ fun ChatMessageBar(input: MutableState<String>, sendMessage: MutableState<Boolea
                 }
             },
         ) {
-            Icon(Icons.Filled.Send, contentDescription = "Send message", Modifier.fillMaxSize(.8f))
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send message")
         }
     }
 }

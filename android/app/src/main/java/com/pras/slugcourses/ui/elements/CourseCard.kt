@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,7 +34,7 @@ enum class Status {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseCard(course: Course, uriHandler: UriHandler, navController: NavController) {
+fun CourseCard(course: Course, navController: NavController) {
     val uri = URLEncoder.encode(course.url, "UTF-8")
     Log.d("CourseCard", "CourseCard: $uri")
     val status = when(course.status) {

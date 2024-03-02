@@ -110,29 +110,13 @@ async def get_stream(userInput : str):
     finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"], question=userInput)["prompt"]
 
     # (7) Send prompt to LLM
-    response = model.generate_content(finalizedPrompt)#, stream=True)
+    response = model.generate_content(finalizedPrompt, stream=True)
 
-    #def stream_data():
-        #for chunk in response:
-        #    yield str({f"response": chunk.text})
+    def stream_data():
+        for chunk in response:
+            yield chunk.text
         
-    #    yield json.dumps(response.text)
-
-        #yield str({"eor": "||"})
-        #yield str(mergedDocs)
-
-    #return StreamingResponse(stream_data())
-
-    docList = []
-    for i in mergedDocs["documents"]:
-        docList.append(docToDict(i))
-
-    response_data = {
-        "text": str(response.text),
-        "document_list": docList
-    }
-    return response_data
-    #return json.dumps([str(response.text), docList])
+    return StreamingResponse(stream_data())
 
 
 def docToDict(doc) -> dict:

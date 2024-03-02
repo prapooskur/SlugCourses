@@ -7,6 +7,36 @@ plugins {
 
     //KSP
     id("com.google.devtools.ksp")
+
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
+    id("app.cash.sqldelight")
+
+    // secrets
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("com.pras")
+        }
+    }
+}
+
+secrets {
+    // Change the properties file from the default "local.properties" in your root project
+    // to another properties file in your root project.
+    propertiesFileName = "secrets.properties"
+
+    // A properties file containing default secret values. This file can be checked in version
+    // control.
+    defaultPropertiesFileName = "secrets.defaults.properties"
+
+    // Configure which keys should be ignored by the plugin by providing regular expressions.
+    // "sdk.dir" is ignored by default.
+    ignoreList.add("sdk.*")       // Ignore all keys matching the regexp "sdk.*"
 }
 
 android {
@@ -37,17 +67,20 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_19
-        targetCompatibility = JavaVersion.VERSION_19
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "19"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
+
+        // fix buildconfig error
+        buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
+        kotlinCompilerExtensionVersion = "1.5.10"
     }
     packaging {
         resources {
@@ -81,12 +114,12 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     val supabaseVersion = "2.1.5"
     implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
 
-
-
+    // database
+    implementation("app.cash.sqldelight:android-driver:2.0.0-alpha05")
 }

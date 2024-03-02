@@ -27,17 +27,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up JDK 19
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '19'
+          java-version: '17'
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Retrieve the secret and decode it to a file
+      - name: Retrieve the keystore and decode it to a file
         env:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
         run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
+
+      - name: Retrieve the gradle secrets and decode them to a file
+        env:
+          SECRETS_B64: ${{ secrets.gradle_secrets_b64 }}
+        run: echo $SECRETS_B64 | base64 --decode > $GITHUB_WORKSPACE/android/secrets.properties
 
       - name: Setup Gradle
         run: chmod +x ./gradlew
