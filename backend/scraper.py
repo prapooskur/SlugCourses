@@ -1,4 +1,4 @@
-import requests, json, sys, os
+import requests, json, sys, os, re
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
@@ -42,6 +42,9 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     doc = BeautifulSoup(response.text, 'html.parser')
 
     sections = []
+
+    # debug - disable tqdm
+    #for panel in doc.select(".panel.panel-default.row"):
     for panel in tqdm(doc.select(".panel.panel-default.row")):
 
        
@@ -56,31 +59,43 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         secondary = course[1].split(" ", maxsplit=1)
 
         department = primary[0].strip()
-        course_number = primary[1].strip()
+        full_course_number = primary[1].strip()
+        course_number = full_course_number
+        #course_number, course_letter = re.match(r'(\d+)([a-zA-Z]*)', course_number).groups() if re.match(r'(\d+)([a-zA-Z]*)', course_number) else (course_number, '')
+
+        course_match = re.match(r'(\d+)(\D*)', full_course_number)
+        course_letter = " "
+
+        if course_match:
+            course_number = course_match.group(1)
+            course_letter = course_match.group(2)
 
         section_number = secondary[0].strip()
         description = secondary[1].strip()
 
-        #edge cases
+        # edge cases
+        #some classes have three locations - this causes enrollment to break if left unhandled
+        #in summer, enrollment is always the only itme in the array
 
-        #ignore credit by petitions
-        #if section_number == "CBP":
-        #    continue
+        if summer:
+            enrolled_index = 0
+        else:
+            enrolled_index = min(locations-1, 1)
         
-
         section = {
             "id": int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
             "term": term,
             "department": department,
             "course_number": course_number,
+            "course_letter": course_letter,
             "section_number": section_number,
-            "description": description,
+            "short_name": description,
             "instructor": panel.select(".col-xs-6:nth-child(2)")[0].text.split(": ")[1].replace(",", ", ").strip(),
             "location": panel.select(".col-xs-6:nth-child(1)")[1].text.split(": ", 1)[1].strip(),
             "time": panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")[1].strip() if len(panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")) > 1 else "None",
             "alt_location": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
             "alt_time": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if locations > 1 else "None",
-            "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
+            "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[enrolled_index].text.strip(),
             "type": panel.select("b")[0].text.strip(),
             "summer_session": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if summer else "None",
             "url": panel.select("a")[0]['href'].strip(),
@@ -88,11 +103,15 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         }
 
         if gened:
+            #pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
+            #section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
             pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
-            section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
+            if "primary_section" in pisaApiResponse and "gened" in pisaApiResponse["primary_section"]:
+                section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
+            if "primary_section" in pisaApiResponse and "title_long" in pisaApiResponse["primary_section"]:
+                section["name"] = pisaApiResponse["primary_section"]["title_long"]
 
         sections.append(section)
-
     
     url: str = os.environ.get("SUPABASE_URL")
     key: str = os.environ.get("SUPABASE_KEY")
@@ -115,7 +134,13 @@ match(len(sys.argv)):
             queryPisa(sys.argv[1], False)
 '''
 
-term_list = [2238, 2232, 2230, 2228]
+#term_list = [2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
 
-with concurrent.futures.ThreadPoolExecutor() as executor:
-    results = list(executor.map(lambda term: queryPisa(str(term), True), term_list))
+#with concurrent.futures.ThreadPoolExecutor() as executor:
+#    results = list(executor.map(lambda term: queryPisa(str(term), False), term_list))
+
+queryPisa("2242", False)
+#queryPisa("2240")
+
+#for term in term_list:
+#    queryPisa(str(term))
