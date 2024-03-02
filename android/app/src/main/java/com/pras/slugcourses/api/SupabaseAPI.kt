@@ -84,18 +84,12 @@ suspend fun supabaseQuery(
                 eq("status", "Open")
             }
             if(department.isNotBlank()) {
-                //val upperdept = department.uppercase()
-                //eq("department", upperdept)
-
                 ilike("department", department)
             }
             if(courseNumber != -1) {
                 eq("course_number", courseNumber)
             }
             if(courseLetter.isNotBlank()) {
-                //val upperLetter = courseLetter.uppercase()
-                //eq("course_letter", upperLetter)
-
                 ilike("course_letter", courseLetter)
             }
             if(query.isNotBlank()) {
@@ -126,17 +120,11 @@ suspend fun supabaseQuery(
             }
         }
 
-
-
-        if (department.isNotBlank()) {
-            order(column = "course_letter", order = Order.ASCENDING)
-            order(column = "course_number", order = Order.ASCENDING)
-        } else {
-            order(column = "department", order = Order.ASCENDING)
-        }
-
-        //order(column = "course_number", order = Order.ASCENDING)
-        //order(column = "course_letter", order = Order.ASCENDING)
+        order(column = "term", order = Order.DESCENDING)
+        order(column = "department", order = Order.ASCENDING)
+        order(column = "course_number", order = Order.ASCENDING)
+        order(column = "course_letter", order = Order.ASCENDING)
+        order(column = "section_number", order = Order.ASCENDING)
 
     }.decodeList<Course>()
 

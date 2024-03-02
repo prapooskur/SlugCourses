@@ -95,14 +95,16 @@ fun ResultsScreen(
         }
     )
 
-    val department = query.substringBefore(" ")
-    val courseNumber = query.substringAfter(" ")
+    val splitQuery = query.contains(" ")
+
+    val department = if (splitQuery) { query.substringBefore(" ") } else { query }
+    val courseNumber = if (splitQuery) { query.substringAfter(" ") } else { query }
 
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
 
-        val useDepartment = (Regex("^[A-Za-z]{2}[A-Za-z]?[A-Za-z]?\$").matches(department))
+        val useDepartment = (Regex("^[A-Za-z]{2,3}$").matches(department))
         val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
 
         if (useDepartment)  Log.d(TAG, "Using department")
