@@ -42,6 +42,9 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     doc = BeautifulSoup(response.text, 'html.parser')
 
     sections = []
+
+    # debug - disable tqdm
+    #for panel in doc.select(".panel.panel-default.row"):
     for panel in tqdm(doc.select(".panel.panel-default.row")):
 
        
@@ -66,20 +69,19 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         if course_match:
             course_number = course_match.group(1)
             course_letter = course_match.group(2)
-            
-        #print(course_letter)
-        #print(course_number+" "+course_letter)
 
         section_number = secondary[0].strip()
         description = secondary[1].strip()
 
-        #edge cases
+        # edge cases
+        #some classes have three locations - this causes enrollment to break if left unhandled
+        #in summer, enrollment is always the only itme in the array
 
-        #ignore credit by petitions
-        #if section_number == "CBP":
-        #    continue
+        if summer:
+            enrolled_index = 0
+        else:
+            enrolled_index = min(locations-1, 1)
         
-
         section = {
             "id": int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
             "term": term,
@@ -93,7 +95,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
             "time": panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")[1].strip() if len(panel.select(".col-xs-6:nth-child(2)")[1].text.split(": ")) > 1 else "None",
             "alt_location": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
             "alt_time": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if locations > 1 else "None",
-            "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
+            "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[enrolled_index].text.strip(),
             "type": panel.select("b")[0].text.strip(),
             "summer_session": panel.select(".col-xs-6:nth-child(4)")[0].text.split(": ")[1].strip() if summer else "None",
             "url": panel.select("a")[0]['href'].strip(),
@@ -110,7 +112,6 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
                 section["name"] = pisaApiResponse["primary_section"]["title_long"]
 
         sections.append(section)
-
     
     url: str = os.environ.get("SUPABASE_URL")
     key: str = os.environ.get("SUPABASE_KEY")
@@ -133,7 +134,7 @@ match(len(sys.argv)):
             queryPisa(sys.argv[1], False)
 '''
 
-term_list = [2238, 2232, 2230, 2228, 2224]
+#term_list = [2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
 
 #with concurrent.futures.ThreadPoolExecutor() as executor:
 #    results = list(executor.map(lambda term: queryPisa(str(term), False), term_list))

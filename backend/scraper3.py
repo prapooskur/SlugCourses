@@ -1,4 +1,4 @@
-import requests, json, sys, os, re, time, concurrent.futures
+import requests, json, sys, os, re, concurrent.futures
 from bs4 import BeautifulSoup, SoupStrainer
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
@@ -27,7 +27,6 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
     department = primary[0].strip()
     full_course_number = primary[1].strip()
     course_number = full_course_number
-    #course_number, course_letter = re.match(r'(\d+)([a-zA-Z]*)', course_number).groups() if re.match(r'(\d+)([a-zA-Z]*)', course_number) else (course_number, '')
 
     course_match = re.match(r'(\d+)(\D*)', full_course_number)
     course_letter = " "
@@ -35,25 +34,24 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
     if course_match:
         course_number = course_match.group(1)
         course_letter = course_match.group(2)
-        
-    #print(course_letter)
-    #print(course_number+" "+course_letter)
 
     section_number = secondary[0].strip()
     description = secondary[1].strip()
-
-    #edge cases
-
-    #ignore credit by petitions
-    #if section_number == "CBP":
-    #    continue
-
 
     # these elements are accessed multiple times
     # store them in variables to reduce calls to select() (which is slow)
     panelNthChild2 = panel.select(".col-xs-6:nth-child(2)")
     panelNthChild4 = panel.select(".col-xs-6:nth-child(4)")[0]  
     panelDivA = panel.select("div > a")[0].text
+
+    # edge cases
+    #some classes have three locations - this causes enrollment to break if left unhandled
+    #in summer, enrollment is always the only itme in the array
+
+    if summer:
+        enrolled_index = 0
+    else:
+        enrolled_index = min(locations-1, 1)
 
     section = {
         "id": int(panelDivA) if panelDivA.isdigit() else 0,
@@ -68,7 +66,7 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
         "time": panelNthChild2[1].text.split(": ")[1].strip() if len(panelNthChild2[1].text.split(": ")) > 1 else "None",
         "alt_location": panel.select(".col-xs-6:nth-child(3)")[0].text.split(": ", 1)[1].strip() if locations > 1 else "None",
         "alt_time": panelNthChild4.text.split(": ")[1].strip() if locations > 1 else "None",
-        "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[locations - 1].text.strip(),
+        "enrolled": panel.select(".col-xs-6:nth-child({})".format(5 if summer else 4))[enrolled_index].text.strip(),
         "type": panel.select("b")[0].text.strip(),
         "summer_session": panelNthChild4.text.split(": ")[1].strip() if summer else "None",
         "url": panel.select("a")[0]['href'].strip(),
@@ -123,7 +121,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     response = requests.post(URL, data=info)
     strainedSoup = SoupStrainer(class_="panel panel-default row") # doesnt help much tbh
     doc = BeautifulSoup(response.content, features='lxml', parse_only=strainedSoup)
-    print(f"Time to make BS4 object: {time.time() - startTime} seconds")
+    #print(f"Time to make BS4 object: {time.time() - startTime} seconds")
 
     panels = doc.select(".panel.panel-default.row")
     
@@ -157,10 +155,10 @@ match(len(sys.argv)):
             queryPisa(sys.argv[1], False)
 '''
 
-term_list = [2238, 2232, 2230, 2228, 2224]
+#term_list = [2238, 2232, 2230, 2228, 2224]
 
 
-startTime = time.time()
+#startTime = time.time()
 queryPisa("2242", False)
 
-print(f"Total time: {time.time() - startTime} seconds")
+#print(f"Total time: {time.time() - startTime} seconds")
