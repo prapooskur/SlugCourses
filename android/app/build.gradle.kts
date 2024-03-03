@@ -119,4 +119,7 @@ dependencies {
 
     // database
     implementation("app.cash.sqldelight:android-driver:2.0.0-alpha05")
+
+    // viewmodel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 }

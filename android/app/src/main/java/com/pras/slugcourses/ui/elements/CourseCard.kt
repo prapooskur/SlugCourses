@@ -1,6 +1,5 @@
 package com.pras.slugcourses.ui.elements
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,11 +30,10 @@ enum class Status {
     WAITLIST,
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseCard(course: Course, navController: NavController) {
     val uri = URLEncoder.encode(course.url, "UTF-8")
-    Log.d("CourseCard", "CourseCard: $uri")
+    //Log.d("CourseCard", "CourseCard: $uri")
     val status = when(course.status) {
         "Open" -> Status.OPEN
         "Closed" -> Status.CLOSED

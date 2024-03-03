@@ -74,7 +74,6 @@ suspend fun supabaseQuery(
         install(Postgrest)
     }
 
-
     val courseList = supabase.from("courses").select {
 
         filter {

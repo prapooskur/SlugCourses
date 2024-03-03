@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
@@ -82,14 +83,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
 }
 
 @Preview(showBackground = true)
@@ -184,6 +177,34 @@ fun Init(startDestination: String) {
                             searchType = searchType
                         )
                     }
+
+                    // search with no query
+                    composable(
+                        route = "results/{term}/{status}/{type}/{gened}/{searchtype}",
+                        enterTransition = { fadeIn() },
+                        exitTransition = { fadeOut() }
+                    ) { backStackEntry ->
+                        currentDestination = "results"
+
+                        val term = backStackEntry.arguments?.getString("term")?.toInt() ?: 2242
+                        val query = ""
+                        val status = Json.decodeFromString<Status>(backStackEntry.arguments?.getString("status") ?: "[]")
+                        val type = Json.decodeFromString<List<Type>>(backStackEntry.arguments?.getString("type") ?: "[]")
+                        val gened = Json.decodeFromString<List<String>>(backStackEntry.arguments?.getString("gened") ?: "[]")
+                        val searchType = backStackEntry.arguments?.getString("searchtype") ?: "All"
+
+                        ResultsScreen(
+                            navController = navController,
+                            term = term,
+                            query = query,
+                            status = status,
+                            type = type,
+                            genEd = gened,
+                            searchType = searchType
+                        )
+                    }
+
+
                     composable(
                         route = "detailed/{term}/{courseNumber}/{url}",
                         enterTransition = { fadeIn() },
@@ -218,11 +239,17 @@ fun Init(startDestination: String) {
 
 @Composable
 fun BottomNavigationBar(navController: NavController, items: List<BottomNavigationItem>, selectedItem: MutableIntState) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
     NavigationBar {
         items.forEachIndexed { index, item ->
+            val screenName = when(index) {
+                0 -> "home"
+                1 -> "chat"
+                else -> "none"
+            }
             NavigationBarItem(
                 icon = {
-                    if (selectedItem.intValue == index) {
+                    if (navBackStackEntry?.destination?.route == screenName) {
                         Icon(
                             imageVector = item.selectedIcon,
                             contentDescription = item.iconDescription
@@ -235,7 +262,7 @@ fun BottomNavigationBar(navController: NavController, items: List<BottomNavigati
                     }
                 },
                 label = { Text(item.name) },
-                selected = selectedItem.intValue == index,
+                selected = navBackStackEntry?.destination?.route == screenName,
                 onClick = {
                     selectedItem.intValue = index
 

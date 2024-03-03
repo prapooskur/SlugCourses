@@ -22,15 +22,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,14 +37,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.CourseInfo
-import com.pras.slugcourses.api.PrimarySection
-import com.pras.slugcourses.api.classAPIResponse
+import com.pras.slugcourses.ui.data.DetailedResultsViewModel
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.pras.slugcourses.ui.shortToast
 import java.net.URLDecoder
 
 private const val TAG = "DetailedResults"
@@ -63,35 +57,23 @@ fun DetailedResultsScreen(
     url: String
 ) {
 
-    var courseInfo: CourseInfo by remember { mutableStateOf(
-        CourseInfo(
-            primary_section = PrimarySection(),
-            meetings = listOf(),
-            secondary_sections = listOf()
-        )
-    ) }
+    val viewModel = viewModel<DetailedResultsViewModel>()
+    val uiState = viewModel.uiState.collectAsState()
 
-    var dataLoaded by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        try {
-            withContext(Dispatchers.IO) {
-                Log.d(TAG, "term: $term, courseNumber: $courseNumber")
-                courseInfo = classAPIResponse(term, courseNumber)
-                dataLoaded = true
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error: ${e.message}")
-            //ShortToast("Error: ${e.message}", context)
+        viewModel.getCourseInfo(term, courseNumber)
+    }
+
+    LaunchedEffect(uiState.value.errorMessage) {
+        if (uiState.value.errorMessage.isNotBlank()) {
+            shortToast(uiState.value.errorMessage, context)
+            viewModel.resetError()
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        rememberTopAppBarState(),
-        canScroll = { true }
-    )
-
+    val courseInfo = uiState.value.courseInfo
     Scaffold(
         // custom insets necessary to render behind nav bar
         contentWindowInsets = WindowInsets(0.dp),
@@ -108,7 +90,7 @@ fun DetailedResultsScreen(
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (dataLoaded) {
+                if (uiState.value.dataLoaded) {
                     item {
                         CourseDetailBox(courseInfo = courseInfo)
                         CourseDescriptionBox(courseInfo = courseInfo,  url = url)
@@ -338,7 +320,7 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                         "Waitlisted" -> "\uD83D\uDFE1"
                         else -> "\uD83D\uDFE6"
                     }
-                    section.meetings.forEachIndexed { index, meeting ->
+                    section.meetings.forEachIndexed { _, meeting ->
                         Spacer(Modifier.height(4.dp))
                         Row(Modifier.fillMaxWidth()) {
                             Text(

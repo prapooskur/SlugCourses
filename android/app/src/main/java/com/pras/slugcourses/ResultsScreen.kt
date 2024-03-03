@@ -1,6 +1,5 @@
 package com.pras.slugcourses
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,25 +14,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.pras.slugcourses.api.Course
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
-import com.pras.slugcourses.api.supabaseQuery
+import com.pras.slugcourses.ui.data.ResultsViewModel
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import com.pras.slugcourses.ui.elements.CourseCard
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
+import com.pras.slugcourses.ui.shortToast
 
 private const val TAG = "results"
 
@@ -48,8 +43,9 @@ fun ResultsScreen(
     genEd: List<String>,
     searchType: String
 ) {
-    var response by remember { mutableStateOf(listOf<Course>()) }
-    var dataLoaded by remember { mutableStateOf(false) }
+
+    val viewModel = viewModel<ResultsViewModel>()
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -65,7 +61,8 @@ fun ResultsScreen(
                     .fillMaxSize()
                     .padding(it)
             ) {
-                if (dataLoaded) {
+                if (uiState.dataLoaded) {
+                    val response = uiState.resultsList
                     if (response.isNotEmpty()) {
                         items(response.size) { course ->
                             CourseCard(
@@ -102,41 +99,22 @@ fun ResultsScreen(
 
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-
-        val useDepartment = (Regex("^[A-Za-z]{2,4}$").matches(department))
-        val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
-
-        if (useDepartment)  Log.d(TAG, "Using department")
-        if (useCourseNumber)  Log.d(TAG, "Using course number")
-
-        try {
-            withContext(Dispatchers.IO) {
-                val result = supabaseQuery(
-                    term = term,
-                    status = status,
-                    department = if (useDepartment) department.uppercase() else "",
-                    courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
-                    courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
-                    query = if (!useDepartment && !useCourseNumber) query else "",
-                    ge = genEd,
-                    asynchronous = type.contains(Type.ASYNC_ONLINE),
-                    hybrid = type.contains(Type.HYBRID),
-                    synchronous = type.contains(Type.SYNC_ONLINE),
-                    inPerson = type.contains(Type.IN_PERSON),
-                    searchType = searchType,
-                )
-                if (isActive) {
-                    response = result
-                    dataLoaded = true
-                }
-
-            }
-        }  catch (e: Exception) {
-            if (isActive) {
-                Log.d(TAG, e.toString())
-                ShortToast("Error: ${e}", context)
-            }
+    LaunchedEffect(key1 = uiState.errorMessage) {
+        if (uiState.errorMessage.isNotEmpty()) {
+            shortToast("An error occurred: ${uiState.errorMessage}", context)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.getCourses(
+            term,
+            department,
+            courseNumber,
+            query,
+            status,
+            type,
+            genEd,
+            searchType
+        )
     }
 }

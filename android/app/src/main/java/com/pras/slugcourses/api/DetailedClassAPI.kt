@@ -12,7 +12,7 @@ private const val TAG = "DetailedClassAPI"
 
 @Serializable
 data class CourseInfo(
-    val primary_section: PrimarySection,
+    val primary_section: PrimarySection = PrimarySection(),
     val meetings: List<Meeting> = listOf(),
     val secondary_sections: List<SecondarySection> = listOf()
 )

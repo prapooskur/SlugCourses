@@ -4,13 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,10 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -32,10 +32,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
+import com.pras.slugcourses.ui.data.HomeViewModel
 import com.pras.slugcourses.ui.elements.LargeDropdownMenu
 import com.pras.slugcourses.ui.elements.LargeDropdownMenuMultiSelect
 import kotlinx.serialization.encodeToString
@@ -45,8 +47,9 @@ import kotlinx.serialization.json.Json
 @Composable
 @Preview
 fun HomeScreen(navController: NavController = rememberNavController()) {
-    var searchText by rememberSaveable { mutableStateOf("") }
-    var searchActive by rememberSaveable { mutableStateOf(false) }
+
+    val viewModel = viewModel<HomeViewModel>()
+    val uiState by viewModel.uiState.collectAsState()
 
     val termMap = mapOf(
         "Spring 2024" to "2242",
@@ -61,15 +64,39 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     val selectedGenEdList = remember { mutableStateListOf<String>() }
 
     val termList = termMap.keys.toList()
-    var selectedTermIndex by remember { mutableIntStateOf(0) }
+    var selectedTermIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
     val selectedTypeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
 
     var selectedStatusIndex by remember { mutableIntStateOf(1) }
 
+    fun searchHandler() {
 
-    Column(
+
+        val term = termMap.values.toList()[selectedTermIndex]
+
+        val status = Json.encodeToString(Status.ALL)
+        val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+        val encodedType = Json.encodeToString(classType)
+        val geList = Json.encodeToString(selectedGenEdList.toList())
+        val searchType = when (selectedStatusIndex) {
+            0 -> "Open"
+            else -> "All"
+        }
+
+        val navPath = if (uiState.searchQuery.isBlank()) {
+            "results/${term}/${status}/${encodedType}/${geList}/${searchType}"
+        } else {
+            "results/${term}/${uiState.searchQuery}/${status}/${encodedType}/${geList}/${searchType}"
+        }
+
+
+        navController.navigate(navPath)
+    }
+
+
+    LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
@@ -77,121 +104,93 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
             .background(MaterialTheme.colorScheme.surface)
             .offset(y = 15.dp)
     ) {
-        //Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
-        Image(
-            painterResource(R.drawable.slug),
-            contentDescription = "Slug Courses",
-            contentScale = ContentScale.Inside,
-            modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(0.25f)
-        )
-        SearchBar(
-            modifier = Modifier.padding(16.dp),
-            query = searchText,
-            onQueryChange = { searchText = it },
-            active = false,
-            onActiveChange = { searchActive = it },
-            placeholder = { Text("Search for classes...") },
-            trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
-                if(searchText.isEmpty()) {
-                    searchText = " "
+        item {
+            //Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
+            Image(
+                painterResource(R.drawable.slug),
+                contentDescription = "Slug Courses",
+                contentScale = ContentScale.Inside,
+                modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(0.25f)
+            )
+            SearchBar(
+                modifier = Modifier.padding(16.dp),
+                query = uiState.searchQuery,
+                onQueryChange = { newQuery->
+                    viewModel.setQuery(newQuery)
+                },
+                active = false,
+                onActiveChange = { /* do nothing */ },
+                placeholder = { Text("Search for classes...") },
+                trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
+                    searchHandler()
+                }) },
+                onSearch = {
+                    searchHandler()
                 }
+            ) { /* do nothing */ }
 
-                val term = termMap.values.toList()[selectedTermIndex]
-
-                //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
-                val status = Json.encodeToString(Status.ALL)
-                val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
-                val encodedType = Json.encodeToString(classType)
-                val geList = Json.encodeToString(selectedGenEdList.toList())
-                val searchType = when (selectedStatusIndex) {
-                    0 -> "Open"
-                    else -> "All"
-                }
-                navController.navigate(
-                    "results/${term}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+            Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
+                LargeDropdownMenu(
+                    modifier = Modifier
+                        .weight(.5f)
+                        .padding(end = 8.dp),
+                    label = "Term",
+                    items = termList,
+                    selectedIndex = selectedTermIndex,
+                    onItemSelected = { index, _ -> selectedTermIndex = index },
                 )
-            }) },
-            onSearch = {
-                if(searchText.isEmpty()) {
-                    searchText = " "
-                }
-
-                val term = termMap.values.toList()[selectedTermIndex]
-
-                //val snapshotListSerializer = SnapshotListSerializer(String.serializer())
-                val status = Json.encodeToString(Status.ALL)
-                val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
-                val encodedType = Json.encodeToString(classType)
-                val geList = Json.encodeToString(selectedGenEdList.toList())
-                val searchType = when (selectedStatusIndex) {
-                    0 -> "Open"
-                    else -> "All"
-                }
-                navController.navigate(
-                    "results/${term}/${searchText}/${status}/${encodedType}/${geList}/${searchType}"
+                LargeDropdownMenuMultiSelect(
+                    modifier = Modifier
+                        .weight(.35f)
+                        .padding(start = 8.dp),
+                    label = "GE",
+                    items = genEdList,
+                    displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0] else if (selectedGenEdList.size == 0) "" else "Multi",
+                    selectedItems = selectedGenEdList,
+                    onItemSelected = { index, _ ->
+                        selectedGenEdList.add(genEdList[index])
+                    },
+                    onItemRemoved = { _, itemName ->
+                        if (itemName in selectedGenEdList) {
+                            selectedGenEdList.remove(itemName)
+                        }
+                    }
                 )
             }
-        ) { /* do nothing */ }
-        Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
-            LargeDropdownMenu(
-                modifier = Modifier
-                    .weight(.5f)
-                    .padding(end = 8.dp),
-                label = "Term",
-                items = termList,
-                selectedIndex = selectedTermIndex,
-                onItemSelected = { index, _ -> selectedTermIndex = index },
-            )
-            LargeDropdownMenuMultiSelect(
-                modifier = Modifier
-                    .weight(.35f)
-                    .padding(start = 8.dp),
-                label = "GE",
-                items = genEdList,
-                displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0] else if (selectedGenEdList.size == 0) "" else "Multi",
-                selectedItems = selectedGenEdList,
-                onItemSelected = { index, _ ->
-                    selectedGenEdList.add(genEdList[index])
-                },
-                onItemRemoved = { _, itemName ->
-                    if (itemName in selectedGenEdList) {
-                        selectedGenEdList.remove(itemName)
-                    }
-                }
-            )
-        }
 
-        Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
-            LargeDropdownMenuMultiSelect(
-                modifier = Modifier
-                    .weight(.5f)
-                    .padding(end = 8.dp),
-                label = "Type",
-                items = typeList,
-                displayLabel = if (selectedTypeList.size == 1) selectedTypeList[0] else "Multiple",
-                selectedItems = selectedTypeList,
-                onItemSelected = { index, _ ->
-                    selectedTypeList.add(typeList[index])
-                },
-                onItemRemoved = { _, itemName ->
-                    if (itemName in selectedTypeList) {
-                        selectedTypeList.remove(itemName)
+            Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
+                LargeDropdownMenuMultiSelect(
+                    modifier = Modifier
+                        .weight(.5f)
+                        .padding(end = 8.dp),
+                    label = "Type",
+                    items = typeList,
+                    displayLabel = if (selectedTypeList.size == 1) selectedTypeList[0] else "Multiple",
+                    selectedItems = selectedTypeList,
+                    onItemSelected = { index, _ ->
+                        selectedTypeList.add(typeList[index])
+                    },
+                    onItemRemoved = { _, itemName ->
+                        if (itemName in selectedTypeList) {
+                            selectedTypeList.remove(itemName)
+                        }
                     }
-                }
-            )
+                )
 
-            LargeDropdownMenu(
-                modifier = Modifier
-                    .weight(.35f)
-                    .padding(start = 8.dp),
-                label = "Status",
-                items = listOf("Open", "All"),
-                selectedIndex = selectedStatusIndex,
-                onItemSelected = { index, _ -> selectedStatusIndex = index },
-            )
+                LargeDropdownMenu(
+                    modifier = Modifier
+                        .weight(.35f)
+                        .padding(start = 8.dp),
+                    label = "Status",
+                    items = listOf("Open", "All"),
+                    selectedIndex = selectedStatusIndex,
+                    onItemSelected = { index, _ -> selectedStatusIndex = index },
+                )
+            }
         }
 
 
 
     }
 }
+
