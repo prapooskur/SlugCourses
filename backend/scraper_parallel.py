@@ -1,4 +1,4 @@
-import requests, json, sys, os, re, concurrent.futures
+import requests, json, sys, os, re, concurrent.futures, time
 from bs4 import BeautifulSoup, SoupStrainer
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
@@ -53,8 +53,11 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
     else:
         enrolled_index = min(locations-1, 1)
 
+    id = int(panelDivA) if panelDivA.isdigit() else 0
+    combined_id = str(term)+"_"+str(id)
+
     section = {
-        "id": int(panelDivA) if panelDivA.isdigit() else 0,
+        "id": combined_id,
         "term": term,
         "department": department,
         "course_number": course_number,
@@ -74,9 +77,7 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
     }
 
     if gened:
-        #pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
-        #section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
-        pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{section["id"]}').text)
+        pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{id}').text)
         if "primary_section" in pisaApiResponse:
             if "gened" in pisaApiResponse["primary_section"]:
                 section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
@@ -88,8 +89,6 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
 
 
 def queryPisa(term: str, gened: bool = False) -> list[dict]:
-    # load_dotenv()
-
     info = {
         "action": "results",
         "binds[:term]": term,
@@ -130,35 +129,26 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         for future in concurrent.futures.as_completed(future_to_section):
             section = future.result()
             sections.append(section)
-    
+
     return sections
-
-    
-    # url: str = os.environ.get("SUPABASE_URL")
-    # key: str = os.environ.get("SUPABASE_KEY")
-    # supabase: Client = create_client(url, key)
-
-    # supabase.table("courses").upsert(sections).execute()
             
 
-        
-'''
-match(len(sys.argv)):
-    case 1:
-        print("Run with args pls")
-    case 2:
-        queryPisa(sys.argv[1], False)
-    case _:
-        if (sys.argv[2] == "True"):
-            queryPisa(sys.argv[1], True)
-        else:
-            queryPisa(sys.argv[1], False)
-'''
+term_list = [2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
 
-#term_list = [2238, 2232, 2230, 2228, 2224]
+load_dotenv()
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
 
+if len(sys.argv) > 1:
+    print("scraping "+str(sys.argv[1]))
+    sections = queryPisa(sys.argv[1], True)
+    supabase.table("courses").upsert(sections).execute()
 
-#startTime = time.time()
-queryPisa("2242", False)
+else:
+    sections = []
+    for term in term_list:
+        print("scraping "+str(term))
+        sections = queryPisa(term, True)
+        supabase.table("courses").upsert(sections).execute()
 
-#print(f"Total time: {time.time() - startTime} seconds")

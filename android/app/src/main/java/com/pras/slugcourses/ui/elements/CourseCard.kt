@@ -44,7 +44,7 @@ fun CourseCard(course: Course, navController: NavController) {
         else -> Status.CLOSED
     }
     Card(onClick = {
-            navController.navigate("detailed/${course.term}/${course.id}/${uri}")
+            navController.navigate("detailed/${course.term}/${course.id.substringAfter("_").toInt()}/${uri}")
         },
         modifier = Modifier
             .padding(6.dp)

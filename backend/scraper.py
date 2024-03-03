@@ -82,8 +82,11 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
         else:
             enrolled_index = min(locations-1, 1)
         
+        id = int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
+        combined_id = str(term)+"_"+str(id)
+
         section = {
-            "id": int(panel.select("div > a")[0].text) if panel.select("div > a")[0].text.isdigit() else 0,
+            "id": combined_id,
             "term": term,
             "department": department,
             "course_number": course_number,

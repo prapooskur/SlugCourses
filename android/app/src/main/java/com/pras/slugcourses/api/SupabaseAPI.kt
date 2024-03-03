@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 private const val TAG = "SupabaseAPI"
 @Serializable
 data class Course(
-    val id: Int,
+    val id: String,
     val term: Int,
     val department: String,
     val course_number: Int,
