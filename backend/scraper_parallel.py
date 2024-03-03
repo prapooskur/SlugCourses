@@ -140,20 +140,24 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-term = 2242
-print("scraping "+str(term))
-sections = queryPisa(term, False)
-supabase.table("courses").upsert(sections).execute()
 
-#if len(sys.argv) > 1:
-#    print("scraping "+str(sys.argv[1]))
-#    sections = queryPisa(sys.argv[1], True)
-#    supabase.table("courses").upsert(sections).execute()
-#
-#else:
-#    sections = []
-#    for term in term_list:
-#        print("scraping "+str(term))
-#        sections = queryPisa(term, True)
-#        supabase.table("courses").upsert(sections).execute()
+
+if len(sys.argv) > 1:
+    if "-a" in sys.argv:
+        do_gened = "-g" in sys.argv
+        for term in term_list:
+            print("scraping "+str(term))
+            sections = queryPisa(term, do_gened)
+            supabase.table("courses").upsert(sections).execute()
+    else:
+        do_gened = "-g" in sys.argv
+        print("scraping "+str(sys.argv[1]))
+        sections = queryPisa(sys.argv[1], do_gened)
+        supabase.table("courses").upsert(sections).execute()
+else:
+    term = 2242
+    print("scraping "+str(term))
+    sections = queryPisa(term, False)
+    supabase.table("courses").upsert(sections).execute()
+    
 
