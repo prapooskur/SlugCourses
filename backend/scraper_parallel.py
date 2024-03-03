@@ -150,10 +150,11 @@ if len(sys.argv) > 1:
             sections = queryPisa(term, do_gened)
             supabase.table("courses").upsert(sections).execute()
     else:
-        do_gened = "-g" in sys.argv
-        print("scraping "+str(sys.argv[1]))
-        sections = queryPisa(sys.argv[1], do_gened)
-        supabase.table("courses").upsert(sections).execute()
+        if sys.argv[1] in term_list:
+            do_gened = "-g" in sys.argv
+            print("scraping "+str(sys.argv[1]))
+            sections = queryPisa(sys.argv[1], do_gened)
+            supabase.table("courses").upsert(sections).execute()
 else:
     term = 2242
     print("scraping "+str(term))
