@@ -140,7 +140,10 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-queryPisa(2242, False)
+term = 2242
+print("scraping "+str(term))
+sections = queryPisa(term, False)
+supabase.table("courses").upsert(sections).execute()
 
 #if len(sys.argv) > 1:
 #    print("scraping "+str(sys.argv[1]))
