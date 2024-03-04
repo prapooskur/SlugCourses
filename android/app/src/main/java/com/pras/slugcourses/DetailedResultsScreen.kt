@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -44,6 +45,7 @@ import com.pras.slugcourses.api.CourseInfo
 import com.pras.slugcourses.ui.data.DetailedResultsViewModel
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import com.pras.slugcourses.ui.shortToast
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 
 private const val TAG = "DetailedResults"
@@ -63,7 +65,9 @@ fun DetailedResultsScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.getCourseInfo(term, courseNumber)
+        viewModel.viewModelScope.launch {
+            viewModel.getCourseInfo(term, courseNumber)
+        }
     }
 
     LaunchedEffect(uiState.value.errorMessage) {

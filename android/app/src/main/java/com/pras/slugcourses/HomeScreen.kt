@@ -55,9 +55,11 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
         "Spring 2024" to "2242",
         "Winter 2024" to "2240",
         "Fall 2023" to "2238",
+        "Summer 2023" to "2234",
         "Spring 2023" to "2232",
         "Winter 2023" to "2230",
-        "Fall 2022" to "2228"
+        "Fall 2022" to "2228",
+        "Summer 2022" to "2224"
     )
 
     val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
@@ -145,7 +147,12 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                         .padding(start = 8.dp),
                     label = "GE",
                     items = genEdList,
-                    displayLabel = if (selectedGenEdList.size == 1) selectedGenEdList[0] else if (selectedGenEdList.size == 0) "" else "Multi",
+                    displayLabel = when (selectedGenEdList.size) {
+                        0 -> ""
+                        1 -> selectedGenEdList[0]
+                        genEdList.size -> "All"
+                        else -> "Multi"
+                    },
                     selectedItems = selectedGenEdList,
                     onItemSelected = { index, _ ->
                         selectedGenEdList.add(genEdList[index])
@@ -165,7 +172,13 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                         .padding(end = 8.dp),
                     label = "Type",
                     items = typeList,
-                    displayLabel = if (selectedTypeList.size == 1) selectedTypeList[0] else "Multiple",
+                    displayLabel = when (selectedTypeList.size) {
+                        0 -> ""
+                        // without cutting out "Online", async online is too long
+                        1 -> selectedTypeList[0].replace(" Online", "")
+                        typeList.size -> "All"
+                        else -> "Multiple"
+                    },
                     selectedItems = selectedTypeList,
                     onItemSelected = { index, _ ->
                         selectedTypeList.add(typeList[index])
