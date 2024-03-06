@@ -19,8 +19,4 @@ class HomeViewModel : ViewModel() {
     fun setQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
-
-    fun setTerm(term: String) {
-        _uiState.value = _uiState.value.copy(termChosen = term)
-    }
 }

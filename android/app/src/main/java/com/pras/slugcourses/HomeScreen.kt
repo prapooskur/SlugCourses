@@ -23,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,15 +62,15 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     )
 
     val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
-    val selectedGenEdList = remember { mutableStateListOf<String>() }
+    val selectedGenEdList = rememberSaveable { mutableStateListOf<String>() }
 
     val termList = termMap.keys.toList()
     var selectedTermIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-    val selectedTypeList = remember { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
+    val selectedTypeList = rememberSaveable { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
 
-    var selectedStatusIndex by remember { mutableIntStateOf(1) }
+    var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
 
     fun searchHandler() {
 
@@ -112,7 +111,9 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
                 painterResource(R.drawable.slug),
                 contentDescription = "Slug Courses",
                 contentScale = ContentScale.Inside,
-                modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(0.25f)
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .fillMaxHeight(0.25f)
             )
             SearchBar(
                 modifier = Modifier.padding(16.dp),
