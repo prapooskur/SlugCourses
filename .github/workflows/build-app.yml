@@ -34,6 +34,9 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Debug
+        run: echo $GITHUB_WORKSPACE
+
       - name: Retrieve the keystore and decode it to a file
         env:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
