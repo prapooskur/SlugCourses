@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,8 +96,19 @@ fun <T> LargeDropdownMenuMultiSelect(
     }
 
     if (expanded) {
+        val copy = remember {
+            val list = mutableStateListOf<String>()
+            list.addAll(selectedItems)
+            list
+        }
         Dialog(
-            onDismissRequest = { expanded = false },
+            onDismissRequest = {
+                //reset list
+                selectedItems.clear()
+                selectedItems.addAll(copy)
+
+                expanded = false
+            },
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
@@ -139,6 +151,10 @@ fun <T> LargeDropdownMenuMultiSelect(
                     Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                         OutlinedButton(
                             onClick = {
+                                //reset list
+                                selectedItems.clear()
+                                selectedItems.addAll(copy)
+
                                 expanded = false
                             },
                         ) {
