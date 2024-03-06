@@ -45,7 +45,7 @@ jobs:
       - name: Retrieve the gradle secrets and decode them to a file
         env:
           GRADLE_SECRETS_B64: ${{ secrets.gradle_secrets_b64 }}
-        run: echo $GRADLE_SECRETS_B64 | base64 --decode > $GITHUB_WORKSPACE/secrets.properties
+        run: echo $GRADLE_SECRETS_B64 | base64 --decode > $GITHUB_WORKSPACE/android/secrets.properties
 
       - name: Setup Gradle
         run: chmod +x ./gradlew
