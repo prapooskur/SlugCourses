@@ -38,7 +38,6 @@ data class ChatViewState(
             Author.SYSTEM
         )
     ),
-    val messageLoading: Boolean = false
 )
 
 private const val TAG = "ChatViewModel"
@@ -64,18 +63,22 @@ class ChatViewModel : ViewModel() {
     suspend fun sendMessage() {
         try {
             withContext(Dispatchers.IO) {
+                val message = uiState.value.message
                 addMessage(ChatMessage(uiState.value.message, Author.USER))
                 Log.d(TAG, ChatMessage(uiState.value.message, Author.USER).toString())
 
+                clearMessage()
+                _uiState.value = _uiState.value.copy(active = true)
 
                 addMessage(ChatMessage("|||", Author.SYSTEM))
 
-                queryChat(uiState.value.message, _uiState.value.messageList)
-                clearMessage()
-                _uiState.value = _uiState.value.copy(active = true)
+                queryChat(message, _uiState.value.messageList)
+
             }
         } catch (e: Exception) {
             Log.d(TAG, "Error: ${e.message}")
+        } finally {
+            _uiState.value = _uiState.value.copy(active = false)
         }
     }
 
