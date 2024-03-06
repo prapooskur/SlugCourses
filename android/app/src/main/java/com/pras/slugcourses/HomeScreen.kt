@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,13 +63,13 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     )
 
     val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
-    val selectedGenEdList = rememberSaveable { mutableStateListOf<String>() }
+    val selectedGenEdList = remember { mutableStateListOf<String>() }
 
     val termList = termMap.keys.toList()
     var selectedTermIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-    val selectedTypeList = rememberSaveable { mutableStateListOf<String>("Async Online", "Hybrid", "Sync Online", "In Person") }
+    val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
 
     var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
 
