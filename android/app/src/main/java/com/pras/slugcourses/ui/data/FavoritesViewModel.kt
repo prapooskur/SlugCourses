@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pras.Database
 import com.pras.slugcourses.api.Course
-import com.pras.slugcourses.fcm.UserId
+import com.pras.slugcourses.ui.UserId
 import com.pras.slugcourses.ui.getSupabaseClient
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from

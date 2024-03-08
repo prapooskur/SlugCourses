@@ -9,6 +9,7 @@ import io.github.jan.supabase.compose.auth.googleNativeLogin
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
+import kotlinx.serialization.Serializable
 
 fun shortToast(text: String, context: Context) {
     Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
@@ -26,3 +27,10 @@ fun getSupabaseClient(): SupabaseClient {
         }
     }
 }
+
+@Serializable
+data class UserId (
+    val user_id: String,
+    val fcm_token: String,
+    val favorites: List<String>
+)
