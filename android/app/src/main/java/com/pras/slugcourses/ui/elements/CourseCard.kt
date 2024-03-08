@@ -1,5 +1,6 @@
 package com.pras.slugcourses.ui.elements
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,12 +10,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +35,7 @@ enum class Status {
 }
 
 @Composable
-fun CourseCard(course: Course, navController: NavController) {
+fun CourseCard(course: Course, navController: NavController, isFavorited: Boolean, onFavorite: () -> Unit, showFavorite: Boolean = true) {
     val uri = URLEncoder.encode(course.url, "UTF-8")
     //Log.d("CourseCard", "CourseCard: $uri")
     val status = when(course.status) {
@@ -45,34 +49,58 @@ fun CourseCard(course: Course, navController: NavController) {
         },
         modifier = Modifier
             .padding(6.dp)
-            .widthIn(max = 800.dp))
+            .widthIn(max = 800.dp)
+    )
+
     {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)) {
-            SectionTitle("${course.department} ${course.course_number}${course.course_letter} - ${course.section_number}: ${course.short_name}", status)
-            SectionSubtitle(Icons.Default.Person, course.instructor)
-            if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
-                SectionSubtitle(painterResource(R.drawable.videocam), course.location)
-            } else {
-                SectionSubtitle(painterResource(R.drawable.location_on), course.location)
-            }
-            if (course.time.isNotBlank()) {
-                SectionSubtitle(painterResource(R.drawable.clock), course.time)
-            }
-            if (course.alt_location != "None") {
-                if (course.alt_location.contains("Online") || course.alt_location.contains("Remote Instruction")) {
-                    SectionSubtitle(painterResource(R.drawable.videocam), course.alt_location)
+        Box( // Use Box to position elements freely
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+            ) {
+                SectionTitle("${course.department} ${course.course_number}${course.course_letter} - ${course.section_number}: ${course.short_name}", status)
+                SectionSubtitle(Icons.Default.Person, course.instructor)
+                if (course.location.contains("Online") || course.location.contains("Remote Instruction")) {
+                    SectionSubtitle(painterResource(R.drawable.videocam), course.location)
                 } else {
-                    SectionSubtitle(painterResource(R.drawable.location_on), course.alt_location)
+                    SectionSubtitle(painterResource(R.drawable.location_on), course.location)
+                }
+                if (course.time.isNotBlank()) {
+                    SectionSubtitle(painterResource(R.drawable.clock), course.time)
+                }
+                if (course.alt_location != "None") {
+                    if (course.alt_location.contains("Online") || course.alt_location.contains("Remote Instruction")) {
+                        SectionSubtitle(painterResource(R.drawable.videocam), course.alt_location)
+                    } else {
+                        SectionSubtitle(painterResource(R.drawable.location_on), course.alt_location)
+                    }
+                }
+                if (course.alt_time != "None") {
+                    SectionSubtitle(painterResource(R.drawable.clock), course.alt_time)
+                }
+                SectionSubtitle(painterResource(R.drawable.group), course.enrolled)
+                if (course.gen_ed.isNotBlank()) {
+                    SectionSubtitle(painterResource(R.drawable.books), course.gen_ed)
                 }
             }
-            if (course.alt_time != "None") {
-                SectionSubtitle(painterResource(R.drawable.clock), course.alt_time)
-            }
-            SectionSubtitle(painterResource(R.drawable.group), course.enrolled)
-            if (course.gen_ed.isNotBlank()) {
-                SectionSubtitle(painterResource(R.drawable.books), course.gen_ed)
+            if (showFavorite) {
+                IconButton( // Add star icon with click handling
+                    onClick = onFavorite,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd) // Position at bottom right
+                        .padding(8.dp) // Add some padding
+                ) {
+                    Icon(
+                        imageVector = if (isFavorited) {
+                            ImageVector.vectorResource(R.drawable.star_filled)
+                        } else {
+                            ImageVector.vectorResource(R.drawable.star)
+                        },
+                        contentDescription = "Favorite"
+                    )
+                }
             }
         }
     }

@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.google.firebase.FirebaseApp
+import com.pras.Database
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
 import com.pras.slugcourses.ui.theme.SlugCoursesTheme
@@ -54,6 +59,7 @@ private const val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this);
         enableEdgeToEdge()
         setContent {
             SlugCoursesTheme {
@@ -108,6 +114,9 @@ const val FADETIME: Float = 200F
 fun Init(startDestination: String) {
     val navController = rememberNavController()
 
+    val driver: SqlDriver = AndroidSqliteDriver(Database.Schema, LocalContext.current, "slugcourses.db")
+    val database = Database(driver)
+
     var currentDestination by remember { mutableStateOf(startDestination) }
 
     val index = remember { mutableIntStateOf(0) }
@@ -124,8 +133,15 @@ fun Init(startDestination: String) {
             route = "chat",
             selectedIcon = ImageVector.vectorResource(R.drawable.chat_filled),
             icon = ImageVector.vectorResource(R.drawable.chat_outlined),
+            iconDescription = "Chat"
+        ),
+        BottomNavigationItem(
+            name = "Favorites",
+            route = "favorites",
+            selectedIcon = ImageVector.vectorResource(R.drawable.star_filled),
+            icon = ImageVector.vectorResource(R.drawable.star),
             iconDescription = "Favorite"
-        )
+        ),
     )
 
 
@@ -149,6 +165,7 @@ fun Init(startDestination: String) {
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) {
+                        index.intValue = 0
                         currentDestination = "home"
 
                         HomeScreen(navController = navController)
@@ -174,7 +191,8 @@ fun Init(startDestination: String) {
                             status = status,
                             type = type,
                             genEd = gened,
-                            searchType = searchType
+                            searchType = searchType,
+                            database = database
                         )
                     }
 
@@ -200,7 +218,8 @@ fun Init(startDestination: String) {
                             status = status,
                             type = type,
                             genEd = gened,
-                            searchType = searchType
+                            searchType = searchType,
+                            database = database
                         )
                     }
 
@@ -223,14 +242,29 @@ fun Init(startDestination: String) {
                         exitTransition = { fadeOut() }
                     ) {
                         currentDestination = "chat"
+                        index.intValue = 1
 
                         ChatScreen()
+                    }
+
+                    composable(
+                        route = "favorites",
+                        enterTransition = { fadeIn() },
+                        exitTransition = { fadeOut() }
+                    ) {
+                        currentDestination = "favorites"
+                        index.intValue = 2
+
+                        FavoritesScreen(
+                            navController = navController,
+                            database = database
+                        )
                     }
                 }
             }
         },
         bottomBar = {
-            if (currentDestination == "home" || currentDestination == "chat") {
+            if (currentDestination == "home" || currentDestination == "chat" || currentDestination == "favorites") {
                 BottomNavigationBar(navController, itemList, index)
             }
         }
@@ -245,6 +279,7 @@ fun BottomNavigationBar(navController: NavController, items: List<BottomNavigati
             val screenName = when(index) {
                 0 -> "home"
                 1 -> "chat"
+                2 -> "favorites"
                 else -> "none"
             }
             NavigationBarItem(
@@ -264,13 +299,15 @@ fun BottomNavigationBar(navController: NavController, items: List<BottomNavigati
                 label = { Text(item.name) },
                 selected = navBackStackEntry?.destination?.route == screenName,
                 onClick = {
-                    selectedItem.intValue = index
+                    if (selectedItem.intValue != index) {
+                        selectedItem.intValue = index
 
-                    Log.d(TAG, index.toString())
-                    Log.d(TAG, selectedItem.intValue.toString())
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId)
-                        launchSingleTop = true
+                        Log.d(TAG, index.toString())
+                        Log.d(TAG, selectedItem.intValue.toString())
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
+                        }
                     }
                 }
             )

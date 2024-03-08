@@ -5,72 +5,63 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pras.Database
 import com.pras.slugcourses.api.Course
-import com.pras.slugcourses.api.Status
-import com.pras.slugcourses.api.Type
-import com.pras.slugcourses.api.supabaseQuery
 import com.pras.slugcourses.fcm.UserId
 import com.pras.slugcourses.ui.getSupabaseClient
-import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
-private const val TAG = "ResultsViewModel"
+private const val TAG = "FavoritesViewModel"
 
-data class ResultsUiState(
-    val resultsList: List<Course> = emptyList(),
+data class FavoritesUiState(
+    val favoritesList: List<Course> = emptyList(),
     val dataLoaded: Boolean = false,
     val errorMessage: String = "",
-    val favoriteMessage: String = ""
+    val favoriteMessage: String = "",
+    val isLoggedIn: Boolean = false
 )
 
+private suspend fun favoritesQuery(supabase: SupabaseClient, idList: List<String>): List<Course> {
+    val courseList = supabase.from("courses").select {
 
-class ResultsViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(ResultsUiState())
-    val uiState: StateFlow<ResultsUiState> = _uiState.asStateFlow()
+        filter {
+            isIn("id", idList)
+        }
 
-    suspend fun getCourses(
-        term: Int,
-        department: String,
-        courseNumber: String,
-        query: String,
-        status: Status,
-        type: List<Type>,
-        genEd: List<String>,
-        searchType: String
-    ) {
-        val useDepartment = (Regex("^[A-Za-z]{2,4}$").matches(department))
-        val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
+        order(column = "term", order = Order.DESCENDING)
+        order(column = "department", order = Order.ASCENDING)
+        order(column = "course_number", order = Order.ASCENDING)
+        order(column = "course_letter", order = Order.ASCENDING)
+        order(column = "section_number", order = Order.ASCENDING)
 
-        if (useDepartment)  Log.d(TAG, "Using department")
-        if (useCourseNumber)  Log.d(TAG, "Using course number")
+    }.decodeList<Course>()
 
+    Log.d(TAG, courseList.toString())
+    return courseList
+}
+
+class FavoritesViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(FavoritesUiState())
+    val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
+
+    suspend fun getCourses(idList: List<String>) {
         try {
             withContext(Dispatchers.IO) {
-                val result = supabaseQuery(
-                    term = term,
-                    status = status,
-                    department = if (useDepartment) department.uppercase() else "",
-                    courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
-                    courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
-                    query = if (!useDepartment && !useCourseNumber) query else "",
-                    ge = genEd,
-                    asynchronous = type.contains(Type.ASYNC_ONLINE),
-                    hybrid = type.contains(Type.HYBRID),
-                    synchronous = type.contains(Type.SYNC_ONLINE),
-                    inPerson = type.contains(Type.IN_PERSON),
-                    searchType = searchType,
-                )
+                val result = favoritesQuery(supabase, idList)
                 _uiState.update { currentState ->
                     currentState.copy(
-                        resultsList = result,
+                        favoritesList = result,
                         dataLoaded = true
                     )
                 }
+
             }
 
         }  catch (e: Exception) {
@@ -82,7 +73,7 @@ class ResultsViewModel : ViewModel() {
             }
         }
     }
-
+    
     suspend fun handleFavorite(course: Course, database: Database) {
         withContext(Dispatchers.IO) {
             if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
@@ -96,28 +87,27 @@ class ResultsViewModel : ViewModel() {
             val dbUserData = database.authQueries.getUserData().executeAsOneOrNull()
             if (dbUserData == null) {
                 database.authQueries.setUserData(
-                    user_id = supabase.auth.retrieveUserForCurrentSession().id,
-                    fcm_token =  FirebaseMessaging.getInstance().getToken().toString()
+                    user_id = UUID.randomUUID().toString(),
+                    fcm_token =  ""
                 )
             }
 
-            if (dbUserData != null && dbUserData.user_id.isEmpty()) {
-                database.authQueries.setUserData(
-                    supabase.auth.retrieveUserForCurrentSession().id,
-                    database.authQueries.getUserData().executeAsOne().fcm_token
+            if (database.authQueries.getUserData().executeAsOne().user_id.isEmpty()) {
+                database.authQueries.setUserId(
+                    user_id = UUID.randomUUID().toString(),
                 )
             }
 
-            if (dbUserData != null && dbUserData.fcm_token.isEmpty()) {
+            // init firebase token if it doesn't exist
+            if (dbUserData != null && dbUserData.user_id.isNotEmpty() && dbUserData.fcm_token.isEmpty()) {
                 database.authQueries.setUserData(
-                    supabase.auth.retrieveUserForCurrentSession().id,
+                    dbUserData.user_id,
                     FirebaseMessaging.getInstance().getToken().toString()
                 )
             }
 
             val favoritesList: List<String> = database.favoritesQueries.selectAll().executeAsList()
-
-            val userData = dbUserData ?: database.authQueries.getUserData().executeAsOne()
+            val userData = database.authQueries.getUserData().executeAsOne()
 
             supabase.from("profiles").upsert(
                 UserId (
@@ -138,4 +128,5 @@ class ResultsViewModel : ViewModel() {
     private companion object {
         val supabase = getSupabaseClient()
     }
+
 }

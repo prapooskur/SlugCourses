@@ -12,6 +12,9 @@ plugins {
 
     // secrets
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
 }
 
 sqldelight {
@@ -98,6 +101,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-runtime-ktx:2.7.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -107,19 +112,34 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // my stuff
-    val ktorVersion="2.3.8"
+    val ktorVersion="2.3.9"
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    val supabaseVersion = "2.1.6"
+    val supabaseVersion = "2.2.1"
     implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:compose-auth")
+    implementation("io.github.jan-tennert.supabase:compose-auth-ui")
 
     // database
-    implementation("app.cash.sqldelight:android-driver:2.0.0-alpha05")
+    implementation("app.cash.sqldelight:android-driver:2.0.1")
 
     // viewmodel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    // notifications
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
+
+
+    // Add the dependency for the Firebase SDK for Google Analytics
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
+
 }
