@@ -12,9 +12,6 @@ plugins {
 
     // secrets
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-
-    // Add the Google services Gradle plugin
-    id("com.google.gms.google-services")
 }
 
 sqldelight {
