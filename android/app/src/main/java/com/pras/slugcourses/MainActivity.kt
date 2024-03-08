@@ -47,7 +47,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import com.google.firebase.FirebaseApp
 import com.pras.Database
 import com.pras.slugcourses.api.Status
 import com.pras.slugcourses.api.Type
@@ -59,7 +58,6 @@ private const val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this);
         enableEdgeToEdge()
         setContent {
             SlugCoursesTheme {

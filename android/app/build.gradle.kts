@@ -133,13 +133,4 @@ dependencies {
     // permissions
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
-    // notifications
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
-
-
-    // Add the dependency for the Firebase SDK for Google Analytics
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-messaging")
-
 }
