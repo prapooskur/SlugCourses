@@ -68,7 +68,7 @@ data class SecondarySection(
     val waitlist_total: String,
     val waitlist_capacity: String,
     val enrl_status: String,
-    val meetings: List<Meeting>
+    val meetings: List<Meeting> = listOf()
 )
 
 private val json = Json { ignoreUnknownKeys = true }

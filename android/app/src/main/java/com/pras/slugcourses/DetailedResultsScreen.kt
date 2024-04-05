@@ -358,6 +358,35 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                         Spacer(Modifier.height(4.dp))
 
                     }
+                    if (section.meetings.isEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(
+                                "Days/Times: Asynchronous Online",
+                                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                            )
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(
+                                "Location: Asynchronous Online",
+                                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                            )
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(
+                                "Instructor: Staff",
+                                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                            )
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(
+                                "$emoji Enrolled: ${section.enrl_total}/${section.capacity}",
+                                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+                    }
                     if (index != courseInfo.secondary_sections.lastIndex) {
                         HorizontalDivider()
                     }
