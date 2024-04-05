@@ -41,7 +41,7 @@ fun CourseCard(course: Course, navController: NavController, isFavorited: Boolea
     val status = when(course.status) {
         "Open" -> Status.OPEN
         "Closed" -> Status.CLOSED
-        "Waitlist" -> Status.WAITLIST
+        "Wait List" -> Status.WAITLIST
         else -> Status.CLOSED
     }
     Card(onClick = {
