@@ -52,6 +52,7 @@ fun HomeScreen(navController: NavController = rememberNavController()) {
     val uiState by viewModel.uiState.collectAsState()
 
     val termMap = mapOf(
+        "Summer 2024" to "2244",
         "Spring 2024" to "2242",
         "Winter 2024" to "2240",
         "Fall 2023" to "2238",
