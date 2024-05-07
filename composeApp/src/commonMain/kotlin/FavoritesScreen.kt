@@ -10,6 +10,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -17,12 +18,13 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.pras.Database
 import kotlinx.coroutines.launch
 import ui.data.FavoritesScreenModel
+import ui.data.NavigatorScreenModel
 import ui.elements.CourseCard
 
 
 private const val TAG = "favorites"
 
-data class FavoritesScreen(val database: Database) : Screen {
+class FavoritesScreen : Screen {
     
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -31,6 +33,10 @@ data class FavoritesScreen(val database: Database) : Screen {
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
         val navigator = LocalNavigator.currentOrThrow
+        val database = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }.uiState.value.database
+        if (database == null) {
+            throw Exception()
+        }
 
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),

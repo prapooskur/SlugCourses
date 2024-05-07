@@ -27,6 +27,8 @@ import api.Type
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import cafe.adriel.voyager.core.model.rememberScreenModel
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Tag
 import com.pras.Database
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -36,7 +38,8 @@ import ui.data.HomeScreenModel
 import ui.elements.LargeDropdownMenu
 import ui.elements.LargeDropdownMenuMultiSelect
 
-data class HomeScreen(val database: Database) : Screen {
+
+class HomeScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
@@ -72,10 +75,14 @@ data class HomeScreen(val database: Database) : Screen {
 
             val term = termMap.values.toList()[selectedTermIndex]
 
-            val status = Json.encodeToString(Status.ALL)
+//            val status = Json.encodeToString(Status.ALL)
             val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
-            val encodedType = Json.encodeToString(classType)
-            val geList = Json.encodeToString(selectedGenEdList.toList())
+//            val encodedType = Json.encodeToString(classType)
+
+            // dear god why is this necessary
+            val geList = mutableListOf<String>()
+            geList.addAll(selectedGenEdList)
+
             val searchType = when (selectedStatusIndex) {
                 0 -> "Open"
                 else -> "All"
@@ -87,9 +94,9 @@ data class HomeScreen(val database: Database) : Screen {
 //            } else {
 //                "results/${term}/${uiState.searchQuery}/${status}/${encodedType}/${geList}/${searchType}"
 //            }
+//ta
 //
-//
-            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, selectedGenEdList, searchType, database))
+            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
 
         }
 

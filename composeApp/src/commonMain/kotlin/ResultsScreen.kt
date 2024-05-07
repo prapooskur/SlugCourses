@@ -2,18 +2,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.Text import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import api.Type
+import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -21,6 +17,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.pras.Database
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
 import kotlinx.coroutines.launch
+import ui.data.NavigatorScreenModel
 import ui.data.ResultsScreenModel
 import ui.elements.CourseCard
 
@@ -32,7 +29,6 @@ data class ResultsScreen(
     val type: List<Type>,
     val genEd: List<String>,
     val searchType: String,
-    val database: Database
 ) : Screen {
     @Composable
     override fun Content() {
@@ -40,6 +36,12 @@ data class ResultsScreen(
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
         val navigator = LocalNavigator.currentOrThrow
+        val database = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }.uiState.value.database
+        if (database == null) {
+            throw Exception()
+        }
+
+//        val type = listOf(Type.IN_PERSON, Type.ASYNC_ONLINE, Type.SYNC_ONLINE, Type.HYBRID)
 
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),

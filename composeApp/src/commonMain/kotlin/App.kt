@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
@@ -22,6 +23,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.*
+import ui.data.NavigatorScreenModel
 import ui.theme.SlugCoursesTheme
 
 data class BottomNavigationItem(
@@ -45,7 +47,9 @@ fun App(driverFactory: DriverFactory) {
             color = MaterialTheme.colorScheme.background
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                Navigator(HomeScreen(database)) { navigator ->
+                Navigator(HomeScreen()) { navigator ->
+                    val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+                    screenModel.setDb(database)
                     Scaffold(
                         // custom insets necessary to render behind nav bar
                         contentWindowInsets = WindowInsets(0.dp),
@@ -63,7 +67,7 @@ fun App(driverFactory: DriverFactory) {
                             val itemList = listOf(
                                 BottomNavigationItem(
                                     name = "Home",
-                                    route = HomeScreen(database),
+                                    route = HomeScreen(),
                                     selectedIcon = painterResource(Res.drawable.home_filled),
                                     icon = painterResource(Res.drawable.home_outlined),
                                     iconDescription = "Home"
@@ -77,7 +81,7 @@ fun App(driverFactory: DriverFactory) {
                                 ),
                                 BottomNavigationItem(
                                     name = "Favorites",
-                                    route = FavoritesScreen(database),
+                                    route = FavoritesScreen(),
                                     selectedIcon = painterResource(Res.drawable.star_filled),
                                     icon = painterResource(Res.drawable.star),
                                     iconDescription = "Favorite"
