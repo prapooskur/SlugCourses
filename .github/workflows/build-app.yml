@@ -123,6 +123,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: exe-build
-        path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0-1.x86_64.exe
+        path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0.exe
 
 # macos causes appimage build to fail
