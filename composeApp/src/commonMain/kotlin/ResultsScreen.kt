@@ -14,8 +14,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.pras.Database
-import com.pras.slugcourses.ui.elements.BoringNormalTopBar
+import ui.elements.BoringNormalTopBar
 import kotlinx.coroutines.launch
 import ui.data.NavigatorScreenModel
 import ui.data.ResultsScreenModel

@@ -4,7 +4,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import com.pras.slugcourses.ui.theme.*
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,

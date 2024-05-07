@@ -15,7 +15,6 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.pras.Database
 import kotlinx.coroutines.launch
 import ui.data.FavoritesScreenModel
 import ui.data.NavigatorScreenModel

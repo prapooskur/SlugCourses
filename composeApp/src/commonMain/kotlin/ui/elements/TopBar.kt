@@ -1,4 +1,4 @@
-package com.pras.slugcourses.ui.elements
+package ui.elements
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
