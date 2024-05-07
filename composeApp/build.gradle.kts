@@ -35,6 +35,8 @@ kotlin {
             isStatic = false
         }
     }
+
+    jvm("desktop")
     
     sourceSets {
         
@@ -44,6 +46,12 @@ kotlin {
 
             implementation(libs.sqldelight.android)
         }
+
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native)
+        }
+
+        val desktopMain by getting
 
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -73,8 +81,9 @@ kotlin {
             implementation(libs.sqldelight.ktx)
         }
 
-        iosMain.dependencies {
-            implementation(libs.sqldelight.native)
+        desktopMain.dependencies {
+            implementation(libs.sqldelight.jvm)
+            implementation(compose.desktop.currentOs)
         }
     }
 }
@@ -114,3 +123,14 @@ android {
 }
 
 
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
+            packageName = "com.pras.slugcourses"
+            packageVersion = "1.0.0"
+        }
+    }
+}

@@ -191,11 +191,11 @@ fun CourseDescriptionBox(
                         modifier = Modifier.clickable {
                             Logger.d(url, tag = TAG)
 //                            val decoded = URLDecoder.decode(url, "UTF-8")
-                            val url = "https://pisa.ucsc.edu/class_search/$url"
-                            if (url.isNotEmpty() /* && URLUtil.isValidUrl(url)*/) {
-                                uriHandler.openUri(url)
+                            val combinedUrl = "https://pisa.ucsc.edu/class_search/$url"
+                            if (combinedUrl.isNotEmpty() /* && URLUtil.isValidUrl(url)*/) {
+                                uriHandler.openUri(combinedUrl)
                             } else {
-                                Logger.e("Invalid URL: $url", tag = TAG)
+                                Logger.e("Invalid URL: $combinedUrl", tag = TAG)
                             }
                         }
                     )
