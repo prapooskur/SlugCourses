@@ -86,7 +86,7 @@ jobs:
     - name: Upload linux jar as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: rpm-build
+        name: linux-jar-build
         path: composeApp/build/compose/jars/com.pras.slugcourses-linux-x64-1.0.0.jar
 
   build-windows:
@@ -112,7 +112,7 @@ jobs:
     - name: Upload windows jar as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: exe-build
+        name: windows-jar-build
         path: composeApp/build/compose/jars/com.pras.slugcourses-windows-x64-1.0.0.jar
 
     - name: Build exe
