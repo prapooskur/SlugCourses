@@ -15,13 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import api.CourseInfo
 import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.pras.slugcourses.ui.elements.BoringNormalTopBar
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -39,19 +37,17 @@ data class DetailedResultsScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val viewModel = rememberScreenModel { DetailedResultsScreenModel() }
-        val uiState = viewModel.uiState.collectAsState()
+        val screenModel = rememberScreenModel { DetailedResultsScreenModel() }
+        val uiState = screenModel.uiState.collectAsState()
 
         LaunchedEffect(Unit) {
-            viewModel.screenModelScope.launch {
-                viewModel.getCourseInfo(term, courseNumber)
-            }
+            screenModel.getCourseInfo(term, courseNumber)
         }
 
         LaunchedEffect(uiState.value.errorMessage) {
             if (uiState.value.errorMessage.isNotBlank()) {
 //                shortToast(uiState.value.errorMessage, context)
-                viewModel.resetError()
+                screenModel.resetError()
             }
         }
 
