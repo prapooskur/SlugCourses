@@ -1,33 +1,38 @@
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Surface
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.*
-import androidx.compose.material3.NavigationBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import co.touchlab.kermit.Logger
 import com.pras.Database
 import com.pras.slugcourses.ChatScreen
 import com.pras.slugcourses.FavoritesScreen
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import slugcourses.composeapp.generated.resources.*
 import ui.theme.SlugCoursesTheme
 
 data class BottomNavigationItem(
     val name: String,
     val route: Screen,
-    val icon: ImageVector,
-    val selectedIcon: ImageVector,
+    val icon: Painter,
+    val selectedIcon: Painter,
     val iconDescription: String
 )
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
@@ -41,14 +46,16 @@ fun App(driverFactory: DriverFactory) {
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Navigator(HomeScreen(database)) { navigator ->
-                    FadeTransition(navigator)
                     Scaffold(
                         // custom insets necessary to render behind nav bar
                         contentWindowInsets = WindowInsets(0.dp),
-                        modifier = Modifier.fillMaxSize(),
                         content = { paddingValues ->
                             Box(Modifier.padding(paddingValues)) {
-                                CurrentScreen()
+                                FadeTransition(navigator) { screen ->
+                                    // todo see if there's a better way to do this?
+                                    screen.Content()
+                                }
+                                //CurrentScreen()
                             }
                         },
                         bottomBar = {
@@ -57,22 +64,22 @@ fun App(driverFactory: DriverFactory) {
                                 BottomNavigationItem(
                                     name = "Home",
                                     route = HomeScreen(database),
-                                    selectedIcon = Icons.Filled.Home,
-                                    icon = Icons.Outlined.Home,
+                                    selectedIcon = painterResource(Res.drawable.home_filled),
+                                    icon = painterResource(Res.drawable.home_outlined),
                                     iconDescription = "Home"
                                 ),
                                 BottomNavigationItem(
                                     name = "Chat",
                                     route = ChatScreen(),
-                                    selectedIcon = Icons.Filled.Home,
-                                    icon = Icons.Outlined.Home,
+                                    selectedIcon = painterResource(Res.drawable.chat_filled),
+                                    icon = painterResource(Res.drawable.chat_outlined),
                                     iconDescription = "Chat"
                                 ),
                                 BottomNavigationItem(
                                     name = "Favorites",
                                     route = FavoritesScreen(database),
-                                    selectedIcon = Icons.Filled.Home,
-                                    icon = Icons.Outlined.Home,
+                                    selectedIcon = painterResource(Res.drawable.star_filled),
+                                    icon = painterResource(Res.drawable.star),
                                     iconDescription = "Favorite"
                                 ),
                             )
@@ -101,12 +108,12 @@ fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>,
                 icon = {
                     if (index == selectedItem.intValue) {
                         Icon(
-                            imageVector = item.selectedIcon,
+                            painter = item.selectedIcon,
                             contentDescription = item.iconDescription
                         )
                     } else {
                         Icon(
-                            imageVector = item.icon,
+                            painter = item.icon,
                             contentDescription = item.iconDescription
                         )
                     }
