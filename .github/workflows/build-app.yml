@@ -62,7 +62,7 @@ jobs:
           name: app-build
           path: composeApp/build/outputs/apk/release/composeApp-release.apk
 
-  #./gradlew packageReleaseDistributionForCurrentOS
+  #./gradlew packageUberJarForCurrentOS
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -81,13 +81,13 @@ jobs:
 
     - name: Build app
       working-directory: .
-      run: ./gradlew packageReleaseDistributionForCurrentOS
+      run: ./gradlew packageUberJarForCurrentOS
 
-    - name: Upload appimage as artifact
+    - name: Upload linux jar as artifact
       uses: actions/upload-artifact@v4
       with:
         name: rpm-build
-        path: composeApp/build/compose/binaries/main/deb/com.pras.slugcourses.0.0-1_amd64.appimage
+        path: composeApp/build/compose/jars/com.pras.slugcourses-linux-x64-1.0.0.jar
 
   build-windows:
     runs-on: windows-latest
@@ -105,14 +105,24 @@ jobs:
       working-directory: .
       run: chmod +x ./gradlew
 
-    - name: Build app
+    - name: Build jar
       working-directory: .
-      run: ./gradlew packageReleaseDistributionForCurrentOS
+      run: ./gradlew packageUberJarForCurrentOS
 
-    - name: Upload exe as artifact
+    - name: Upload windows jar as artifact
       uses: actions/upload-artifact@v4
       with:
         name: exe-build
-        path: composeApp/build/compose/binaries/main/exe/com.pras.slugcourses-1.0.0.exe
+        path: composeApp/build/compose/jars/com.pras.slugcourses-windows-x64-1.0.0.jar
+
+    - name: Build exe
+      working-directory: .
+      run: ./gradlew packageReleaseExe
+
+    - name: Upload windows jar as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: exe-build
+        path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0-1.x86_64.exe
 
 # macos causes appimage build to fail

@@ -112,7 +112,9 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles("common-rules.pro")
         }
     }
     compileOptions {
@@ -130,9 +132,20 @@ compose.desktop {
         mainClass = "MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
+            targetFormats(TargetFormat.Rpm, TargetFormat.Exe)
             packageName = "com.pras.slugcourses"
             packageVersion = "1.0.0"
+
+            // needed for sqldelight
+            modules("java.sql")
+        }
+
+        buildTypes.release.proguard {
+            // enabling proguard causes ktor to fail
+            isEnabled.set(false)
+            obfuscate.set(false)
+            configurationFiles.from(project.file("common-rules.pro"))
+            configurationFiles.from(project.file("desktop-rules.pro"))
         }
     }
 }
