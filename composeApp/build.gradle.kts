@@ -114,7 +114,10 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles("common-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "common-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -144,8 +147,7 @@ compose.desktop {
             // enabling proguard causes ktor to fail
             isEnabled.set(false)
             obfuscate.set(false)
-            configurationFiles.from(project.file("common-rules.pro"))
-            configurationFiles.from(project.file("desktop-rules.pro"))
+            configurationFiles.from(project.file("common-rules.pro"), project.file("desktop-rules.pro"))
         }
     }
 }
