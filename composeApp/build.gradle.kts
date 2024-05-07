@@ -145,8 +145,8 @@ compose.desktop {
 
         buildTypes.release.proguard {
             // enabling proguard causes ktor to fail
-            isEnabled.set(false)
-            obfuscate.set(false)
+            isEnabled.set(true)
+//            obfuscate.set(true)
             configurationFiles.from(project.file("common-rules.pro"), project.file("desktop-rules.pro"))
         }
     }
