@@ -83,7 +83,12 @@ kotlin {
 
         desktopMain.dependencies {
             implementation(libs.sqldelight.jvm)
-            implementation(compose.desktop.currentOs)
+            //implementation(compose.desktop.currentOs)
+            implementation(compose.desktop.linux_x64)
+            implementation(compose.desktop.linux_arm64)
+            implementation(compose.desktop.windows_x64)
+            implementation(compose.desktop.macos_x64)
+            implementation(compose.desktop.macos_arm64)
         }
     }
 }
@@ -142,7 +147,7 @@ compose.desktop {
 
         buildTypes.release.proguard {
             // enabling proguard causes ktor to fail
-            isEnabled.set(false)
+            isEnabled.set(true)
 //            obfuscate.set(true)
             configurationFiles.from(project.file("common-rules.pro"), project.file("desktop-rules.pro"))
         }
