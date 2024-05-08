@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
@@ -63,7 +60,6 @@ fun App(driverFactory: DriverFactory) {
                             }
                         },
                         bottomBar = {
-                            val index = remember { mutableIntStateOf(0) }
                             val itemList = listOf(
                                 BottomNavigationItem(
                                     name = "Home",
@@ -89,7 +85,7 @@ fun App(driverFactory: DriverFactory) {
                             )
 
                             if (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen) {
-                                BottomNavigationBar(navigator, itemList, index)
+                                BottomNavigationBar(navigator, itemList)
                             }
                         }
                     )
@@ -103,14 +99,21 @@ fun App(driverFactory: DriverFactory) {
 
 
 @Composable
-fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>, selectedItem: MutableIntState) {
+fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>) {
+    fun isSelected(index: Int): Boolean {
+        return when(index) {
+            0 -> navigator.lastItem is HomeScreen
+            1 -> navigator.lastItem is ChatScreen
+            else -> navigator.lastItem is FavoritesScreen
+        }
+    }
     NavigationBar {
         items.forEachIndexed { index, item ->
             Logger.d(item.route.toString(), tag = "BottomBar item")
             Logger.d(navigator.lastItem.toString(), tag = "BottomBar home")
             NavigationBarItem(
                 icon = {
-                    if (index == selectedItem.intValue) {
+                    if (isSelected(index)) {
                         Icon(
                             painter = item.selectedIcon,
                             contentDescription = item.iconDescription
@@ -123,10 +126,9 @@ fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>,
                     }
                 },
                 label = { Text(item.name) },
-                selected = index == selectedItem.intValue,
+                selected = isSelected(index),
                 onClick = {
-                    if (selectedItem.intValue != index) {
-                        selectedItem.intValue = index
+                    if (!isSelected(index)) {
                         navigator.popUntilRoot()
                         navigator.push(item.route)
                     }
