@@ -1,5 +1,6 @@
 package com.pras.slugcourses
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -10,11 +11,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import ui.data.FavoritesScreenModel
 import ui.data.NavigatorScreenModel
@@ -36,6 +41,8 @@ class FavoritesScreen : Screen {
         if (database == null) {
             throw Exception()
         }
+//        val favorites: Set<String> = database.favoritesQueries.selectAll().executeAsList().toSet()
+        val favoriteFlow = database.favoritesQueries.selectAll().asFlow().mapToList(Dispatchers.IO).collectAsState(initial = emptySet())
 
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
@@ -58,20 +65,25 @@ class FavoritesScreen : Screen {
                 ) {
                     if (uiState.dataLoaded) {
                         val response = uiState.favoritesList
-                        val favorites: Set<String> = database.favoritesQueries.selectAll().executeAsList().toSet()
                         if (response.isNotEmpty()) {
                             items(response.size) { id ->
                                 val course = response[id]
-                                CourseCard(
-                                    course = course,
-                                    navigator = navigator,
-                                    isFavorited = favorites.contains(course.id),
-                                    onFavorite = {
-                                        coroutineScope.launch {
-                                            screenModel.handleFavorite(course, database)
+                                AnimatedVisibility(
+                                    favoriteFlow.value.contains(course.id),
+                                    enter = fadeIn(),
+                                    exit = fadeOut() + slideOutVertically() + shrinkVertically()
+                                ) {
+                                    CourseCard(
+                                        course = course,
+                                        navigator = navigator,
+                                        isFavorited = favoriteFlow.value.contains(course.id),
+                                        onFavorite = {
+                                            coroutineScope.launch {
+                                                screenModel.handleFavorite(course, database)
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         } else {
                             item {
