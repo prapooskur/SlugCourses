@@ -4,7 +4,7 @@ import api.Course
 import cafe.adriel.voyager.core.model.ScreenModel
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import com.pras.slugcourses.ui.getSupabaseClient
+import ui.getSupabaseClient
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order

@@ -14,8 +14,6 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import com.pras.slugcourses.ChatScreen
-import com.pras.slugcourses.FavoritesScreen
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview

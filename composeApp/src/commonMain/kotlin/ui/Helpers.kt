@@ -1,4 +1,4 @@
-package com.pras.slugcourses.ui
+package ui
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
@@ -19,15 +19,3 @@ fun getSupabaseClient(): SupabaseClient {
         install(Postgrest)
     }
 }
-
-//@Serializable
-//data class UserData (
-//    val user_id: String,
-//    val fcm_token: String,
-//    val favorites: List<String>
-//)
-//
-//@Serializable
-//data class FavoritesData (
-//    val favorites: List<String>
-//)
