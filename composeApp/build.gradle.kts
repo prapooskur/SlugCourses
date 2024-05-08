@@ -79,8 +79,6 @@ kotlin {
             implementation(libs.ktor.cio)
 
             implementation(libs.sqldelight.ktx)
-
-//            implementation(libs.kotlinx.coroutines)
         }
 
         desktopMain.dependencies {
@@ -128,7 +126,6 @@ android {
         debugImplementation(libs.compose.ui.tooling)
     }
 }
-
 
 compose.desktop {
     application {

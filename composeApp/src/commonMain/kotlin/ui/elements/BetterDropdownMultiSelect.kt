@@ -104,8 +104,9 @@ fun <T> LargeDropdownMenuMultiSelect(
         Dialog(
             onDismissRequest = {
                 //reset list
-                selectedItems.clear()
-                selectedItems.addAll(copy)
+                // kind of clunky, disabled
+//                selectedItems.clear()
+//                selectedItems.addAll(copy)
 
                 expanded = false
             },
