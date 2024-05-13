@@ -1,3 +1,4 @@
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,10 +34,11 @@ data class BottomNavigationItem(
 @Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
-    val driver = driverFactory.createDriver()
-    val database = Database(driver)
-
-    SlugCoursesTheme {
+    val database: Database = createDatabase(driverFactory)
+    SlugCoursesTheme(
+        darkTheme = isSystemInDarkTheme(),
+        dynamicColor = true,
+    ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -89,12 +91,9 @@ fun App(driverFactory: DriverFactory) {
                     )
                 }
             }
-
         }
     }
 }
-
-
 
 @Composable
 fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>) {
