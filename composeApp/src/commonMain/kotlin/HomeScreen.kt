@@ -36,7 +36,7 @@ class HomeScreen : Screen {
         val uiState by screenModel.uiState.collectAsState()
 
         val termMap = mapOf(
-            "Fall 2024"   to 2228,
+            "Fall 2024"   to 2248,
             "Summer 2024" to 2244,
             "Spring 2024" to 2242,
             "Winter 2024" to 2240,
