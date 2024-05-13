@@ -133,7 +133,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     return sections
             
 
-term_list = [2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
+term_list = [2248, 2244, 2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
 
 load_dotenv()
 url: str = os.environ.get("SUPABASE_URL")
@@ -155,10 +155,14 @@ if len(sys.argv) > 1:
             print("scraping "+str(sys.argv[1]))
             sections = queryPisa(sys.argv[1], do_gened)
             supabase.table("courses").upsert(sections).execute()
+        elif "-g" in sys.argv:
+            term = term_list[0]
+            print("scraping "+str(term))
+            sections = queryPisa(term, True)
+            supabase.table("courses").upsert(sections).execute()
 else:
-    term = 2242
+    terms = [2244, 2248]
     print("scraping "+str(term))
-    sections = queryPisa(term, False)
-    supabase.table("courses").upsert(sections).execute()
-    
-
+    for term in terms:
+        sections = queryPisa(term, False)
+        supabase.table("courses").upsert(sections).execute()
