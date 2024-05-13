@@ -9,6 +9,10 @@ from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 def termToQuarterName(term : str) -> str:
     match term:
+        case "2248":
+            return "Fall 2024"
+        case "2244":
+            return "Summer 2024"
         case "2242":
             return "Spring 2024"
         case "2240":
@@ -32,7 +36,7 @@ def termToQuarterName(term : str) -> str:
 
 def populate():
     print("updating cache...")
-    terms = ["2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
+    terms = ["2248", "2244", "2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
     classNums = []
     addedNums = set()
     for term in terms:
