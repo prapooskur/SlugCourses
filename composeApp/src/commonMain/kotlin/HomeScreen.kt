@@ -187,6 +187,9 @@ class HomeScreen : Screen {
                     )
                 }
             }
+            item {
+                Spacer(Modifier.padding(bottom=56.dp))
+            }
         }
     }
 }
