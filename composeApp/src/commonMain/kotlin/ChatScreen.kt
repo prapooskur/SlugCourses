@@ -39,13 +39,13 @@ class ChatScreen : Screen {
     override fun Content() {
         val sendMessage = remember { mutableStateOf(false) }
 
-        val viewModel = rememberScreenModel { ChatScreenModel() }
-        val uiState = viewModel.uiState.collectAsState()
+        val screenModel = rememberScreenModel { ChatScreenModel() }
+        val uiState = screenModel.uiState.collectAsState()
 
         LaunchedEffect(sendMessage.value) {
             if (sendMessage.value) {
                 try {
-                    viewModel.sendMessage()
+                    screenModel.sendMessage()
                 } catch (e: Exception) {
 //                    Log.d(TAG, e.toString())
 //                    shortToast(e.message ?: "error: no exception message", context)
@@ -72,15 +72,15 @@ class ChatScreen : Screen {
                         items(uiState.value.messageList) { chat ->
                             Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
                                 when (chat.author) {
-                                    Author.USER -> ChatMessageBubble(chat.message)
-                                    Author.SYSTEM -> ChatResponseBubble(chat.message, incomplete = (chat.message == "|||"))
+                                    Author.USER -> ChatMessageBubble(chat.message.trimEnd())
+                                    Author.SYSTEM -> ChatResponseBubble(chat.message.trimEnd(), incomplete = (chat.message == "|||"))
                                 }
                             }
                         }
                     }
                 },
                 bottomBar = {
-                    ChatMessageBar(viewModel, sendMessage)
+                    ChatMessageBar(screenModel, sendMessage)
                 }
             )
         }
