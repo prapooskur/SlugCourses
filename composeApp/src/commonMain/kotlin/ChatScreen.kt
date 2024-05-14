@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import co.touchlab.kermit.Logger
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
 import ui.data.Author
 import ui.data.ChatScreenModel
 
@@ -157,10 +159,17 @@ fun ChatMessageBubble(message: String){
                 shape = ChatMessageShape
             ) {
                 SelectionContainer {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                        modifier = Modifier.padding(16.dp)
+//                    Text(
+//                        text = message,
+//                        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+//                        modifier = Modifier.padding(16.dp)
+//                    )
+                    Markdown(
+                        content = message,
+                        modifier = Modifier.padding(16.dp),
+                        colors = markdownColor(LocalContentColor.current)
+                        //typography = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+                        //modifier = Modifier.padding(16.dp)
                     )
                 }
             }
@@ -177,10 +186,12 @@ fun ChatResponseBubble(response: String, incomplete: Boolean){
         ) {
             if (!incomplete) {
                 SelectionContainer {
-                    Text(
-                        text = response,
-                        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                        modifier = Modifier.padding(16.dp)
+                    Markdown(
+                        content = response,
+                        modifier = Modifier.padding(16.dp),
+                        colors = markdownColor(LocalContentColor.current)
+                        //typography = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+                        //modifier = Modifier.padding(16.dp)
                     )
                 }
             } else {

@@ -79,6 +79,9 @@ kotlin {
             implementation(libs.ktor.cio)
 
             implementation(libs.sqldelight.ktx)
+            
+            implementation(libs.markdown.renderer)
+            implementation(libs.markdown.renderer.m3)
         }
 
         desktopMain.dependencies {
