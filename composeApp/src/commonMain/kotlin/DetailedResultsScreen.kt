@@ -206,7 +206,7 @@ fun CourseDescriptionBox(
                 HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        courseInfo.primary_section.description,
+                        courseInfo.primary_section.description.trimEnd(),
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
@@ -246,7 +246,7 @@ fun CourseRequirementsBox(
                 HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        courseInfo.primary_section.requirements,
+                        courseInfo.primary_section.requirements.trimEnd(),
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
@@ -286,7 +286,7 @@ fun CourseNotesBox(
                 for (note in courseInfo.notes) {
                     Row(Modifier.fillMaxWidth()) {
                         Text(
-                            note,
+                            note.trimEnd(),
                             modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                         )
                     }

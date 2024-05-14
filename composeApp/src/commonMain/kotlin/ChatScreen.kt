@@ -2,6 +2,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
@@ -52,32 +53,37 @@ class ChatScreen : Screen {
                     sendMessage.value = false
                 }
             }
-
-
         }
-        Scaffold(
-            content = { paddingValues ->
-                LazyColumn(
-                    Modifier
-                        .padding(paddingValues)
-                        .padding(horizontal = 8.dp)
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    items(uiState.value.messageList) { chat ->
-                        Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
-                            when (chat.author) {
-                                Author.USER -> ChatMessageBubble(chat.message)
-                                Author.SYSTEM -> ChatResponseBubble(chat.message, incomplete = (chat.message == "|||"))
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Scaffold(
+                modifier = Modifier.widthIn(max = 1200.dp),
+                content = { paddingValues ->
+                    LazyColumn(
+                        Modifier
+                            .padding(paddingValues)
+                            .padding(horizontal = 8.dp)
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        items(uiState.value.messageList) { chat ->
+                            Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
+                                when (chat.author) {
+                                    Author.USER -> ChatMessageBubble(chat.message)
+                                    Author.SYSTEM -> ChatResponseBubble(chat.message, incomplete = (chat.message == "|||"))
+                                }
                             }
                         }
                     }
+                },
+                bottomBar = {
+                    ChatMessageBar(viewModel, sendMessage)
                 }
-            },
-            bottomBar = {
-                ChatMessageBar(viewModel, sendMessage)
-            }
-        )
+            )
+        }
     }
 
 }
@@ -149,11 +155,13 @@ fun ChatMessageBubble(message: String){
                 color = MaterialTheme.colorScheme.primary,
                 shape = ChatMessageShape
             ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                    modifier = Modifier.padding(16.dp)
-                )
+                SelectionContainer {
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }
@@ -167,18 +175,18 @@ fun ChatResponseBubble(response: String, incomplete: Boolean){
             shape = ChatResponseShape
         ) {
             if (!incomplete) {
-                Text(
-                    text = response,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                    modifier = Modifier.padding(16.dp)
-                )
+                SelectionContainer {
+                    Text(
+                        text = response,
+                        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             } else {
                 Row(Modifier.fillMaxWidth(), Arrangement.Center, Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.padding(16.dp))
                 }
-
             }
-
         }
     }
 }

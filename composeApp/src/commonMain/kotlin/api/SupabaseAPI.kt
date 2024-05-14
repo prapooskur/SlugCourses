@@ -89,12 +89,21 @@ suspend fun supabaseQuery(
                 ilike("course_letter", courseLetter)
             }
             if(query.isNotBlank()) {
-                textSearch(
-                    column = "name",
-                    query = query,
-                    config = "english",
-                    textSearchType = TextSearchType.NONE
-                )
+                or {
+                    textSearch(
+                        column = "short_name",
+                        query = query,
+                        config = "english",
+                        textSearchType = TextSearchType.WEBSEARCH
+                    )
+                    textSearch(
+                        column = "name",
+                        query = query,
+                        config = "english",
+                        textSearchType = TextSearchType.WEBSEARCH
+                    )
+                }
+
             }
             if(ge.isNotEmpty()) {
                 isIn("gen_ed", ge)
