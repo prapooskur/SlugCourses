@@ -22,6 +22,7 @@ supabase = "2.4.1"
 ktor = "2.3.10"
 sqlDelight = "2.0.2"
 markdown-renderer = "0.16.0"
+foundationAndroid = "1.6.7"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -49,6 +50,7 @@ sqldelight-jvm = { group = "app.cash.sqldelight", name = "sqlite-driver", versio
 sqldelight-ktx = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqlDelight" }
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdown-renderer" }
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

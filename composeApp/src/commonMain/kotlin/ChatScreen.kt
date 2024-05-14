@@ -1,6 +1,7 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -44,17 +45,26 @@ class ChatScreen : Screen {
 
         val screenModel = rememberScreenModel { ChatScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
+        val listState = rememberLazyListState()
 
         LaunchedEffect(sendMessage.value) {
             if (sendMessage.value) {
                 try {
                     screenModel.sendMessage()
+                    listState.scrollToItem(uiState.value.messageList.lastIndex, 9999)
                 } catch (e: Exception) {
                     Logger.d(e.toString(), tag=TAG)
 //                    shortToast(e.message ?: "error: no exception message", context)
                 } finally {
                     sendMessage.value = false
                 }
+            }
+        }
+
+        LaunchedEffect(uiState.value.messageList[uiState.value.messageList.lastIndex]) {
+            // force scroll to bottom
+            if (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1 && !listState.isScrollInProgress) {
+                listState.scrollToItem(uiState.value.messageList.lastIndex, 9999)
             }
         }
 
@@ -70,7 +80,8 @@ class ChatScreen : Screen {
                             .padding(paddingValues)
                             .padding(horizontal = 8.dp)
                             .fillMaxSize(),
-                        verticalArrangement = Arrangement.Bottom
+                        verticalArrangement = Arrangement.Bottom,
+                        state = listState
                     ) {
                         items(uiState.value.messageList) { chat ->
                             Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
