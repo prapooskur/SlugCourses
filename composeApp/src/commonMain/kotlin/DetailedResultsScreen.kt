@@ -76,6 +76,9 @@ data class DetailedResultsScreen(
                                 if (courseInfo.primary_section.requirements.isNotEmpty()) {
                                     CourseRequirementsBox(courseInfo = courseInfo)
                                 }
+                                if (courseInfo.notes.isNotEmpty()) {
+                                    CourseNotesBox(courseInfo = courseInfo)
+                                }
                                 CourseMeetingsBox(courseInfo = courseInfo)
                                 if (courseInfo.secondary_sections.isNotEmpty()) {
                                     CourseSectionsBox(courseInfo = courseInfo)
@@ -248,6 +251,46 @@ fun CourseRequirementsBox(
                     )
                 }
 
+            }
+        }
+    }
+}
+
+@Composable
+fun CourseNotesBox(
+    courseInfo: CourseInfo
+) {
+    Box(
+        Modifier
+            .padding(12.dp)
+            .fillMaxWidth()
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(PADDING_VALUE - 4.dp)
+            ) {
+                Row {
+                    Text(
+                        text = "Class Notes",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                for (note in courseInfo.notes) {
+                    Row(Modifier.fillMaxWidth()) {
+                        Text(
+                            note,
+                            modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }

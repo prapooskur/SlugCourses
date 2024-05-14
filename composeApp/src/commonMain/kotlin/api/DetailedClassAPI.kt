@@ -14,7 +14,8 @@ private const val TAG = "DetailedClassAPI"
 data class CourseInfo(
     val primary_section: PrimarySection = PrimarySection(),
     val meetings: List<Meeting> = listOf(),
-    val secondary_sections: List<SecondarySection> = listOf()
+    val secondary_sections: List<SecondarySection> = listOf(),
+    val notes: List<String> = listOf()
 )
 
 @Serializable
