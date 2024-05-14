@@ -115,7 +115,9 @@ class HomeScreen : Screen {
                     }
                 ) { /* do nothing */ }
 
-                Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp)) {
+                val widthMax = 600.dp
+
+                Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp).widthIn(max=widthMax)) {
                     LargeDropdownMenu(
                         modifier = Modifier
                             .weight(.5f)
@@ -149,7 +151,7 @@ class HomeScreen : Screen {
                     )
                 }
 
-                Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp)) {
+                Row(Modifier.padding(horizontal = 32.dp, vertical = 4.dp).widthIn(max=widthMax)) {
                     LargeDropdownMenuMultiSelect(
                         modifier = Modifier
                             .weight(.5f)

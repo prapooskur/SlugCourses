@@ -70,14 +70,17 @@ data class DetailedResultsScreen(
                 ) {
                     if (uiState.value.dataLoaded) {
                         item {
-                            CourseDetailBox(courseInfo = courseInfo)
-                            CourseDescriptionBox(courseInfo = courseInfo, url = url)
-                            CourseRequirementsBox(courseInfo = courseInfo)
-                            CourseMeetingsBox(courseInfo = courseInfo)
-                            if (courseInfo.secondary_sections.isNotEmpty()) {
-                                CourseSectionsBox(courseInfo = courseInfo)
+                            Column(Modifier.widthIn(max=800.dp)) {
+                                CourseDetailBox(courseInfo = courseInfo)
+                                CourseDescriptionBox(courseInfo = courseInfo, url = url)
+                                if (courseInfo.primary_section.requirements.isNotEmpty()) {
+                                    CourseRequirementsBox(courseInfo = courseInfo)
+                                }
+                                CourseMeetingsBox(courseInfo = courseInfo)
+                                if (courseInfo.secondary_sections.isNotEmpty()) {
+                                    CourseSectionsBox(courseInfo = courseInfo)
+                                }
                             }
-
                         }
                     } else {
                         item {
