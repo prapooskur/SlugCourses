@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import co.touchlab.kermit.Logger
 import ui.data.Author
 import ui.data.ChatScreenModel
 
@@ -47,7 +48,7 @@ class ChatScreen : Screen {
                 try {
                     screenModel.sendMessage()
                 } catch (e: Exception) {
-//                    Log.d(TAG, e.toString())
+                    Logger.d(e.toString(), tag=TAG)
 //                    shortToast(e.message ?: "error: no exception message", context)
                 } finally {
                     sendMessage.value = false
