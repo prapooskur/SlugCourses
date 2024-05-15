@@ -1,30 +1,21 @@
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -105,6 +96,7 @@ class ChatScreen : Screen {
 private const val ALPHA_FULL = 1f
 private const val ALPHA_DISABLED = 0.38f
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boolean>) {
     val uiState = screenModel.uiState.collectAsState()
@@ -125,6 +117,57 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
             shape = RoundedCornerShape(16.dp),
             placeholder = { Text("Type a message...") },
         )
+        //external circle
+        val sendActive = !sendMessage.value && uiState.value.message.isNotBlank()
+        Box(
+            contentAlignment= Alignment.Center,
+            modifier = Modifier
+                .size(56.dp)
+                .aspectRatio(1f)
+                .padding(4.dp)
+                .clip(CircleShape)
+                .background(
+                    if (sendActive) {
+                        ButtonDefaults.filledTonalButtonColors().containerColor
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors().disabledContainerColor
+                    }
+                )
+                .alpha(
+                    if (sendActive) {
+                        ALPHA_FULL
+                    } else {
+                        ALPHA_DISABLED
+                    }
+                )
+                .combinedClickable (
+                    onClick = {
+                        if (sendActive) {
+                            sendMessage.value = true
+                        }
+                    },
+                    onLongClick = {
+                        if (!sendMessage.value) {
+                            screenModel.resetMessages()
+                        }
+                    }
+                )
+        ){
+            //internal circle with icon
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Send,
+                contentDescription = "Click to send, hold to clear messages",
+                modifier = Modifier
+                    .size(ButtonDefaults.IconSize),
+//                    .padding(2.dp),
+                tint = if (sendActive) {
+                    ButtonDefaults.filledTonalButtonColors().contentColor
+                } else {
+                    ButtonDefaults.filledTonalButtonColors().disabledContentColor
+                }
+            )
+        }
+        /*
         Button(
             modifier = Modifier
                 .height(56.dp)
@@ -149,6 +192,7 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
                     modifier = Modifier.size(ButtonDefaults.IconSize)
             )
         }
+        */
     }
 }
 

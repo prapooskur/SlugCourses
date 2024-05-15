@@ -77,12 +77,13 @@ kotlin {
 
             implementation(libs.ktor.core)
             implementation(libs.ktor.cio)
+            implementation(libs.ktor.negotiation)
+            implementation(libs.ktor.serialization)
 
             implementation(libs.sqldelight.ktx)
             
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.m3)
-            implementation(libs.androidx.foundation.android)
         }
 
         desktopMain.dependencies {
