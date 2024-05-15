@@ -4,6 +4,7 @@ import api.Course
 import api.Type
 import api.supabaseQuery
 import cafe.adriel.voyager.core.model.ScreenModel
+import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val TAG = "ResultsScreenModel"
@@ -45,32 +47,32 @@ class ResultsScreenModel : ScreenModel {
 //        if (useCourseNumber)  Log.d(TAG, "Using course number")
 
         try {
-            withContext(Dispatchers.IO) {
-                val result = supabaseQuery(
-                    term = term,
-                    department = if (useDepartment) department.uppercase() else "",
-                    courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
-                    courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
-                    query = if (!useDepartment && !useCourseNumber) query else "",
-                    ge = genEd,
-                    asynchronous = type.contains(Type.ASYNC_ONLINE),
-                    hybrid = type.contains(Type.HYBRID),
-                    synchronous = type.contains(Type.SYNC_ONLINE),
-                    inPerson = type.contains(Type.IN_PERSON),
-                    searchType = searchType,
-                )
-                Logger.d(result.toString(), tag = TAG)
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        resultsList = result,
-                        dataLoaded = true
+            screenModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    val result = supabaseQuery(
+                        term = term,
+                        department = if (useDepartment) department.uppercase() else "",
+                        courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
+                        courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
+                        query = if (!useDepartment && !useCourseNumber) query else "",
+                        ge = genEd,
+                        asynchronous = type.contains(Type.ASYNC_ONLINE),
+                        hybrid = type.contains(Type.HYBRID),
+                        synchronous = type.contains(Type.SYNC_ONLINE),
+                        inPerson = type.contains(Type.IN_PERSON),
+                        searchType = searchType,
                     )
+                    Logger.d(result.toString(), tag = TAG)
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            resultsList = result,
+                            dataLoaded = true
+                        )
+                    }
+                    Logger.d(_uiState.toString(), tag = TAG)
                 }
-                Logger.d(_uiState.toString(), tag = TAG)
             }
-
         }  catch (e: Exception) {
-//            Log.d(TAG, "An error occurred: ${e.message}")
             _uiState.update { currentState ->
                 currentState.copy(
                     errorMessage = "An error occurred: ${e.message}"

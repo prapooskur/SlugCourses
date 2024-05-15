@@ -16,14 +16,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import ui.data.Author
 import ui.data.ChatScreenModel
+import ui.data.NavigatorScreenModel
 
 
 private const val TAG = "ChatScreen"
@@ -36,6 +42,10 @@ class ChatScreen : Screen {
 
         val screenModel = rememberScreenModel { ChatScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
+
+        val navigator = LocalNavigator.currentOrThrow
+        val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+
         val listState = rememberLazyListState()
 
         LaunchedEffect(sendMessage.value) {
@@ -56,6 +66,12 @@ class ChatScreen : Screen {
             // force scroll to bottom
             if (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1 && !listState.isScrollInProgress) {
                 listState.scrollToItem(uiState.value.messageList.lastIndex, 9999)
+            }
+        }
+
+        LaunchedEffect(uiState.value.errorMessage) {
+            if (uiState.value.errorMessage.isNotBlank()) {
+                navScreenModel.uiState.value.snackbarHostState.showSnackbar(uiState.value.errorMessage)
             }
         }
 
@@ -101,7 +117,6 @@ private const val ALPHA_DISABLED = 0.38f
 fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boolean>) {
     val uiState = screenModel.uiState.collectAsState()
 
-    //todo pls fix
     Row(
         Modifier
             .padding(16.dp),
@@ -119,6 +134,7 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
         )
         //external circle
         val sendActive = !sendMessage.value && uiState.value.message.isNotBlank()
+        val haptics = LocalHapticFeedback.current
         Box(
             contentAlignment= Alignment.Center,
             modifier = Modifier
@@ -149,6 +165,7 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
                     onLongClick = {
                         if (!sendMessage.value) {
                             screenModel.resetMessages()
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         }
                     }
                 )
@@ -167,32 +184,6 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
                 }
             )
         }
-        /*
-        Button(
-            modifier = Modifier
-                .height(56.dp)
-                .padding(4.dp)
-                //.aspectRatio(1f)
-                .alpha(
-                    if (!sendMessage.value && uiState.value.message.isNotBlank()) {
-                        ALPHA_FULL
-                    } else {
-                        ALPHA_DISABLED
-                    }
-                ),
-            onClick = {
-                if (!sendMessage.value && uiState.value.message.isNotBlank()) {
-                    sendMessage.value = true
-                }
-            },
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Send message",
-                    modifier = Modifier.size(ButtonDefaults.IconSize)
-            )
-        }
-        */
     }
 }
 

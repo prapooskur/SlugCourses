@@ -56,7 +56,6 @@ fun App(driverFactory: DriverFactory) {
                                     // todo see if there's a better way to do this?
                                     screen.Content()
                                 }
-                                //CurrentScreen()
                             }
                         },
                         bottomBar = {
@@ -87,6 +86,9 @@ fun App(driverFactory: DriverFactory) {
                             if (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen) {
                                 BottomNavigationBar(navigator, itemList)
                             }
+                        },
+                        snackbarHost = {
+                            SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
                         }
                     )
                 }

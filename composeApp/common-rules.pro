@@ -2,3 +2,6 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn org.slf4j.impl.StaticMDCBinder
 -dontwarn org.slf4j.impl.StaticMarkerBinder
+-dontwarn java.awt.event.ActionListener
+-dontwarn javax.swing.SwingUtilities
+-dontwarn javax.swing.Timer

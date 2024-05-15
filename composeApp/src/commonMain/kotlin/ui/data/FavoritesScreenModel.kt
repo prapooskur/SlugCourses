@@ -2,6 +2,7 @@ package ui.data
 
 import api.Course
 import cafe.adriel.voyager.core.model.ScreenModel
+import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
 import ui.getSupabaseClient
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val TAG = "FavoritesViewModel"
@@ -31,19 +33,20 @@ class FavoritesScreenModel : ScreenModel {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
-    suspend fun getFavorites(database: Database) {
+    fun getFavorites(database: Database) {
         try {
-            withContext(Dispatchers.IO) {
-                val idList = database.favoritesQueries.selectAll().executeAsList()
-                val result = favoritesQuery(supabase, idList)
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        favoritesList = result,
-                        dataLoaded = true
-                    )
+            screenModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    val idList = database.favoritesQueries.selectAll().executeAsList()
+                    val result = favoritesQuery(supabase, idList)
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            favoritesList = result,
+                            dataLoaded = true
+                        )
+                    }
                 }
             }
-
         }  catch (e: Exception) {
             Logger.d("An error occurred: ${e.message}", tag = TAG)
             _uiState.update { currentState ->

@@ -3,7 +3,9 @@ package ui.data
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import cafe.adriel.voyager.core.model.ScreenModel
+import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -19,6 +21,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 
@@ -48,6 +51,7 @@ data class ChatScreenState(
             Author.SYSTEM
         )
     ),
+    val errorMessage: String = ""
 )
 
 private const val TAG = "ChatScreenModel"
@@ -83,54 +87,60 @@ class ChatScreenModel : ScreenModel {
         _uiState.value.messageList.add(chatMessage)
     }
 
-    suspend fun sendMessage() {
+    fun sendMessage() {
         try {
-            withContext(Dispatchers.IO) {
+            screenModelScope.launch {
+                withContext(Dispatchers.IO) {
 //                val message = uiState.value.message
-                addMessage(ChatMessage(uiState.value.message, Author.USER))
-                //Log.d(TAG, ChatMessage(uiState.value.message, Author.USER).toString())
+                    addMessage(ChatMessage(uiState.value.message, Author.USER))
+                    //Log.d(TAG, ChatMessage(uiState.value.message, Author.USER).toString())
 
-                clearMessage()
-                _uiState.value = _uiState.value.copy(active = true)
+                    clearMessage()
+                    _uiState.value = _uiState.value.copy(active = true)
 
-                addMessage(ChatMessage("|||", Author.SYSTEM))
+                    addMessage(ChatMessage("|||", Author.SYSTEM))
 
-                //queryChat(message, _uiState.value.messageList)
-                queryChatPost(_uiState.value.messageList)
+                    //queryChat(message, _uiState.value.messageList)
+                    queryChatPost(_uiState.value.messageList)
 
+                }
             }
         } catch (e: Exception) {
             Logger.d("Error: ${e.message}", tag = TAG)
+            _uiState.value = _uiState.value.copy(
+                errorMessage = e.message ?: "error: no exception message",
+                messageList = _uiState.value.messageList.dropLast(1).toMutableStateList()
+            )
         } finally {
             _uiState.value = _uiState.value.copy(active = false)
         }
     }
 
-    suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>) {
-        val response = mutableStateOf("")
-
-        client.prepareGet(CHAT_URL + query.encodeURLPath()) .execute { httpResponse ->
-            val channel: ByteReadChannel = httpResponse.body()
-            while (!channel.isClosedForRead) {
-                val line = channel.readUTF8Line(99999) ?: continue
-
-                if (line.isBlank()) {
-                    response.value+="\n"
-                } else {
-                    response.value+=line
-                    if (!channel.isClosedForRead) {
-                        response.value+="\n"
-                    }
-                }
-
-                chatList[chatList.lastIndex] = (ChatMessage(
-                    response.value,
-                    Author.SYSTEM
-                ))
-                //Log.d(TAG, line)
-            }
-        }
-    }
+//    suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>) {
+//        val response = mutableStateOf("")
+//
+//        client.prepareGet(CHAT_URL + query.encodeURLPath()) .execute { httpResponse ->
+//            val channel: ByteReadChannel = httpResponse.body()
+//            while (!channel.isClosedForRead) {
+//                val line = channel.readUTF8Line(99999) ?: continue
+//
+//                if (line.isBlank()) {
+//                    response.value+="\n"
+//                } else {
+//                    response.value+=line
+//                    if (!channel.isClosedForRead) {
+//                        response.value+="\n"
+//                    }
+//                }
+//
+//                chatList[chatList.lastIndex] = (ChatMessage(
+//                    response.value,
+//                    Author.SYSTEM
+//                ))
+//                //Log.d(TAG, line)
+//            }
+//        }
+//    }
 
     suspend fun queryChatPost(chatList: SnapshotStateList<ChatMessage>) {
         val response = mutableStateOf("")
@@ -164,7 +174,8 @@ class ChatScreenModel : ScreenModel {
     private companion object {
         val client = HttpClient(CIO) {
             install(HttpTimeout) {
-                requestTimeoutMillis = 10000
+                connectTimeoutMillis = 60000
+                socketTimeoutMillis = 10000
             }
             install(ContentNegotiation) {
                 json()

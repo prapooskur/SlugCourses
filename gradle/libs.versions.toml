@@ -22,6 +22,8 @@ supabase = "2.4.1"
 ktor = "2.3.10"
 sqlDelight = "2.0.2"
 markdown-renderer = "0.16.0"
+coroutines-version = "1.8.1"
+
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -39,6 +41,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 voyager-navigator = { group = "cafe.adriel.voyager", name = "voyager-navigator", version.ref = "voyager" }
 voyager-screenmodel = { group = "cafe.adriel.voyager", name = "voyager-screenmodel", version.ref = "voyager" }
 voyager-transitions = { group = "cafe.adriel.voyager", name = "voyager-transitions", version.ref = "voyager" }
+coroutines-swing = {group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "coroutines-version"}
 kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit"}
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt", version.ref = "supabase" }
 ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }

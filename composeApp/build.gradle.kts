@@ -84,6 +84,8 @@ kotlin {
             
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.m3)
+
+            implementation(libs.coroutines.swing)
         }
 
         desktopMain.dependencies {

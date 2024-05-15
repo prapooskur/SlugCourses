@@ -35,7 +35,8 @@ data class ResultsScreen(
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
         val navigator = LocalNavigator.currentOrThrow
-        val database = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }.uiState.value.database
+        val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+        val database = navScreenModel.uiState.value.database
         if (database == null) {
             throw Exception()
         }
@@ -114,6 +115,12 @@ data class ResultsScreen(
                 searchType
             )
             screenModel.getFavorites(database)
+        }
+
+        LaunchedEffect(screenModel.uiState.value.errorMessage) {
+            if (screenModel.uiState.value.errorMessage.isNotBlank()) {
+                navScreenModel.uiState.value.snackbarHostState.showSnackbar(screenModel.uiState.value.errorMessage)
+            }
         }
     }
 }
