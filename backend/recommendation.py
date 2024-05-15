@@ -11,7 +11,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
-
+from pydantic import BaseModel
+from typing import List
+from enum import Enum
 
 
 # create app and load .env
@@ -80,7 +82,7 @@ document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
 # create LLM
 genai.configure(api_key=geminiKey)
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 
 # uvicorn backend.recommendation:classRecommender
@@ -117,7 +119,6 @@ async def get_stream(userInput : str):
             yield chunk.text
         
     return StreamingResponse(stream_data())
-
 
 def docToDict(doc) -> dict:
     return {
