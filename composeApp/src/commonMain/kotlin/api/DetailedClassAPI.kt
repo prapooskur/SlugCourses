@@ -3,7 +3,6 @@ package api
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -75,7 +74,7 @@ data class SecondarySection(
 private val json = Json { ignoreUnknownKeys = true }
 
 suspend fun classAPIResponse(term: String, courseNum: String): CourseInfo {
-    val client = HttpClient(CIO)
+    val client = HttpClient()
     val url = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/${term}/${courseNum}"
     val response = client.get(url).body<String>()
 

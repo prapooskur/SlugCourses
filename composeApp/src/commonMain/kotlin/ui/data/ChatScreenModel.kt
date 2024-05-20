@@ -9,7 +9,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -172,7 +171,7 @@ class ChatScreenModel : ScreenModel {
     }
 
     private companion object {
-        val client = HttpClient(CIO) {
+        val client = HttpClient() {
             install(HttpTimeout) {
                 connectTimeoutMillis = 60000
                 socketTimeoutMillis = 10000
