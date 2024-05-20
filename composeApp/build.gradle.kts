@@ -32,6 +32,7 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
+            binaryOption("bundleId", "com.pras.slugcourses.SlugCoursesiOS")
             isStatic = false
         }
     }
@@ -106,7 +107,7 @@ kotlin {
 
 android {
     namespace = "com.pras.slugcourses"
-    compileSdkVersion(libs.versions.android.compileSdk.get().toInt())
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
