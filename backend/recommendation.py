@@ -11,9 +11,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
-from pydantic import BaseModel
-from typing import List
-from enum import Enum
 
 
 # create app and load .env

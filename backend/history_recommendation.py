@@ -108,19 +108,17 @@ def retrieve_courses(input: str):
     return finalizedPrompt
 
 
-conn = psycopg2.connect("user=postgres.cdmaojsmfcuyscmphhjk password="+supaPass+" host=aws-0-us-west-1.pooler.supabase.com port=5432 dbname=postgres")
-conn.set_session(readonly=True)
 def query_course_database(sql_input: str):
     """
-    Queries the course SQL database (read-only). Use for queries about a specific class, instructor, or location.
-    Example: SELECT * FROM courses WHERE department = 'BME' AND course_number = 160
+    Queries the course SQL database (read-only). Use for queries about a specific class, instructor, department, or location.
+    Example: SELECT * FROM courses WHERE department = 'BME' AND course_number = 160 AND course_letter = ''
     Example: SELECT * FROM courses WHERE department = 'HIS' AND course_number = 80 AND course_letter = 'Y'
     Table: courses
     id	            Unique identifier for each course offering. Combines term and course number.
-    term	        The term a course is taught.  (2228 - Fall 2022, 2230 - Winter 2023, 2232 - Spring 2023, 2234 - Summer 2023, 2238 - Fall 2023, 2240 - Winter 2024, 2242 - Spring 2024, 2244 - Summer 2024, 2248 - Fall 2024, etc.)
+    term	        The term a course is taught. Only use if asked. (2228 - Fall 2022, 2230 - Winter 2023, 2232 - Spring 2023, 2234 - Summer 2023, 2238 - Fall 2023, 2240 - Winter 2024, 2242 - Spring 2024, 2244 - Summer 2024, 2248 - Fall 2024, etc.)
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
-    course_letter	Optional letter suffix for course number, used for further course differentiation.
+    course_letter	Optional letter suffix for course number. If no letter was specified, use '' instead.
     section_number	Numerical code to distinguish different sections of the same course within a term.
     short_name	    A concise title or abbreviation of the course (e.g., Math Methods I, Israel-Palestine, Adv Photography).
     name	        The full title of the course.
@@ -133,9 +131,13 @@ def query_course_database(sql_input: str):
     type	        Instruction mode (e.g., In Person, Asynchronous Online, Synchronous Online, Hybrid).
     enrolled	    Current enrollment status, showing the number of students enrolled and the capacity.
     status	        Whether the course is Open or Closed for enrollment.
-    url	            Link to the detailed course information page. Preprend "https://pisa.ucsc.edu/class_search/".
+    url	            Link to the detailed course information page.
     summer_session	Indicates which summer session a course belongs to (if applicable).
+    description     A description of the course and the topics it covers.
     """
+
+    conn = psycopg2.connect("user=postgres.cdmaojsmfcuyscmphhjk password="+supaPass+" host=aws-0-us-west-1.pooler.supabase.com port=6543 dbname=postgres")
+    conn.set_session(readonly=True)
 
     cur = conn.cursor()
     sql_input = sql_input.replace("\"","'").replace("\\","")
@@ -143,42 +145,49 @@ def query_course_database(sql_input: str):
 
     cur.execute(sql_input)
     output = cur.fetchall()
-    print(output)
+    # print(output)
 
     cur.close()
 
     return output
 
 
-def get_quarter_from_term(term_input: int):
-    """
-    Given a term from the database, returns a quarter.
-    """
-    print("matching "+str(term_input))
-    match term_input:
-        case 2248:
-            quarter = "Fall 2024"
-        case 2244:
-            quarter = "Summer 2024"
-        case 2242:
-            quarter = "Spring 2024"
-        case 2238:
-            quarter = "Fall 2023"
-        case 2234:
-            quarter = "Summer 2023"
-        case 2232:
-            quarter = "Spring 2023"
-        case 2230:
-            quarter = "Winter 2023"
-        case 2228:
-            quarter = "Fall 2023"
-        case _:
-            return term_input
-    return quarter
+# def get_quarter_from_term(term_input: int):
+#     """
+#     Given a term from the database, returns a quarter.
+#     """
+#     print("matching "+str(term_input))
+#     match term_input:
+#         case 2248:
+#             quarter = "Fall 2024"
+#         case 2244:
+#             quarter = "Summer 2024"
+#         case 2242:
+#             quarter = "Spring 2024"
+#         case 2240:
+#             quarter = "Winter 2024"
+#         case 2238:
+#             quarter = "Fall 2023"
+#         case 2234:
+#             quarter = "Summer 2023"
+#         case 2232:
+#             quarter = "Spring 2023"
+#         case 2230:
+#             quarter = "Winter 2023"
+#         case 2228:
+#             quarter = "Fall 2022"
+#         case _:
+#             return term_input
+#     return quarter
 
 # create LLM
+init_message = """
+You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
+The current term is Spring 2024. The next term is Summer 2024, followed by Fall 2024.
+"""
+tool_list=[retrieve_courses, query_course_database]
 genai.configure(api_key=geminiKey)
-model = genai.GenerativeModel('gemini-1.5-flash-latest',tools=[retrieve_courses, query_course_database, get_quarter_from_term])
+model = genai.GenerativeModel('gemini-1.5-flash-latest',tools=tool_list, system_instruction = init_message)
 
 class Author(str, Enum):
     USER = "USER"
@@ -191,31 +200,13 @@ class ChatMessage(BaseModel):
 class Chat(BaseModel):
     messages: List[ChatMessage]
 
-post_prompt_template = '''
-Given these documents, answer the question. 
-Documents:
-{% for doc in documents %}
-    {{ doc.content }}
-{% endfor %}
-Question: {{question}}
-Answer:'''
-
-init_message = """
-You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents.
-The current term is Spring 2024. The upcoming terms are Summer 2024 and Fall 2024.
-"""
-
-
 @classRecommender.post("/chat/")
-async def get_stream_history(chat: Chat):
+def get_stream_history(chat: Chat):
 
     finalized_messages = []
     
-    for message in chat.messages:
-        if message == chat.messages[0]:
-            finalized_messages.append({"role":"model", "parts": [init_message]})
-            
-        elif message.author == Author.USER:
+    for message in chat.messages[1:]:
+        if message.author == Author.USER:
             finalized_messages.append({"role":"user", "parts": [message.message]})
         else:
             finalized_messages.append({"role":"model", "parts": [message.message]})
@@ -224,11 +215,11 @@ async def get_stream_history(chat: Chat):
     print(finalized_messages)
     # (7) Send prompt to LLM
     #response = model.generate_content(finalized_messages, stream=True)
-    response = model.generate_content(finalized_messages, tools = [retrieve_courses, query_course_database, get_quarter_from_term], stream = True)
+    response = model.generate_content(finalized_messages, tools = tool_list, tool_config={'function_calling_config':'ANY'}, stream = True)
     fcall = False
     response.resolve()
+    function_calls = {}
     for part in response.parts:
-        function_calls = {}
         if fn := part.function_call:
             fcall = True
             function_calls[fn.name] = globals()[fn.name](**fn.args)
@@ -236,9 +227,21 @@ async def get_stream_history(chat: Chat):
         glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
         for fn, val in function_calls.items()
     ]
-    if fcall:   
+    while fcall:   
         finalized_messages.append({"role":"model", "parts": response_parts})
-        response = model.generate_content(finalized_messages, stream = True)
+        response = model.generate_content(finalized_messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+        response.resolve()
+        
+        fcall = False
+        function_calls = {}
+        for part in response.parts:
+            if fn := part.function_call:
+                fcall = True
+                function_calls[fn.name] = globals()[fn.name](**fn.args)
+        response_parts = [
+            glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
+            for fn, val in function_calls.items()
+        ]
 
     def stream_data():
         for chunk in response:
