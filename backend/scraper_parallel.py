@@ -13,7 +13,7 @@ MAX_RESULTS = "2000"
 
 # takes in a single panel from BS4 and parses it into a dictionary
 # delegate used in the multithreading in queryPisa
-def parseSinglePanel(panel, term: str, gened: bool) -> dict:
+def parseSinglePanel(panel, term: str, detailed: bool) -> dict:
 
     locations = len(panel.select(".fa-location-arrow"))
     summer = len(panel.select(".fa-calendar")) != 0
@@ -76,19 +76,28 @@ def parseSinglePanel(panel, term: str, gened: bool) -> dict:
         "status": panel.select("h2 .sr-only")[0].text.strip()
     }
 
-    if gened:
+    try:
+        int(section["course_number"])
+    except ValueError:
+        # print("invalid course_number", section["course_number"])
+        # only a few classes do this and they're all listed as "external", so skip if it's not valid so the upload doesn't fail.
+        return
+
+    if detailed:
         pisaApiResponse = json.loads(requests.get(PISA_API + f'{term}/{id}').text)
         if "primary_section" in pisaApiResponse:
             if "gened" in pisaApiResponse["primary_section"]:
                 section["gen_ed"] = pisaApiResponse["primary_section"]["gened"]
             if "title_long" in pisaApiResponse["primary_section"]:
                 section["name"] = pisaApiResponse["primary_section"]["title_long"]
+            if "description" in pisaApiResponse["primary_section"]:
+                section["description"] = pisaApiResponse["primary_section"]["description"]
 
     return section
 
 
 
-def queryPisa(term: str, gened: bool = False) -> list[dict]:
+def queryPisa(term: str, detailed: bool = False) -> list[dict]:
     info = {
         "action": "results",
         "binds[:term]": term,
@@ -116,7 +125,7 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     }
     sections = []
 
-    time.time()
+
     response = requests.post(URL, data=info)
     strainedSoup = SoupStrainer(class_="panel panel-default row") # doesnt help much tbh
     doc = BeautifulSoup(response.content, features='lxml', parse_only=strainedSoup)
@@ -125,10 +134,12 @@ def queryPisa(term: str, gened: bool = False) -> list[dict]:
     panels = doc.select(".panel.panel-default.row")
     
     with ThreadPoolExecutor() as executor:
-        future_to_section = {executor.submit(parseSinglePanel, panel, term, gened): panel for panel in panels}
+        future_to_section = {executor.submit(parseSinglePanel, panel, term, detailed): panel for panel in panels}
         for future in concurrent.futures.as_completed(future_to_section):
             section = future.result()
-            sections.append(section)
+            # if the course number isn't a number the function returns none, so a check is needed
+            if section:
+                sections.append(section)
 
     return sections
             
@@ -143,26 +154,28 @@ supabase: Client = create_client(url, key)
 
 
 if len(sys.argv) > 1:
+    do_detail = "-g" in sys.argv
+    if do_detail:
+        print("getting detailed info")
     if "-a" in sys.argv:
-        do_gened = "-g" in sys.argv
+        print("getting every term")
         for term in term_list:
             print("scraping "+str(term))
-            sections = queryPisa(term, do_gened)
+            sections = queryPisa(term, do_detail)
             supabase.table("courses").upsert(sections).execute()
     else:
-        if sys.argv[1] in term_list:
-            do_gened = "-g" in sys.argv
-            print("scraping "+str(sys.argv[1]))
-            sections = queryPisa(sys.argv[1], do_gened)
+        if int(sys.argv[1]) in term_list:
+            print("scraping specific term: "+str(sys.argv[1]))
+            sections = queryPisa(sys.argv[1], do_detail)
             supabase.table("courses").upsert(sections).execute()
-        elif "-g" in sys.argv:
+        elif do_detail:
             term = term_list[0]
-            print("scraping "+str(term))
+            print("scraping latest term: "+str(term))
             sections = queryPisa(term, True)
             supabase.table("courses").upsert(sections).execute()
 else:
     terms = [2244, 2248]
-    print("scraping "+str(term))
+    print("scraping "+str(terms))
     for term in terms:
         sections = queryPisa(term, False)
         supabase.table("courses").upsert(sections).execute()

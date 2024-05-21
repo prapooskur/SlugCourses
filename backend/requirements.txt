@@ -2,9 +2,9 @@ beautifulsoup4==4.12.3
 google-ai-haystack==0.0.1
 python-dotenv==1.0.0
 requests==2.31.0
-supabase==2.3.4
+supabase==2.4.5
 tqdm==4.66.3
-haystack-ai @ git+https://github.com/deepset-ai/haystack.git@b8b8b5d5c64aa97108b957c9cfa9f4f0f4629153
+haystack-ai==2.1.2
 fastapi==0.110.0
 uvicorn==0.26.0
 lxml==5.1.0
