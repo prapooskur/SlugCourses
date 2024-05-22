@@ -1,5 +1,9 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text import androidx.compose.runtime.*
@@ -14,6 +18,8 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.delay
 import ui.elements.BoringNormalTopBar
 import kotlinx.coroutines.launch
 import ui.data.NavigatorScreenModel
@@ -29,6 +35,7 @@ data class ResultsScreen(
     val genEd: List<String>,
     val searchType: String,
 ) : Screen {
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
         val screenModel = rememberScreenModel { ResultsScreenModel() }
@@ -36,10 +43,34 @@ data class ResultsScreen(
         val coroutineScope = rememberCoroutineScope()
         val navigator = LocalNavigator.currentOrThrow
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
-        val database = navScreenModel.uiState.value.database
-        if (database == null) {
-            throw Exception()
-        }
+        val database = navScreenModel.uiState.value.database ?: throw Exception()
+
+        val splitQuery = query.contains(" ")
+        val department = if (splitQuery) { query.substringBefore(" ") } else { query }
+        val courseNumber = if (splitQuery) { query.substringAfter(" ") } else { query }
+
+        val refreshScope = rememberCoroutineScope()
+
+        val pullRefreshState = rememberPullRefreshState(
+            uiState.refreshing,
+            onRefresh = {
+                refreshScope.launch {
+                    Logger.d("updating?", tag = TAG)
+                    screenModel.getCourses(
+                        term,
+                        department,
+                        courseNumber,
+                        query,
+                        type,
+                        genEd,
+                        searchType
+                    )
+                    screenModel.getFavorites(database)
+                    delay(250)
+                }
+            },
+            refreshingOffset = 128.dp
+        )
 
 //        val type = listOf(Type.IN_PERSON, Type.ASYNC_ONLINE, Type.SYNC_ONLINE, Type.HYBRID)
 
@@ -52,57 +83,55 @@ data class ResultsScreen(
                 )
             },
             content = {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(it),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (uiState.dataLoaded) {
-                        val response = uiState.resultsList
-                        // val favorites: Set<String> = database.favoritesQueries.selectAll().executeAsList().toSet()
-                        if (response.isNotEmpty()) {
-                            items(response.size) { id ->
-                                val course = response[id]
-                                CourseCard(
-                                    course = course,
-                                    navigator = navigator,
-                                    // isFavorited = false,
-                                    // fixme
-                                    isFavorited = uiState.favoritesList.contains(course.id),
-                                    onFavorite = {
-                                        coroutineScope.launch {
-                                            screenModel.handleFavorite(course, database)
+                Box(Modifier.pullRefresh(pullRefreshState)) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (uiState.dataLoaded) {
+                            val response = uiState.resultsList
+                            // val favorites: Set<String> = database.favoritesQueries.selectAll().executeAsList().toSet()
+                            if (response.isNotEmpty()) {
+                                items(response.size) { id ->
+                                    val course = response[id]
+                                    CourseCard(
+                                        course = course,
+                                        navigator = navigator,
+                                        isFavorited = uiState.favoritesList.contains(course.id),
+                                        onFavorite = {
+                                            coroutineScope.launch {
+                                                screenModel.handleFavorite(course, database)
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
+                            } else {
+                                item {
+                                    Text(
+                                        text = "No classes found.",
+                                        fontSize = 24.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.offset(y = (240).dp)
+                                    )
+                                }
                             }
+
                         } else {
                             item {
-                                Text(
-                                    text = "No classes found.",
-                                    fontSize = 24.sp,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.offset(y = (240).dp)
-                                )
-                            }
-                        }
-
-                    } else {
-                        item {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                CircularProgressIndicator()
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                    CircularProgressIndicator()
+                                }
                             }
                         }
                     }
+
+                    PullRefreshIndicator(uiState.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
                 }
+
             }
         )
-
-        val splitQuery = query.contains(" ")
-
-        val department = if (splitQuery) { query.substringBefore(" ") } else { query }
-        val courseNumber = if (splitQuery) { query.substringAfter(" ") } else { query }
 
         LaunchedEffect(Unit) {
             screenModel.getCourses(

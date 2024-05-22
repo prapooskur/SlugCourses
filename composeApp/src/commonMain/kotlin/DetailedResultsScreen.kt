@@ -1,6 +1,10 @@
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,13 +38,23 @@ data class DetailedResultsScreen(
     val courseNumber: String,
     val url: String
 ) : Screen {
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { DetailedResultsScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
+        val pullRefreshState = rememberPullRefreshState(
+            uiState.value.refreshing,
+            onRefresh = {
+                Logger.d("updating?", tag = TAG)
+                screenModel.getCourseInfo(term, courseNumber)
+            },
+            refreshingOffset = 128.dp
+        )
 
         LaunchedEffect(Unit) {
+            Logger.d("updating.", tag = TAG)
             screenModel.getCourseInfo(term, courseNumber)
         }
 
@@ -62,36 +76,40 @@ data class DetailedResultsScreen(
                 )
             },
             content = {paddingValues ->
-                LazyColumn(
-                    Modifier
-                        .padding(paddingValues)
-                        .fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (uiState.value.dataLoaded) {
-                        item {
-                            Column(Modifier.widthIn(max=800.dp)) {
-                                CourseDetailBox(courseInfo = courseInfo)
-                                CourseDescriptionBox(courseInfo = courseInfo, url = url)
-                                if (courseInfo.primary_section.requirements.isNotEmpty()) {
-                                    CourseRequirementsBox(courseInfo = courseInfo)
-                                }
-                                if (courseInfo.notes.isNotEmpty()) {
-                                    CourseNotesBox(courseInfo = courseInfo)
-                                }
-                                CourseMeetingsBox(courseInfo = courseInfo)
-                                if (courseInfo.secondary_sections.isNotEmpty()) {
-                                    CourseSectionsBox(courseInfo = courseInfo)
+                Box(Modifier.pullRefresh(pullRefreshState)) {
+                    LazyColumn(
+                        Modifier
+                            .padding(paddingValues)
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (uiState.value.dataLoaded) {
+                            item {
+                                Column(Modifier.widthIn(max=800.dp)) {
+                                    CourseDetailBox(courseInfo = courseInfo)
+                                    CourseDescriptionBox(courseInfo = courseInfo, url = url)
+                                    if (courseInfo.primary_section.requirements.isNotEmpty()) {
+                                        CourseRequirementsBox(courseInfo = courseInfo)
+                                    }
+                                    if (courseInfo.notes.isNotEmpty()) {
+                                        CourseNotesBox(courseInfo = courseInfo)
+                                    }
+                                    CourseMeetingsBox(courseInfo = courseInfo)
+                                    if (courseInfo.secondary_sections.isNotEmpty()) {
+                                        CourseSectionsBox(courseInfo = courseInfo)
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        item {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                CircularProgressIndicator()
-                            }
+                        } else {
+//                            item {
+//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            }
                         }
                     }
+
+                    PullRefreshIndicator(uiState.value.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
                 }
             }
         )

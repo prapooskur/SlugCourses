@@ -1,13 +1,12 @@
 package api
 
 import co.touchlab.kermit.Logger
-import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import kotlinx.serialization.Serializable
+import ui.getSupabaseClient
 
 private const val TAG = "SupabaseAPI"
 @Serializable
@@ -66,10 +65,8 @@ suspend fun supabaseQuery(
     inPerson: Boolean = true,
     searchType: String = "All",
 ): List<Course> {
-    // fixme add url
-    val supabase = createSupabaseClient("https://cdmaojsmfcuyscmphhjk.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkbWFvanNtZmN1eXNjbXBoaGprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDU3MTg2MzYsImV4cCI6MjAyMTI5NDYzNn0.q_DWwkjq8F3CG5GjDj0UA21nvfirVZkrGkMkDuKRN7c") {
-        install(Postgrest)
-    }
+
+    val supabase = getSupabaseClient()
 
     val courseList = supabase.from("courses").select {
 

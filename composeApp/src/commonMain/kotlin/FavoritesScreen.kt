@@ -1,6 +1,10 @@
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +20,10 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.data.FavoritesScreenModel
 import ui.data.NavigatorScreenModel
@@ -28,19 +34,31 @@ private const val TAG = "favorites"
 
 class FavoritesScreen : Screen {
     
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
         val screenModel = rememberScreenModel { FavoritesScreenModel() }
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
         val navigator = LocalNavigator.currentOrThrow
-        val database = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }.uiState.value.database
-        if (database == null) {
-            throw Exception()
-        }
-//        val favorites: Set<String> = database.favoritesQueries.selectAll().executeAsList().toSet()
+        val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+        val database = navScreenModel.uiState.value.database ?: throw Exception()
+
         val favoriteFlow = database.favoritesQueries.selectAll().asFlow().mapToList(Dispatchers.IO).collectAsState(initial = emptySet())
+
+        val refreshScope = rememberCoroutineScope()
+
+        val pullRefreshState = rememberPullRefreshState(
+            uiState.refreshing,
+            onRefresh = {
+                refreshScope.launch {
+                    Logger.d("updating?", tag = TAG)
+                    screenModel.getFavorites(database)
+                    delay(250)
+                }
+            },
+            refreshingOffset = 128.dp
+        )
 
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
@@ -55,59 +73,63 @@ class FavoritesScreen : Screen {
                 )
             },
             content = {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(it),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (uiState.dataLoaded) {
-                        val response = uiState.favoritesList
-                        if (response.isNotEmpty()) {
-                            items(response.size) { id ->
-                                val course = response[id]
-                                AnimatedVisibility(
-                                    favoriteFlow.value.contains(course.id),
-                                    enter = fadeIn(),
-                                    exit = fadeOut() + slideOutVertically() + shrinkVertically()
-                                ) {
-                                    CourseCard(
-                                        course = course,
-                                        navigator = navigator,
-                                        isFavorited = favoriteFlow.value.contains(course.id),
-                                        onFavorite = {
-                                            coroutineScope.launch {
-                                                screenModel.handleFavorite(course, database)
+                Box(Modifier.pullRefresh(pullRefreshState)) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (uiState.dataLoaded) {
+                            val response = uiState.favoritesList
+                            if (response.isNotEmpty()) {
+                                items(response.size) { id ->
+                                    val course = response[id]
+                                    AnimatedVisibility(
+                                        favoriteFlow.value.contains(course.id),
+                                        enter = fadeIn(),
+                                        exit = fadeOut() + slideOutVertically() + shrinkVertically()
+                                    ) {
+                                        CourseCard(
+                                            course = course,
+                                            navigator = navigator,
+                                            isFavorited = favoriteFlow.value.contains(course.id),
+                                            onFavorite = {
+                                                coroutineScope.launch {
+                                                    screenModel.handleFavorite(course, database)
+                                                }
                                             }
-                                        }
+                                        )
+                                    }
+                                }
+                            } else {
+                                item {
+                                    Text(
+                                        text = "No favorite classes.",
+                                        fontSize = 24.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.offset(y = (240).dp)
                                     )
                                 }
                             }
-                        } else {
-                            item {
-                                Text(
-                                    text = "No favorite classes.",
-                                    fontSize = 24.sp,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.offset(y = (240).dp)
-                                )
-                            }
-                        }
 
-                    } else {
-                        item {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                CircularProgressIndicator()
-                            }
+                        } else {
+//                            item {
+//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            }
                         }
                     }
+
+                    PullRefreshIndicator(uiState.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
                 }
             }
         )
 
         LaunchedEffect(key1 = uiState.errorMessage) {
             if (uiState.errorMessage.isNotEmpty()) {
-                //shorttoast("An error occurred: ${uiState.errorMessage}", context)
+                navScreenModel.uiState.value.snackbarHostState.showSnackbar(screenModel.uiState.value.errorMessage)
             }
         }
 

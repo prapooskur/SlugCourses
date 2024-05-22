@@ -7,14 +7,11 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private const val TAG = "ResultsScreenModel"
 
@@ -23,7 +20,8 @@ data class ResultsUiState(
     val favoritesList: List<String> = emptyList(),
     val dataLoaded: Boolean = false,
     val errorMessage: String = "",
-    val favoriteMessage: String = ""
+    val favoriteMessage: String = "",
+    val refreshing: Boolean = false,
 )
 
 
@@ -31,7 +29,7 @@ class ResultsScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(ResultsUiState())
     val uiState: StateFlow<ResultsUiState> = _uiState.asStateFlow()
 
-    suspend fun getCourses(
+    fun getCourses(
         term: Int,
         department: String,
         courseNumber: String,
@@ -45,44 +43,48 @@ class ResultsScreenModel : ScreenModel {
 
 //        if (useDepartment)  Log.d(TAG, "Using department")
 //        if (useCourseNumber)  Log.d(TAG, "Using course number")
-
-        try {
-            screenModelScope.launch {
-                withContext(Dispatchers.IO) {
-                    val result = supabaseQuery(
-                        term = term,
-                        department = if (useDepartment) department.uppercase() else "",
-                        courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
-                        courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
-                        query = if (!useDepartment && !useCourseNumber) query else "",
-                        ge = genEd,
-                        asynchronous = type.contains(Type.ASYNC_ONLINE),
-                        hybrid = type.contains(Type.HYBRID),
-                        synchronous = type.contains(Type.SYNC_ONLINE),
-                        inPerson = type.contains(Type.IN_PERSON),
-                        searchType = searchType,
+        screenModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        refreshing = true,
                     )
-                    Logger.d(result.toString(), tag = TAG)
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            resultsList = result,
-                            dataLoaded = true
-                        )
-                    }
-                    Logger.d(_uiState.toString(), tag = TAG)
                 }
-            }
-        }  catch (e: Exception) {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    errorMessage = "An error occurred: ${e.message}"
+                val result = supabaseQuery(
+                    term = term,
+                    department = if (useDepartment) department.uppercase() else "",
+                    courseNumber = if (useCourseNumber) courseNumber.filter{it.isDigit()}.toInt() else -1,
+                    courseLetter = if (useCourseNumber) courseNumber.filter{it.isLetter()} else "",
+                    query = if (!useDepartment && !useCourseNumber) query else "",
+                    ge = genEd,
+                    asynchronous = type.contains(Type.ASYNC_ONLINE),
+                    hybrid = type.contains(Type.HYBRID),
+                    synchronous = type.contains(Type.SYNC_ONLINE),
+                    inPerson = type.contains(Type.IN_PERSON),
+                    searchType = searchType,
                 )
+
+                Logger.d(result.toString(), tag = TAG)
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        resultsList = result,
+                        dataLoaded = true,
+                        refreshing = false
+                    )
+                }
+                Logger.d(_uiState.toString(), tag = TAG)
+            } catch (e: Exception) {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        errorMessage = "An error occurred: ${e.message}"
+                    )
+                }
             }
         }
     }
 
-    suspend fun getFavorites(database: Database) {
-        withContext(Dispatchers.IO) {
+    fun getFavorites(database: Database) {
+        screenModelScope.launch(Dispatchers.IO) {
             _uiState.update { currentState ->
                 currentState.copy(
                     favoritesList = database.favoritesQueries.selectAll().executeAsList()

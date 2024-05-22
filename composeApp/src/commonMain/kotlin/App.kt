@@ -15,7 +15,6 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.*
@@ -30,7 +29,6 @@ data class BottomNavigationItem(
     val iconDescription: String
 )
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
