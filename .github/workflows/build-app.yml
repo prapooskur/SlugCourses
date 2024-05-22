@@ -25,6 +25,10 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Setup Android SDK and licenses
+        uses: android-actions/setup-android@v3
+
+
       - uses: actions/checkout@v4
       - name: Retrieve the secret and decode it to a file
         env:
