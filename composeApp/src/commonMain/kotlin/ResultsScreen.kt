@@ -65,6 +65,7 @@ data class ResultsScreen(
                     uiState.refreshing,
                     onRefresh = {
                         refreshScope.launch {
+                            screenModel.clearError()
                             screenModel.setRefresh(true)
                             screenModel.getCourses(
                                 term,
@@ -76,7 +77,7 @@ data class ResultsScreen(
                                 searchType
                             )
                             screenModel.getFavorites(database)
-                            delay(250)
+                            delay(100)
                         }
                     },
                 )
@@ -153,7 +154,32 @@ data class ResultsScreen(
 
         LaunchedEffect(screenModel.uiState.value.errorMessage) {
             if (screenModel.uiState.value.errorMessage.isNotBlank()) {
-                navScreenModel.uiState.value.snackbarHostState.showSnackbar(screenModel.uiState.value.errorMessage)
+                val result = navScreenModel.uiState.value.snackbarHostState.showSnackbar(
+                    screenModel.uiState.value.errorMessage,
+                    actionLabel = "Retry",
+                )
+                when(result) {
+                    SnackbarResult.ActionPerformed -> {
+                        refreshScope.launch {
+                            screenModel.clearError()
+                            screenModel.setRefresh(true)
+                            screenModel.getCourses(
+                                term,
+                                department,
+                                courseNumber,
+                                query,
+                                type,
+                                genEd,
+                                searchType
+                            )
+                            screenModel.getFavorites(database)
+                            delay(100)
+                        }
+                    }
+                    SnackbarResult.Dismissed -> {
+                        /* Handle snackbar dismissed */
+                    }
+                }
             }
         }
     }

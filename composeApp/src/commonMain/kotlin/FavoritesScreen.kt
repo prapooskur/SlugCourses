@@ -67,7 +67,7 @@ class FavoritesScreen : Screen {
                         refreshScope.launch {
                             screenModel.setRefresh(true)
                             screenModel.getFavorites(database)
-                            delay(250)
+                            delay(100)
                         }
                     },
                 )
@@ -133,7 +133,23 @@ class FavoritesScreen : Screen {
 
         LaunchedEffect(key1 = uiState.errorMessage) {
             if (uiState.errorMessage.isNotEmpty()) {
-                navScreenModel.uiState.value.snackbarHostState.showSnackbar(screenModel.uiState.value.errorMessage)
+                val result = navScreenModel.uiState.value.snackbarHostState.showSnackbar(
+                    screenModel.uiState.value.errorMessage,
+                    actionLabel = "Retry",
+                )
+                when(result) {
+                    SnackbarResult.ActionPerformed -> {
+                        refreshScope.launch {
+                            screenModel.setRefresh(true)
+                            screenModel.getFavorites(database)
+                            delay(100)
+                        }
+                    }
+                    SnackbarResult.Dismissed -> {
+                        /* Handle snackbar dismissed */
+                    }
+                }
+                screenModel.clearError()
             }
         }
 

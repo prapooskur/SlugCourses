@@ -7,6 +7,8 @@ import co.touchlab.kermit.Logger
 import com.pras.Database
 import ui.getSupabaseClient
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.exceptions.BadRequestRestException
+import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.*
@@ -59,12 +61,18 @@ class FavoritesScreenModel : ScreenModel {
                     )
                 }
             }  catch (e: Exception) {
-                Logger.d("An error occurred: ${e.message}", tag = TAG)
+                Logger.d("Exception in favorites: $e", tag = TAG)
                 if (e !is CancellationException) {
+
+                    val errorMessage = when(e) {
+                        is HttpRequestException -> "Failed to fetch favorites"
+                        is BadRequestRestException -> "Bad request"
+                        else -> "An error occurred: ${e.message}"
+                    }
                     // cancellation exceptions are normal
                     _uiState.update { currentState ->
                         currentState.copy(
-                            errorMessage = "An error occurred: ${e.message}"
+                            errorMessage = errorMessage
                         )
                     }
                 }
@@ -107,6 +115,12 @@ class FavoritesScreenModel : ScreenModel {
 
         Logger.d(courseList.toString(), tag = TAG)
         return courseList
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = ""
+        )
     }
 
     private companion object {

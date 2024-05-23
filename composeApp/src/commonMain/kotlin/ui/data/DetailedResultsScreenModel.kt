@@ -5,6 +5,8 @@ import api.CourseInfo
 import api.classAPIResponse
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
+import io.ktor.client.network.sockets.*
+import io.ktor.util.network.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,10 +47,15 @@ class DetailedResultsScreenModel : ScreenModel {
                     )
                 }
             }  catch (e: Exception) {
-                //Log.d(TAG, "An error occurred: ${e.message}")
+                Logger.d("Exception in detailed results: $e", tag = TAG)
+                val errorMessage = when (e) {
+                    is UnresolvedAddressException -> "No Internet connection"
+                    is SocketTimeoutException -> "Connection timed out"
+                    else -> "Error: ${e.message}"
+                }
                 _uiState.update { currentState ->
                     currentState.copy(
-                        errorMessage = "An error occurred: ${e.message}"
+                        errorMessage = errorMessage
                     )
                 }
             } finally {

@@ -7,6 +7,8 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
+import io.github.jan.supabase.exceptions.BadRequestRestException
+import io.github.jan.supabase.exceptions.HttpRequestException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -77,20 +79,25 @@ class ResultsScreenModel : ScreenModel {
                     currentState.copy(
                         resultsList = result,
                         dataLoaded = true,
-                        refreshing = false
                     )
                 }
                 Logger.d(_uiState.toString(), tag = TAG)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
+                    val errorMessage = when(e) {
+                        is HttpRequestException -> "Failed to fetch results"
+                        is BadRequestRestException -> "Bad request"
+                        else -> "An error occurred: ${e.message}"
+                    }
                     // cancellation exceptions are normal
                     _uiState.update { currentState ->
                         currentState.copy(
-                            errorMessage = "An error occurred: ${e.message}"
+                            errorMessage = errorMessage
                         )
                     }
                 }
-
+            } finally {
+                setRefresh(false)
             }
         }
     }
@@ -128,6 +135,12 @@ class ResultsScreenModel : ScreenModel {
     private fun setFavoritesMessage(message: String) {
         _uiState.value = _uiState.value.copy(
             favoriteMessage = message
+        )
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = ""
         )
     }
 }
