@@ -82,11 +82,15 @@ class ResultsScreenModel : ScreenModel {
                 }
                 Logger.d(_uiState.toString(), tag = TAG)
             } catch (e: Exception) {
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        errorMessage = "An error occurred: ${e.message}"
-                    )
+                if (e !is CancellationException) {
+                    // cancellation exceptions are normal
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            errorMessage = "An error occurred: ${e.message}"
+                        )
+                    }
                 }
+
             }
         }
     }

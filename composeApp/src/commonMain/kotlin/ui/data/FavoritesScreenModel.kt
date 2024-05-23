@@ -9,14 +9,11 @@ import ui.getSupabaseClient
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private const val TAG = "FavoritesViewModel"
 
@@ -63,10 +60,13 @@ class FavoritesScreenModel : ScreenModel {
                 }
             }  catch (e: Exception) {
                 Logger.d("An error occurred: ${e.message}", tag = TAG)
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        errorMessage = "An error occurred: ${e.message}"
-                    )
+                if (e !is CancellationException) {
+                    // cancellation exceptions are normal
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            errorMessage = "An error occurred: ${e.message}"
+                        )
+                    }
                 }
             }
         }
