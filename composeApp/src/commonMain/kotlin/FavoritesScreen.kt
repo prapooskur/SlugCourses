@@ -20,7 +20,6 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -48,18 +47,6 @@ class FavoritesScreen : Screen {
 
         val refreshScope = rememberCoroutineScope()
 
-        val pullRefreshState = rememberPullRefreshState(
-            uiState.refreshing,
-            onRefresh = {
-                refreshScope.launch {
-                    Logger.d("updating?", tag = TAG)
-                    screenModel.getFavorites(database)
-                    delay(250)
-                }
-            },
-            refreshingOffset = 128.dp
-        )
-
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
             topBar = {
@@ -72,12 +59,23 @@ class FavoritesScreen : Screen {
                     },
                 )
             },
-            content = {
-                Box(Modifier.pullRefresh(pullRefreshState)) {
+            content = { paddingValues ->
+
+                val pullRefreshState = rememberPullRefreshState(
+                    uiState.refreshing,
+                    onRefresh = {
+                        refreshScope.launch {
+                            screenModel.setRefresh(true)
+                            screenModel.getFavorites(database)
+                            delay(250)
+                        }
+                    },
+                )
+
+                Box(Modifier.pullRefresh(pullRefreshState).padding(paddingValues)) {
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(it),
+                            .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (uiState.dataLoaded) {
@@ -122,7 +120,13 @@ class FavoritesScreen : Screen {
                         }
                     }
 
-                    PullRefreshIndicator(uiState.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+                    PullRefreshIndicator(
+                        uiState.refreshing,
+                        pullRefreshState,
+                        Modifier.align(Alignment.TopCenter),
+                        backgroundColor = MaterialTheme.colorScheme.surfaceBright,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         )
@@ -134,6 +138,9 @@ class FavoritesScreen : Screen {
         }
 
         LaunchedEffect(Unit) {
+            if (!uiState.dataLoaded) {
+                screenModel.setRefresh(true)
+            }
             screenModel.getFavorites(database)
         }
     }

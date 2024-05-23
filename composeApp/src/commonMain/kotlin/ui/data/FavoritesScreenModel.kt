@@ -33,14 +33,25 @@ class FavoritesScreenModel : ScreenModel {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
+
+    fun setRefresh(isRefreshing: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                refreshing = isRefreshing
+            )
+        }
+    }
+
     fun getFavorites(database: Database) {
         screenModelScope.launch(Dispatchers.IO) {
             try {
+                /*
                 _uiState.update { currentState ->
                     currentState.copy(
                         refreshing = true
                     )
                 }
+                */
                 val idList = database.favoritesQueries.selectAll().executeAsList()
                 val result = favoritesQuery(supabase, idList)
                 _uiState.update { currentState ->

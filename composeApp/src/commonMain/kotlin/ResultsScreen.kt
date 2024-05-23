@@ -4,9 +4,8 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text import androidx.compose.runtime.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -18,7 +17,6 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.delay
 import ui.elements.BoringNormalTopBar
 import kotlinx.coroutines.launch
@@ -51,27 +49,6 @@ data class ResultsScreen(
 
         val refreshScope = rememberCoroutineScope()
 
-        val pullRefreshState = rememberPullRefreshState(
-            uiState.refreshing,
-            onRefresh = {
-                refreshScope.launch {
-                    Logger.d("updating?", tag = TAG)
-                    screenModel.getCourses(
-                        term,
-                        department,
-                        courseNumber,
-                        query,
-                        type,
-                        genEd,
-                        searchType
-                    )
-                    screenModel.getFavorites(database)
-                    delay(250)
-                }
-            },
-            refreshingOffset = 128.dp
-        )
-
 //        val type = listOf(Type.IN_PERSON, Type.ASYNC_ONLINE, Type.SYNC_ONLINE, Type.HYBRID)
 
         Scaffold(
@@ -82,12 +59,32 @@ data class ResultsScreen(
                     navigator = navigator,
                 )
             },
-            content = {
-                Box(Modifier.pullRefresh(pullRefreshState)) {
+            content = { paddingValues ->
+
+                val pullRefreshState = rememberPullRefreshState(
+                    uiState.refreshing,
+                    onRefresh = {
+                        refreshScope.launch {
+                            screenModel.setRefresh(true)
+                            screenModel.getCourses(
+                                term,
+                                department,
+                                courseNumber,
+                                query,
+                                type,
+                                genEd,
+                                searchType
+                            )
+                            screenModel.getFavorites(database)
+                            delay(250)
+                        }
+                    },
+                )
+
+                Box(Modifier.pullRefresh(pullRefreshState).padding(paddingValues)) {
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(it),
+                            .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (uiState.dataLoaded) {
@@ -119,21 +116,29 @@ data class ResultsScreen(
                             }
 
                         } else {
-                            item {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                    CircularProgressIndicator()
-                                }
-                            }
+//                            item {
+//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            }
                         }
                     }
 
-                    PullRefreshIndicator(uiState.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+                    PullRefreshIndicator(
+                        uiState.refreshing,
+                        pullRefreshState,
+                        Modifier.align(Alignment.TopCenter),
+                        backgroundColor = MaterialTheme.colorScheme.surfaceBright,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
                 }
-
             }
         )
 
         LaunchedEffect(Unit) {
+            if (!uiState.dataLoaded) {
+                screenModel.setRefresh(true)
+            }
             screenModel.getCourses(
                 term,
                 department,

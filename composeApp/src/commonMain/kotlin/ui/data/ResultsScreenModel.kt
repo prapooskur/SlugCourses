@@ -29,6 +29,14 @@ class ResultsScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(ResultsUiState())
     val uiState: StateFlow<ResultsUiState> = _uiState.asStateFlow()
 
+    fun setRefresh(isRefreshing: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                refreshing = isRefreshing,
+            )
+        }
+    }
+
     fun getCourses(
         term: Int,
         department: String,
@@ -45,11 +53,11 @@ class ResultsScreenModel : ScreenModel {
 //        if (useCourseNumber)  Log.d(TAG, "Using course number")
         screenModelScope.launch(Dispatchers.IO) {
             try {
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        refreshing = true,
-                    )
-                }
+//                _uiState.update { currentState ->
+//                    currentState.copy(
+//                        refreshing = true,
+//                    )
+//                }
                 val result = supabaseQuery(
                     term = term,
                     department = if (useDepartment) department.uppercase() else "",

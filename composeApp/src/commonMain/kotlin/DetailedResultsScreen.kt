@@ -44,14 +44,7 @@ data class DetailedResultsScreen(
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { DetailedResultsScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
-        val pullRefreshState = rememberPullRefreshState(
-            uiState.value.refreshing,
-            onRefresh = {
-                Logger.d("updating?", tag = TAG)
-                screenModel.getCourseInfo(term, courseNumber)
-            },
-            refreshingOffset = 128.dp
-        )
+
 
         LaunchedEffect(Unit) {
             Logger.d("updating.", tag = TAG)
@@ -75,11 +68,20 @@ data class DetailedResultsScreen(
                     navigator = navigator
                 )
             },
-            content = {paddingValues ->
-                Box(Modifier.pullRefresh(pullRefreshState)) {
+            content = { paddingValues ->
+
+                val pullRefreshState = rememberPullRefreshState(
+                    uiState.value.refreshing,
+                    onRefresh = {
+                        Logger.d("updating?", tag = TAG)
+                        screenModel.getCourseInfo(term, courseNumber)
+                    },
+                )
+
+                Box(Modifier.pullRefresh(pullRefreshState).padding(paddingValues)) {
                     LazyColumn(
                         Modifier
-                            .padding(paddingValues)
+//                            .padding(paddingValues)
                             .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -109,7 +111,13 @@ data class DetailedResultsScreen(
                         }
                     }
 
-                    PullRefreshIndicator(uiState.value.refreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+                    PullRefreshIndicator(
+                        uiState.value.refreshing,
+                        pullRefreshState,
+                        Modifier.align(Alignment.TopCenter),
+                        backgroundColor = MaterialTheme.colorScheme.surfaceBright,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         )
@@ -478,12 +486,12 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
 }
 
 
-@Preview
-@Composable
-fun DetailedResultsScreenPreview() {
-    DetailedResultsScreen(
-        term = "2240",
-        courseNumber = "30169",
-        url = ""
-    )
-}
+//@Preview
+//@Composable
+//fun DetailedResultsScreenPreview() {
+//    DetailedResultsScreen(
+//        term = "2240",
+//        courseNumber = "30169",
+//        url = ""
+//    )
+//}
