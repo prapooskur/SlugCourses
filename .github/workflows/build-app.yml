@@ -23,7 +23,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          #cache: 'gradle'
 
       - name: Setup Android SDK and licenses
         uses: android-actions/setup-android@v3
@@ -35,9 +35,12 @@ jobs:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
         run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
 
+      #- name: Setup Gradle
+      #  working-directory: .
+      #  run: chmod +x ./gradlew
+
       - name: Setup Gradle
-        working-directory: .
-        run: chmod +x ./gradlew
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build app
         working-directory: .
