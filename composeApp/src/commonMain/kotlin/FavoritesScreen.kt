@@ -21,7 +21,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.data.FavoritesScreenModel
@@ -43,7 +42,7 @@ class FavoritesScreen : Screen {
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
         val database = navScreenModel.uiState.value.database ?: throw Exception()
 
-        val favoriteFlow = database.favoritesQueries.selectAll().asFlow().mapToList(Dispatchers.IO).collectAsState(initial = emptySet())
+        val favoriteFlow = database.favoritesQueries.selectAll().asFlow().mapToList(Dispatchers.Default).collectAsState(initial = emptySet())
 
         val refreshScope = rememberCoroutineScope()
 

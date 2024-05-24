@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -13,11 +14,26 @@ sqldelight {
     databases {
         create("Database") {
             packageName.set("com.pras")
+            // needed for js
+            generateAsync.set(true)
         }
     }
 }
 
+compose.experimental { web.application {} }
+
 kotlin {
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
+    js(IR) {
+        browser()
+        binaries.executable()
+    }
+
     androidTarget {
         compilations.all {
             kotlinOptions {
@@ -57,6 +73,7 @@ kotlin {
         }
 
         val desktopMain by getting
+        val jsMain by getting
 
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -85,7 +102,7 @@ kotlin {
             implementation(libs.ktor.serialization)
 
             implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.ktx)
+            implementation(libs.sqldelight.coroutines)
             
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.m3)
@@ -102,6 +119,14 @@ kotlin {
             implementation(compose.desktop.macos_x64)
             implementation(compose.desktop.macos_arm64)
             implementation(libs.coroutines.swing)
+        }
+
+        jsMain.dependencies {
+            implementation(libs.ktor.js)
+            implementation(libs.sqldelight.js)
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.0.2"))
+            implementation(npm("sql.js", "1.10.3"))
+            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
         }
     }
 }
@@ -144,6 +169,9 @@ android {
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
     }
+}
+dependencies {
+    implementation(libs.androidx.ui.desktop)
 }
 
 compose.desktop {

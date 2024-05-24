@@ -1,6 +1,8 @@
 package ui.data
 
 import api.Course
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
@@ -42,7 +44,7 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     fun getFavorites(database: Database) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(Dispatchers.Default) {
             try {
                 /*
                 _uiState.update { currentState ->
@@ -51,7 +53,7 @@ class FavoritesScreenModel : ScreenModel {
                     )
                 }
                 */
-                val idList = database.favoritesQueries.selectAll().executeAsList()
+                val idList = database.favoritesQueries.selectAll().awaitAsList()
                 val result = favoritesQuery(supabase, idList)
                 _uiState.update { currentState ->
                     currentState.copy(
@@ -81,8 +83,8 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     suspend fun handleFavorite(course: Course, database: Database) {
-        withContext(Dispatchers.IO) {
-            if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
+        withContext(Dispatchers.Default) {
+            if (database.favoritesQueries.select(course.id).awaitAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
             } else {

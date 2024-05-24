@@ -16,7 +16,6 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -89,7 +88,7 @@ class ChatScreenModel : ScreenModel {
     fun sendMessage() {
         try {
             screenModelScope.launch {
-                withContext(Dispatchers.IO) {
+                withContext(Dispatchers.Default) {
 //                val message = uiState.value.message
                     addMessage(ChatMessage(uiState.value.message, Author.USER))
                     //Log.d(TAG, ChatMessage(uiState.value.message, Author.USER).toString())

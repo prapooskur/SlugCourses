@@ -15,6 +15,9 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import co.touchlab.kermit.Logger
 import com.pras.Database
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.*
@@ -32,7 +35,7 @@ data class BottomNavigationItem(
 @Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
-    val database: Database = createDatabase(driverFactory)
+    // val database: Database = createDatabase(driverFactory)
     SlugCoursesTheme(
         darkTheme = isSystemInDarkTheme(),
         dynamicColor = true,
@@ -44,7 +47,13 @@ fun App(driverFactory: DriverFactory) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Navigator(HomeScreen()) { navigator ->
                     val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
-                    screenModel.setDb(database)
+
+                    CoroutineScope(Dispatchers.Main).launch {
+                        // blocking
+                        val driver = provideDbDriver(Database.Schema)
+                        screenModel.setDb(Database(driver))
+                    }
+
                     Scaffold(
                         // custom insets necessary to render behind nav bar
                         contentWindowInsets = WindowInsets(0.dp),
