@@ -15,10 +15,10 @@ androidx-test-junit = "1.1.5"
 compose = "1.7.0-beta01"
 compose-plugin = "1.6.10-rc01"
 junit = "4.13.2"
-kotlin = "1.9.23"
+kotlin = "2.0.0"
 voyager = "1.0.0"
 kermit = "2.0.3"
-supabase = "2.4.1"
+supabase = "2.4.2"
 ktor = "2.3.11"
 sqlDelight = "2.0.2"
 markdown-renderer = "0.16.0"
@@ -60,6 +60,7 @@ markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin"}
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
 sqlDelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight"}
