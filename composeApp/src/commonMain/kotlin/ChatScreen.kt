@@ -1,8 +1,10 @@
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,6 +29,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
+import kotlinx.coroutines.delay
 import ui.data.Author
 import ui.data.ChatScreenModel
 import ui.data.NavigatorScreenModel
@@ -101,12 +104,66 @@ class ChatScreen : Screen {
                     }
                 },
                 bottomBar = {
-                    ChatMessageBar(screenModel, sendMessage)
+                    Column {
+                        Spacer(Modifier.padding(top = 2.dp))
+                        SuggestionBar(screenModel)
+                        Spacer(Modifier.padding(top = 4.dp))
+                        ChatMessageBar(screenModel, sendMessage)
+                    }
                 }
             )
         }
     }
 
+}
+
+@Composable
+fun SuggestionBar(screenModel: ChatScreenModel) {
+    val suggestionList = listOf(
+        "Courses that fulfill the IM gen ed",
+        "Courses taught by Prof. Tantalo next quarter",
+        "Open CSE courses this summer",
+        "Is CSE 115a still open this fall?",
+        "How many people are currently enrolled in CSE 130?",
+        "Which professors are teaching CSE 30 in fall?",
+        "What are the prerequisites for CSE 101?",
+        "What time is ECON 1 held?",
+        "Who teaches ECE 101?",
+        "What are the prerequisites for LING 50?",
+        "What is LING 80K?",
+        "MATH 100 course description",
+        "Courses about ethics",
+        "List all quarters PHIL 9 was taught.",
+        "List all professors for JRLC 1."
+    )
+    var randomSuggestions by remember { mutableStateOf(suggestionList.shuffled().take(4)) }
+
+    LaunchedEffect(screenModel.uiState.value.message, screenModel.uiState.value.messageList.size) {
+        if (screenModel.uiState.value.message.isEmpty() && screenModel.uiState.value.messageList.size > 1) {
+            // a small delay so the list goes offscreen before it's updated
+            delay(150)
+            randomSuggestions = suggestionList.shuffled().take(4)
+        }
+    }
+
+    AnimatedVisibility(
+        visible = (screenModel.uiState.value.message.isEmpty() && screenModel.uiState.value.messageList.size == 1),
+        enter = fadeIn() + slideInVertically( initialOffsetY = { it/2 } ) + expandVertically(),
+        exit = fadeOut() + slideOutVertically( targetOffsetY = { it/2 } ) + shrinkVertically(),
+        label = "suggestions"
+    ) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(horizontal = 6.dp)) {
+            items(randomSuggestions.size) { index ->
+                SuggestionChip(
+                    onClick = {
+                        screenModel.setMessage(randomSuggestions[index])
+                        screenModel.sendMessage()
+                    },
+                    label = { Text(randomSuggestions[index]) },
+                )
+            }
+        }
+    }
 }
 
 private const val ALPHA_FULL = 1f
@@ -119,7 +176,8 @@ fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boole
 
     Row(
         Modifier
-            .padding(16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
