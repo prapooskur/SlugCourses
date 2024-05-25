@@ -8,6 +8,7 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.network.sockets.*
 import io.ktor.util.network.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +30,7 @@ class DetailedResultsScreenModel : ScreenModel {
     val uiState: StateFlow<DetailedResultsUiState> = _uiState.asStateFlow()
 
     fun getCourseInfo(term: String, courseNum: String) {
-        screenModelScope.launch(Dispatchers.Default) {
+        screenModelScope.launch(Dispatchers.IO) {
             Logger.d("Getting course info", tag=TAG)
             _uiState.update { currentState ->
                 currentState.copy(

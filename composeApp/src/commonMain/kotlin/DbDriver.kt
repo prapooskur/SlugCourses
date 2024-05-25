@@ -1,6 +1,4 @@
-import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.db.SqlSchema
 
 import com.pras.Database
 
@@ -15,7 +13,3 @@ fun createDatabase(driverFactory: DriverFactory): Database {
     // Do more work with the database (see below).
     return database
 }
-
-expect suspend fun provideDbDriver(
-    schema: SqlSchema<QueryResult.AsyncValue<Unit>>
-): SqlDriver

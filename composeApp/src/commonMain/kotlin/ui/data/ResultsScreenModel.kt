@@ -3,8 +3,6 @@ package ui.data
 import api.Course
 import api.Type
 import api.supabaseQuery
-import app.cash.sqldelight.async.coroutines.awaitAsList
-import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
@@ -55,7 +53,7 @@ class ResultsScreenModel : ScreenModel {
 
 //        if (useDepartment)  Log.d(TAG, "Using department")
 //        if (useCourseNumber)  Log.d(TAG, "Using course number")
-        screenModelScope.launch(Dispatchers.Default) {
+        screenModelScope.launch(Dispatchers.IO) {
             try {
 //                _uiState.update { currentState ->
 //                    currentState.copy(
@@ -105,10 +103,10 @@ class ResultsScreenModel : ScreenModel {
     }
 
     fun getFavorites(database: Database) {
-        screenModelScope.launch(Dispatchers.Default) {
+        screenModelScope.launch(Dispatchers.IO) {
             _uiState.update { currentState ->
                 currentState.copy(
-                    favoritesList = database.favoritesQueries.selectAll().awaitAsList()
+                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
                 )
             }
         }
@@ -117,8 +115,8 @@ class ResultsScreenModel : ScreenModel {
 
 
     suspend fun handleFavorite(course: Course, database: Database) {
-        withContext(Dispatchers.Default) {
-            if (database.favoritesQueries.select(course.id).awaitAsOneOrNull().isNullOrEmpty()) {
+        withContext(Dispatchers.IO) {
+            if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
             } else {
@@ -128,7 +126,7 @@ class ResultsScreenModel : ScreenModel {
 
             _uiState.update { currentState ->
                 currentState.copy(
-                    favoritesList = database.favoritesQueries.selectAll().awaitAsList()
+                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
                 )
             }
         }
