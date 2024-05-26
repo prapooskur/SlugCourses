@@ -128,7 +128,7 @@ jobs:
 
       - name: Build xcarchive
         working-directory: .
-        run: xcodebuild build -workspace iosApp/iosApp.xcproj/project.xcworkspace/ -configuration Release -scheme iosApp -sdk iphoneos -destination name = 'iPhone 15' -verbose -archivepath iosOut/SlugCourses.xcarchive archive -allowProvisioningUpdates
+        run: xcodebuild build -workspace iosApp/iosApp.xcproj/project.xcworkspace/ -configuration Release -scheme iosApp -sdk iphoneos -destination name='iPhone 15' -verbose -archivepath iosOut/SlugCourses.xcarchive archive -allowProvisioningUpdates
 
       - name: Create ipa (may not work)
         working-directory: iosOut/SlugCourses.xcarchive/Products/Applications
