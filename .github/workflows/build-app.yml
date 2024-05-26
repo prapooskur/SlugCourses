@@ -126,33 +126,9 @@ jobs:
 #      - name: Setup Gradle
 #        uses: gradle/actions/setup-gradle@v3
 
-      - name: Debug
-        working-directory: .
-        run: ls
-
-      - name: Debug
-        working-directory: .
-        run: ls iosApp/iosApp.xcproj/
-
-      - name: Debug
-        working-directory: .
-        run: ls iosApp/iosApp.xcproj/project.xcworkspace/
-
       - name: Prepare build
         working-directory: .
         run: ./gradlew iosArm64Binaries
-
-      - name: Debug
-        working-directory: .
-        run: ls
-
-      - name: Debug
-        working-directory: .
-        run: ls iosApp/iosApp.xcproj/
-
-      - name: Debug
-        working-directory: .
-        run: ls iosApp/iosApp.xcproj/project.xcworkspace/
 
       - name: Build xcarchive
         working-directory: .
