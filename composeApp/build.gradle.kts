@@ -135,6 +135,11 @@ android {
                 "common-rules.pro"
             )
         }
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix =  "-DEBUG"
+            resValue("string", "app_name", "Slug Courses - Debug")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

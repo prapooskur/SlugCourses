@@ -56,6 +56,7 @@ fun BoringNormalTopBar(
         title = {
             Text(
                 text = titleText,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         },

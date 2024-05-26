@@ -49,13 +49,13 @@ class HomeScreen : Screen {
         )
 
         val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
-        val selectedGenEdList = remember { mutableStateListOf<String>() }
+//        val selectedGenEdList = remember { mutableStateListOf<String>() }
 
         val termList = termMap.keys.toList()
         var selectedTermIndex by rememberSaveable { mutableIntStateOf(0) }
 
         val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-        val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
+//        val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
 
         var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
 
@@ -64,12 +64,12 @@ class HomeScreen : Screen {
             val term = termMap.values.toList()[selectedTermIndex]
 
 //            val status = Json.encodeToString(Status.ALL)
-            val classType: List<Type> = selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
+            val classType: List<Type> = uiState.selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
 //            val encodedType = Json.encodeToString(classType)
 
             // dear god why is this necessary
             val geList = mutableListOf<String>()
-            geList.addAll(selectedGenEdList)
+            geList.addAll(uiState.selectedGenEdList)
 
             val searchType = when (selectedStatusIndex) {
                 0 -> "Open"
@@ -133,19 +133,19 @@ class HomeScreen : Screen {
                             .padding(start = 8.dp),
                         label = "GE",
                         items = genEdList,
-                        displayLabel = when (selectedGenEdList.size) {
+                        displayLabel = when (uiState.selectedGenEdList.size) {
                             0 -> ""
-                            1 -> selectedGenEdList[0]
+                            1 -> uiState.selectedGenEdList[0]
                             genEdList.size -> "All"
                             else -> "Multi"
                         },
-                        selectedItems = selectedGenEdList,
+                        selectedItems = uiState.selectedGenEdList,
                         onItemSelected = { index, _ ->
-                            selectedGenEdList.add(genEdList[index])
+                            uiState.selectedGenEdList.add(genEdList[index])
                         },
                         onItemRemoved = { _, itemName ->
-                            if (itemName in selectedGenEdList) {
-                                selectedGenEdList.remove(itemName)
+                            if (itemName in uiState.selectedGenEdList) {
+                                uiState.selectedGenEdList.remove(itemName)
                             }
                         }
                     )
@@ -158,20 +158,20 @@ class HomeScreen : Screen {
                             .padding(end = 8.dp),
                         label = "Type",
                         items = typeList,
-                        displayLabel = when (selectedTypeList.size) {
+                        displayLabel = when (uiState.selectedTypeList.size) {
                             0 -> ""
                             // without cutting out "Online", async online is too long
-                            1 -> selectedTypeList[0].replace(" Online", "")
+                            1 -> uiState.selectedTypeList[0].replace(" Online", "")
                             typeList.size -> "All"
                             else -> "Multiple"
                         },
-                        selectedItems = selectedTypeList,
+                        selectedItems = uiState.selectedTypeList,
                         onItemSelected = { index, _ ->
-                            selectedTypeList.add(typeList[index])
+                            uiState.selectedTypeList.add(typeList[index])
                         },
                         onItemRemoved = { _, itemName ->
-                            if (itemName in selectedTypeList) {
-                                selectedTypeList.remove(itemName)
+                            if (itemName in uiState.selectedTypeList) {
+                                uiState.selectedTypeList.remove(itemName)
                             }
                         }
                     )
@@ -193,4 +193,3 @@ class HomeScreen : Screen {
         }
     }
 }
-
