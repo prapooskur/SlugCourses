@@ -110,3 +110,32 @@ jobs:
       with:
         name: exe-build
         path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0.exe
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+#          cache: 'gradle'
+#
+#      - name: Setup Gradle
+#        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build xcarchive
+        working-directory: .
+        run: xcodebuild build -workspace iosApp/iosApp.xcproj/project.xcworkspace/ -configuration Release -scheme iosApp -sdk iphoneos -destination name = 'iPhone 15' -verbose -archivepath iosOut/SlugCourses.xcarchive archive -allowProvisioningUpdates
+
+      - name: Create ipa (may not work)
+        working-directory: iosOut/SlugCourses.xcarchive/Products/Applications
+        run: zip -r SlugCourses.ipa Slug\ Courses.app/
+
+      - name: Upload ipa as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-build-untested
+          path: iosOut/SlugCourses.xcarchive/Products/Applications/SlugCourses.ipa
