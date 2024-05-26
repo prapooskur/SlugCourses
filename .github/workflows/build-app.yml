@@ -130,6 +130,14 @@ jobs:
         working-directory: .
         run: ls
 
+      - name: Debug
+        working-directory: .
+        run: ls iosApp/iosApp.xcproj/
+
+      - name: Debug
+        working-directory: .
+        run: ls iosApp/iosApp.xcproj/project.xcworkspace/
+
       - name: Prepare build
         working-directory: .
         run: ./gradlew iosArm64Binaries
@@ -137,6 +145,14 @@ jobs:
       - name: Debug
         working-directory: .
         run: ls
+
+      - name: Debug
+        working-directory: .
+        run: ls iosApp/iosApp.xcproj/
+
+      - name: Debug
+        working-directory: .
+        run: ls iosApp/iosApp.xcproj/project.xcworkspace/
 
       - name: Build xcarchive
         working-directory: .
