@@ -126,6 +126,10 @@ jobs:
 #      - name: Setup Gradle
 #        uses: gradle/actions/setup-gradle@v3
 
+      - name: Prepare build
+        working-directory: .
+        run: ./gradlew iosArm64Binaries
+
       - name: Build xcarchive
         working-directory: .
         run: xcodebuild build -workspace iosApp/iosApp.xcproj/project.xcworkspace/ -configuration Release -scheme iosApp -sdk iphoneos -destination name='iPhone 15' -verbose -archivepath iosOut/SlugCourses.xcarchive archive -allowProvisioningUpdates
