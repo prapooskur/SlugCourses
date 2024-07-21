@@ -59,7 +59,6 @@ data class TwoPaneResultsScreen(
         var selectedId by rememberSaveable { mutableIntStateOf(0) }
         var selectedUrl by rememberSaveable { mutableStateOf("") }
 
-
         Row(Modifier.fillMaxSize()) {
 
             // List pane
@@ -250,6 +249,7 @@ data class TwoPaneResultsScreen(
             if (!uiState.listPane.listDataLoaded) {
                 screenModel.setListRefresh(true)
             }
+
             screenModel.getCourses(
                 term,
                 department,
@@ -265,6 +265,17 @@ data class TwoPaneResultsScreen(
         // when a course is selected, update data pane
         LaunchedEffect(selectedId) {
             if (screenModel.uiState.value.listPane.resultsList.isNotEmpty()) {
+                Logger.d("selected "+screenModel.uiState.value.listPane.resultsList[selectedId].toString(), tag = TAG)
+                screenModel.getCourseInfo(
+                    screenModel.uiState.value.listPane.resultsList[selectedId].term.toString(),
+                    screenModel.uiState.value.listPane.resultsList[selectedId].id.substringAfter("_")
+                )
+            }
+        }
+
+        // when the results list updates, update data pane
+        LaunchedEffect(screenModel.uiState.value.listPane.resultsList) {
+            if (screenModel.uiState.value.listPane.resultsList.isNotEmpty() && screenModel.uiState.value.listPane.listDataLoaded) {
                 Logger.d("selected "+screenModel.uiState.value.listPane.resultsList[selectedId].toString(), tag = TAG)
                 screenModel.getCourseInfo(
                     screenModel.uiState.value.listPane.resultsList[selectedId].term.toString(),
