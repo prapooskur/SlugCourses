@@ -58,6 +58,7 @@ class HomeScreen : Screen {
 //        val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
 
         var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
+        val localScreenWidth = LocalScreenSize.current.width
 
         fun searchHandler() {
 
@@ -76,7 +77,13 @@ class HomeScreen : Screen {
                 else -> "All"
             }
 
-            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+            if (localScreenWidth < 600) {
+                navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+            } else {
+                navigator.push(TwoPaneResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+            }
+//            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+//            navigator.push(TwoPaneResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
         }
 
 
@@ -93,9 +100,9 @@ class HomeScreen : Screen {
                 Image(
                     painterResource(Res.drawable.slug),
                     contentDescription = "Slug Courses",
-                    contentScale = ContentScale.Inside,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .fillMaxWidth(0.5f)
+                        .widthIn(max = 250.dp)
                         .fillMaxHeight(0.25f)
                 )
                 SearchBar(

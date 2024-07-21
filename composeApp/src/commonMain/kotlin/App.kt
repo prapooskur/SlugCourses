@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -30,6 +33,11 @@ data class BottomNavigationItem(
 )
 
 @Composable
+expect fun GetScreenSize(): IntSize
+
+val LocalScreenSize = compositionLocalOf<IntSize> { error("No Screen Size Info provided") }
+
+@Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
     val database: Database = createDatabase(driverFactory)
@@ -37,58 +45,63 @@ fun App(driverFactory: DriverFactory) {
         darkTheme = isSystemInDarkTheme(),
         dynamicColor = true,
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Navigator(HomeScreen()) { navigator ->
-                    val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
-                    screenModel.setDb(database)
-                    Scaffold(
-                        // custom insets necessary to render behind nav bar
-                        contentWindowInsets = WindowInsets(0.dp),
-                        content = { paddingValues ->
-                            Box(Modifier.padding(paddingValues)) {
-                                FadeTransition(navigator) { screen ->
-                                    // todo see if there's a better way to do this?
-                                    screen.Content()
-                                }
-                            }
-                        },
-                        bottomBar = {
-                            val itemList = listOf(
-                                BottomNavigationItem(
-                                    name = "Home",
-                                    route = HomeScreen(),
-                                    selectedIcon = painterResource(Res.drawable.home_filled),
-                                    icon = painterResource(Res.drawable.home_outlined),
-                                    iconDescription = "Home"
-                                ),
-                                BottomNavigationItem(
-                                    name = "Chat",
-                                    route = ChatScreen(),
-                                    selectedIcon = painterResource(Res.drawable.chat_filled),
-                                    icon = painterResource(Res.drawable.chat_outlined),
-                                    iconDescription = "Chat"
-                                ),
-                                BottomNavigationItem(
-                                    name = "Favorites",
-                                    route = FavoritesScreen(),
-                                    selectedIcon = painterResource(Res.drawable.star_filled),
-                                    icon = painterResource(Res.drawable.star),
-                                    iconDescription = "Favorite"
-                                ),
-                            )
+        CompositionLocalProvider(LocalScreenSize provides GetScreenSize()) {
 
-                            if (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen) {
-                                BottomNavigationBar(navigator, itemList)
+            val screenSize = LocalScreenSize.current
+
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Navigator(HomeScreen()) { navigator ->
+                        val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+                        screenModel.setDb(database)
+                        Scaffold(
+                            // custom insets necessary to render behind nav bar
+                            contentWindowInsets = WindowInsets(0.dp),
+                            content = { paddingValues ->
+                                Box(Modifier.padding(paddingValues)) {
+                                    FadeTransition(navigator) { screen ->
+                                        // todo see if there's a better way to do this?
+                                        screen.Content()
+                                    }
+                                }
+                            },
+                            bottomBar = {
+                                val itemList = listOf(
+                                    BottomNavigationItem(
+                                        name = "Home",
+                                        route = HomeScreen(),
+                                        selectedIcon = painterResource(Res.drawable.home_filled),
+                                        icon = painterResource(Res.drawable.home_outlined),
+                                        iconDescription = "Home"
+                                    ),
+                                    BottomNavigationItem(
+                                        name = "Chat",
+                                        route = ChatScreen(),
+                                        selectedIcon = painterResource(Res.drawable.chat_filled),
+                                        icon = painterResource(Res.drawable.chat_outlined),
+                                        iconDescription = "Chat"
+                                    ),
+                                    BottomNavigationItem(
+                                        name = "Favorites",
+                                        route = FavoritesScreen(),
+                                        selectedIcon = painterResource(Res.drawable.star_filled),
+                                        icon = painterResource(Res.drawable.star),
+                                        iconDescription = "Favorite"
+                                    ),
+                                )
+
+                                if (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen) {
+                                    BottomNavigationBar(navigator, itemList)
+                                }
+                            },
+                            snackbarHost = {
+                                SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
                             }
-                        },
-                        snackbarHost = {
-                            SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
