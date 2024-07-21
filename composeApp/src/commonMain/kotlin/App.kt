@@ -1,8 +1,5 @@
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,7 +21,7 @@ import slugcourses.composeapp.generated.resources.*
 import ui.data.NavigatorScreenModel
 import ui.theme.SlugCoursesTheme
 
-data class BottomNavigationItem(
+data class NavigationItem(
     val name: String,
     val route: Screen,
     val icon: Painter,
@@ -47,7 +44,29 @@ fun App(driverFactory: DriverFactory) {
     ) {
         CompositionLocalProvider(LocalScreenSize provides GetScreenSize()) {
 
-            val screenSize = LocalScreenSize.current
+            val navItemList = listOf(
+                NavigationItem(
+                    name = "Home",
+                    route = HomeScreen(),
+                    selectedIcon = painterResource(Res.drawable.home_filled),
+                    icon = painterResource(Res.drawable.home_outlined),
+                    iconDescription = "Home"
+                ),
+                NavigationItem(
+                    name = "Chat",
+                    route = ChatScreen(),
+                    selectedIcon = painterResource(Res.drawable.chat_filled),
+                    icon = painterResource(Res.drawable.chat_outlined),
+                    iconDescription = "Chat"
+                ),
+                NavigationItem(
+                    name = "Favorites",
+                    route = FavoritesScreen(),
+                    selectedIcon = painterResource(Res.drawable.star_filled),
+                    icon = painterResource(Res.drawable.star),
+                    iconDescription = "Favorite"
+                ),
+            )
 
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -61,46 +80,36 @@ fun App(driverFactory: DriverFactory) {
                             // custom insets necessary to render behind nav bar
                             contentWindowInsets = WindowInsets(0.dp),
                             content = { paddingValues ->
-                                Box(Modifier.padding(paddingValues)) {
-                                    FadeTransition(navigator) { screen ->
-                                        // todo see if there's a better way to do this?
-                                        screen.Content()
+
+                                Row(Modifier.padding(paddingValues)) {
+                                    if (LocalScreenSize.current.width >= 600 &&
+                                        (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen)) {
+                                        NavRail(
+                                            navigator = navigator,
+                                            items = navItemList
+                                        )
+                                    }
+
+                                    Box {
+                                        FadeTransition(navigator) { screen ->
+                                            // todo see if there's a better way to do this?
+                                            screen.Content()
+                                        }
                                     }
                                 }
                             },
                             bottomBar = {
-                                val itemList = listOf(
-                                    BottomNavigationItem(
-                                        name = "Home",
-                                        route = HomeScreen(),
-                                        selectedIcon = painterResource(Res.drawable.home_filled),
-                                        icon = painterResource(Res.drawable.home_outlined),
-                                        iconDescription = "Home"
-                                    ),
-                                    BottomNavigationItem(
-                                        name = "Chat",
-                                        route = ChatScreen(),
-                                        selectedIcon = painterResource(Res.drawable.chat_filled),
-                                        icon = painterResource(Res.drawable.chat_outlined),
-                                        iconDescription = "Chat"
-                                    ),
-                                    BottomNavigationItem(
-                                        name = "Favorites",
-                                        route = FavoritesScreen(),
-                                        selectedIcon = painterResource(Res.drawable.star_filled),
-                                        icon = painterResource(Res.drawable.star),
-                                        iconDescription = "Favorite"
-                                    ),
-                                )
-
-                                if (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen) {
-                                    BottomNavigationBar(navigator, itemList)
+                                if (LocalScreenSize.current.width < 600 &&
+                                    (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen)
+                                ) {
+                                    BottomNavigationBar(navigator, navItemList)
                                 }
                             },
                             snackbarHost = {
                                 SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
                             }
                         )
+
                     }
                 }
             }
@@ -109,7 +118,7 @@ fun App(driverFactory: DriverFactory) {
 }
 
 @Composable
-fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>) {
+fun BottomNavigationBar(navigator: Navigator, items: List<NavigationItem>) {
     fun isSelected(index: Int): Boolean {
         return when(index) {
             0 -> navigator.lastItem is HomeScreen
@@ -145,5 +154,50 @@ fun BottomNavigationBar(navigator: Navigator, items: List<BottomNavigationItem>)
                 }
             )
         }
+    }
+}
+
+@Composable
+fun NavRail(navigator: Navigator, items: List<NavigationItem>) {
+    fun isSelected(index: Int): Boolean {
+        return when(index) {
+            0 -> navigator.lastItem is HomeScreen
+            1 -> navigator.lastItem is ChatScreen
+            else -> navigator.lastItem is FavoritesScreen
+        }
+    }
+
+    NavigationRail {
+
+        Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxHeight()) {
+            items.forEachIndexed { index, item ->
+                Logger.d(item.route.toString(), tag = "BottomBar item")
+                Logger.d(navigator.lastItem.toString(), tag = "BottomBar home")
+                NavigationRailItem(
+                    icon = {
+                        if (isSelected(index)) {
+                            Icon(
+                                painter = item.selectedIcon,
+                                contentDescription = item.iconDescription
+                            )
+                        } else {
+                            Icon(
+                                painter = item.icon,
+                                contentDescription = item.iconDescription
+                            )
+                        }
+                    },
+                    label = { Text(item.name) },
+                    selected = isSelected(index),
+                    onClick = {
+                        if (!isSelected(index)) {
+                            navigator.popUntilRoot()
+                            navigator.push(item.route)
+                        }
+                    }
+                )
+            }
+        }
+
     }
 }

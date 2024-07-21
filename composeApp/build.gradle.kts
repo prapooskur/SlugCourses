@@ -17,6 +17,10 @@ sqldelight {
     }
 }
 
+composeCompiler {
+    enableStrongSkippingMode = true
+}
+
 kotlin {
     androidTarget {
         compilations.all {

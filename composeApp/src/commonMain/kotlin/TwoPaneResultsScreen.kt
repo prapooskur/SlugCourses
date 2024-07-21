@@ -24,13 +24,10 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
-import com.pras.Database
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.data.NavigatorScreenModel
 import ui.data.TwoPaneResultsScreenModel
-import ui.elements.BoringNormalTopBar
-import ui.elements.CourseCard
 import ui.elements.TwoPaneCourseCard
 
 private const val TAG = "twopaneresults"
