@@ -82,7 +82,8 @@ data class TwoPaneResultsScreen(
                                     }) },
                                     onSearch = {
                                         twoPaneSearchHandler(screenModel, searchQuery)
-                                    }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
                                 ) { /* do nothing */ }
                             },
                             navigationIcon = {
@@ -184,12 +185,16 @@ data class TwoPaneResultsScreen(
                     topBar = {
                         TopAppBar(
                             title = {
-                                Text(
-                                    text = courseInfo.primary_section.title_long,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                Column(Modifier.fillMaxSize(), Arrangement.Center) {
+                                    Text(
+                                        text = courseInfo.primary_section.title_long,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Start,
+                                    )
+                                }
                             },
+                            modifier = Modifier.heightIn(min=56.dp)
                         )
                     },
                     content = { paddingValues ->

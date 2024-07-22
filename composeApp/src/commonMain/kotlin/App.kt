@@ -82,8 +82,8 @@ fun App(driverFactory: DriverFactory) {
                             content = { paddingValues ->
 
                                 Row(Modifier.padding(paddingValues)) {
-                                    if (LocalScreenSize.current.width >= 600 &&
-                                        (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen)) {
+                                    // nav rail always visible on large screen
+                                    if (LocalScreenSize.current.width >= 600) {
                                         NavRail(
                                             navigator = navigator,
                                             items = navItemList
@@ -167,8 +167,7 @@ fun NavRail(navigator: Navigator, items: List<NavigationItem>) {
         }
     }
 
-    NavigationRail {
-
+    NavigationRail() {
         Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxHeight()) {
             items.forEachIndexed { index, item ->
                 Logger.d(item.route.toString(), tag = "BottomBar item")
@@ -198,6 +197,5 @@ fun NavRail(navigator: Navigator, items: List<NavigationItem>) {
                 )
             }
         }
-
     }
 }
