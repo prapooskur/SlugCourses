@@ -99,7 +99,7 @@ class HomeScreen : Screen {
                 //Text("Slug Courses", fontSize = 42.sp, fontWeight = FontWeight.SemiBold)
                 Image(
                     painterResource(Res.drawable.slug),
-                    contentDescription = "Slug Courses",
+                    contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .widthIn(max = 250.dp)

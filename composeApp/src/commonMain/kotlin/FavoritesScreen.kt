@@ -90,7 +90,9 @@ class FavoritesScreen : Screen {
                                     ) {
                                         CourseCard(
                                             course = course,
-                                            navigator = navigator,
+                                            onClick = { clickTerm, clickId, clickUrl ->
+                                                navigator.push(DetailedResultsScreen(clickTerm, clickId, clickUrl))
+                                            },
                                             isFavorited = favoriteFlow.value.contains(course.id),
                                             onFavorite = {
                                                 coroutineScope.launch {
@@ -110,13 +112,6 @@ class FavoritesScreen : Screen {
                                     )
                                 }
                             }
-
-                        } else {
-//                            item {
-//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-//                                    CircularProgressIndicator()
-//                                }
-//                            }
                         }
                     }
 

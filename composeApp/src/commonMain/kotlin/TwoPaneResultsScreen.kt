@@ -28,7 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.data.NavigatorScreenModel
 import ui.data.TwoPaneResultsScreenModel
-import ui.elements.TwoPaneCourseCard
+import ui.elements.CourseCard
 
 private const val TAG = "twopaneresults"
 
@@ -136,20 +136,21 @@ data class TwoPaneResultsScreen(
                                     if (response.isNotEmpty()) {
                                         items(response.size) { id ->
                                             val course = response[id]
-                                            TwoPaneCourseCard(
+                                            CourseCard(
                                                 course = course,
-                                                onClick = {
+                                                // no need for parameters here
+                                                onClick = { _, _, _ ->
                                                     // todo figure out what the hell i'm doing here
                                                     selectedId = id
                                                     selectedUrl = course.url
                                                 },
-                                                selected = (id == selectedId),
                                                 isFavorited = uiState.listPane.favoritesList.contains(course.id),
                                                 onFavorite = {
                                                     coroutineScope.launch {
                                                         screenModel.handleFavorite(course, database)
                                                     }
-                                                }
+                                                },
+                                                selected = (id == selectedId)
                                             )
                                         }
                                     } else {

@@ -26,7 +26,6 @@ import co.touchlab.kermit.Logger
 import ui.elements.BoringNormalTopBar
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.open_in_new
 import ui.data.DetailedResultsScreenModel
@@ -102,12 +101,6 @@ data class DetailedResultsScreen(
                                     }
                                 }
                             }
-                        } else {
-//                            item {
-//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-//                                    CircularProgressIndicator()
-//                                }
-//                            }
                         }
                     }
 
@@ -122,7 +115,6 @@ data class DetailedResultsScreen(
             }
         )
     }
-
 }
 
 private val ELEV_VALUE = 4.dp

@@ -96,7 +96,9 @@ data class ResultsScreen(
                                     val course = response[id]
                                     CourseCard(
                                         course = course,
-                                        navigator = navigator,
+                                        onClick = { clickTerm, clickId, clickUrl ->
+                                            navigator.push(DetailedResultsScreen(clickTerm, clickId, clickUrl))
+                                        },
                                         isFavorited = uiState.favoritesList.contains(course.id),
                                         onFavorite = {
                                             coroutineScope.launch {
@@ -115,13 +117,6 @@ data class ResultsScreen(
                                     )
                                 }
                             }
-
-                        } else {
-//                            item {
-//                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-//                                    CircularProgressIndicator()
-//                                }
-//                            }
                         }
                     }
 

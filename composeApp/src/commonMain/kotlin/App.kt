@@ -99,9 +99,7 @@ fun App(driverFactory: DriverFactory) {
                                 }
                             },
                             bottomBar = {
-                                if (LocalScreenSize.current.width < 600 &&
-                                    (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen)
-                                ) {
+                                if (LocalScreenSize.current.width < 600 && (onTopDestination(navigator))) {
                                     BottomNavigationBar(navigator, navItemList)
                                 }
                             },
@@ -115,6 +113,10 @@ fun App(driverFactory: DriverFactory) {
             }
         }
     }
+}
+
+fun onTopDestination(navigator: Navigator): Boolean {
+    return (navigator.lastItem is HomeScreen || navigator.lastItem is ChatScreen || navigator.lastItem is FavoritesScreen)
 }
 
 @Composable
@@ -167,7 +169,9 @@ fun NavRail(navigator: Navigator, items: List<NavigationItem>) {
         }
     }
 
-    NavigationRail() {
+    // dense ui, so cut down max width 10%
+    // within spec
+    NavigationRail(modifier = Modifier.widthIn(max=72.dp)) {
         Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxHeight()) {
             items.forEachIndexed { index, item ->
                 Logger.d(item.route.toString(), tag = "BottomBar item")
@@ -195,6 +199,7 @@ fun NavRail(navigator: Navigator, items: List<NavigationItem>) {
                         }
                     }
                 )
+                Spacer(Modifier.padding(vertical = 4.dp))
             }
         }
     }
