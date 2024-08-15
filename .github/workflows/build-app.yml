@@ -1,56 +1,59 @@
-name: Build and Sign App
-run-name: Building and signing app
+name: Build apps
+run-name: Building apps
 on:
   workflow_dispatch:
   push:
     # only build if app files were modified
-    #paths-ignore:
-    #  - '*.md'
-    #  - '.github/**'
-    #  - 'assets/**'
-    #  - '.gitignore'
-    #  - 'LICENSE'
-    #  - 'metadata/**'
-    #  - 'backend/**'
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+      - 'assets/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'metadata/**'
     paths:
-      - 'android/**'
-      - '!android/.idea/**'
-      - '!android/app/.gitignore'
+      - 'app/**'
+      - '!app/.idea/**'
+      - '!app/.fleet/**'
+      - '!app/.gitignore'
+      - '!app/iosApp/**'
 
 defaults:
-      run:
-        working-directory: ./android
+  run:
+    working-directory: ./app
 
 jobs:
-  build-app:
+  build-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          #cache: 'gradle'
 
-      - name: Debug
-        run: echo $GITHUB_WORKSPACE
+      - name: Setup Android SDK and licenses
+        uses: android-actions/setup-android@v3
 
-      - name: Retrieve the keystore and decode it to a file
+
+      - uses: actions/checkout@v4
+      - name: Retrieve the secret and decode it to a file
         env:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
         run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
 
-      - name: Retrieve the gradle secrets and decode them to a file
-        env:
-          GRADLE_SECRETS_B64: ${{ secrets.gradle_secrets_b64 }}
-        run: echo $GRADLE_SECRETS_B64 | base64 --decode > $GITHUB_WORKSPACE/android/secrets.properties
+      #- name: Setup Gradle
+      #  working-directory: .
+      #  run: chmod +x ./gradlew
 
       - name: Setup Gradle
-        run: chmod +x ./gradlew
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build app
+        working-directory: .
         run: ./gradlew buildRelease
 
       - name: Sign app
@@ -58,6 +61,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.keystore_password }}
           KEY_ALIAS: ${{ secrets.key_alias }}
           KEY_PASSWORD: ${{ secrets.key_password }}
+        working-directory: .
         run: |
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
@@ -68,12 +72,84 @@ jobs:
       - name: "Deleting keystore file"
         run: rm $GITHUB_WORKSPACE/signing-key.jks
 
-      
+
       - name: Upload apk as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-build
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: composeApp/build/outputs/apk/release/composeApp-release.apk
 
-permissions:
-  contents: write
+  build-desktop:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        #cache: 'gradle'
+
+#    - name: Setup Gradle
+#      working-directory: .
+#      run: chmod +x ./gradlew
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Build jar
+      working-directory: .
+      run: ./gradlew packageUberJarForCurrentOS
+
+    - name: Rename file
+      run: mv composeApp/build/compose/jars/com.pras.slugcourses-windows-x64-1.0.0.jar composeApp/build/compose/jars/com.pras.slugcourses.jar
+
+    - name: Upload jar as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: universal-jar-build
+        path: composeApp/build/compose/jars/com.pras.slugcourses.jar
+
+    - name: Build exe
+      working-directory: .
+      run: ./gradlew packageReleaseExe
+
+    - name: Upload windows exe as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: exe-build
+        path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0.exe
+
+#  build-ios:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '17'
+#          distribution: 'temurin'
+##          cache: 'gradle'
+##
+##      - name: Setup Gradle
+##        uses: gradle/actions/setup-gradle@v3
+#
+#      - name: Prepare build
+#        working-directory: .
+#        run: ./gradlew iosArm64Binaries
+#
+#      - name: Build xcarchive
+#        working-directory: .
+#        run: xcodebuild build -workspace iosApp/iosApp.xcodeproj/project.xcworkspace/ -configuration Release -scheme iosApp -sdk iphoneos -destination name='iPhone 15' -verbose -archivePath iosOut/SlugCourses.xcarchive archive -allowProvisioningUpdates
+#
+#      - name: Create ipa (may not work)
+#        working-directory: iosOut/SlugCourses.xcarchive/Products/Applications
+#        run: zip -r SlugCourses.ipa Slug\ Courses.app/
+#
+#      - name: Upload ipa as artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ipa-build-untested
+#          path: iosOut/SlugCourses.xcarchive/Products/Applications/SlugCourses.ipa
