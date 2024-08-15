@@ -58,8 +58,7 @@ class HomeScreen : Screen {
 //        val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
 
         var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
-        val localScreenWidth = LocalScreenSize.current.width
-
+        
         fun searchHandler() {
 
             val term = termMap.values.toList()[selectedTermIndex]
@@ -77,13 +76,8 @@ class HomeScreen : Screen {
                 else -> "All"
             }
 
-            if (localScreenWidth < 600) {
-                navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
-            } else {
-                navigator.push(TwoPaneResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
-            }
-//            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
-//            navigator.push(TwoPaneResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+            navigator.push(ResultsScreen(term, uiState.searchQuery, classType, geList, searchType))
+
         }
 
 

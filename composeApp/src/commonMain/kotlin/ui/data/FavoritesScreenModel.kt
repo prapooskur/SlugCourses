@@ -1,6 +1,8 @@
 package ui.data
 
 import api.Course
+import api.CourseInfo
+import api.classAPIResponse
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
@@ -11,6 +13,8 @@ import io.github.jan.supabase.exceptions.BadRequestRestException
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import io.ktor.client.network.sockets.*
+import io.ktor.util.network.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,11 +24,22 @@ import kotlinx.coroutines.flow.update
 private const val TAG = "FavoritesViewModel"
 
 data class FavoritesUiState(
-    val favoritesList: List<Course> = emptyList(),
-    val dataLoaded: Boolean = false,
+    val listPane: FavoritesListPaneUiState = FavoritesListPaneUiState(),
+    val detailPane: FavoritesDetailPaneUiState = FavoritesDetailPaneUiState(),
     val errorMessage: String = "",
     val favoriteMessage: String = "",
-    val refreshing: Boolean = false,
+)
+
+data class FavoritesListPaneUiState(
+    val favoritesList: List<Course> = emptyList(),
+    val listDataLoaded: Boolean = false,
+    val listRefreshing: Boolean = false,
+)
+
+data class FavoritesDetailPaneUiState(
+    val courseInfo: CourseInfo = CourseInfo(),
+    val detailDataLoaded: Boolean = false,
+    val detailRefreshing: Boolean = false,
 )
 
 
@@ -33,31 +48,30 @@ class FavoritesScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(FavoritesUiState())
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
 
-    fun setRefresh(isRefreshing: Boolean) {
+    // list pane functions
+    fun setListRefresh(isRefreshing: Boolean) {
         _uiState.update { currentState ->
             currentState.copy(
-                refreshing = isRefreshing
+                listPane = currentState.listPane.copy(
+                    listRefreshing = isRefreshing,
+                )
             )
         }
     }
 
     fun getFavorites(database: Database) {
         screenModelScope.launch(Dispatchers.IO) {
+            setListRefresh(true)
             try {
-                /*
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        refreshing = true
-                    )
-                }
-                */
                 val idList = database.favoritesQueries.selectAll().executeAsList()
                 val result = favoritesQuery(supabase, idList)
                 _uiState.update { currentState ->
                     currentState.copy(
-                        favoritesList = result,
-                        dataLoaded = true,
-                        refreshing = false
+                        listPane = currentState.listPane.copy(
+                            favoritesList = result,
+                            listDataLoaded = true,
+                            listRefreshing = false
+                        )
                     )
                 }
             }  catch (e: Exception) {
@@ -80,8 +94,8 @@ class FavoritesScreenModel : ScreenModel {
         }
     }
 
-    suspend fun handleFavorite(course: Course, database: Database) {
-        withContext(Dispatchers.IO) {
+    fun handleFavorite(course: Course, database: Database) {
+        screenModelScope.launch(Dispatchers.IO) {
             if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
@@ -115,6 +129,47 @@ class FavoritesScreenModel : ScreenModel {
 
         Logger.d(courseList.toString(), tag = TAG)
         return courseList
+    }
+
+    private fun setDetailRefresh(isRefreshing: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                detailPane = currentState.detailPane.copy(
+                    detailRefreshing = isRefreshing
+                )
+            )
+        }
+    }
+
+    fun getCourseInfo(term: String, id: String) {
+        screenModelScope.launch(Dispatchers.IO) {
+            setDetailRefresh(true)
+            try {
+                val courseInfo = classAPIResponse(term, id.substringAfter("_"))
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        detailPane = currentState.detailPane.copy(
+                            courseInfo = courseInfo,
+                            detailDataLoaded = true,
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Logger.d("Exception in detailed results: $e", tag = TAG)
+                val errorMessage = when (e) {
+                    is UnresolvedAddressException -> "No Internet connection"
+                    is SocketTimeoutException -> "Connection timed out"
+                    else -> "Error: ${e.message}"
+                }
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        errorMessage = errorMessage
+                    )
+                }
+            } finally {
+                setDetailRefresh(false)
+            }
+        }
     }
 
     fun clearError() {

@@ -1,29 +1,42 @@
 package ui.data
 
-import api.Course
-import api.Type
-import api.supabaseQuery
+import api.*
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
 import io.github.jan.supabase.exceptions.BadRequestRestException
 import io.github.jan.supabase.exceptions.HttpRequestException
+import io.ktor.client.network.sockets.*
+import io.ktor.util.network.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import ui.departmentList
 
 private const val TAG = "ResultsScreenModel"
 
 data class ResultsUiState(
+    val listPane: ResultListUiState = ResultListUiState(),
+    val detailPane: ResultDetailUiState = ResultDetailUiState(),
+    val errorMessage: String = "",
+)
+
+data class ResultListUiState(
+    // list
     val resultsList: List<Course> = emptyList(),
     val favoritesList: List<String> = emptyList(),
-    val dataLoaded: Boolean = false,
-    val errorMessage: String = "",
+    val listDataLoaded: Boolean = false,
     val favoriteMessage: String = "",
-    val refreshing: Boolean = false,
+    val listRefreshing: Boolean = false,
+)
+
+data class ResultDetailUiState(
+    val courseInfo: CourseInfo = CourseInfo(),
+    val detailDataLoaded: Boolean = false,
+    val detailRefreshing: Boolean = false,
 )
 
 
@@ -31,10 +44,13 @@ class ResultsScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(ResultsUiState())
     val uiState: StateFlow<ResultsUiState> = _uiState.asStateFlow()
 
-    fun setRefresh(isRefreshing: Boolean) {
+    // list stuff
+    private fun setListRefresh(isRefreshing: Boolean) {
         _uiState.update { currentState ->
             currentState.copy(
-                refreshing = isRefreshing,
+                listPane = currentState.listPane.copy(
+                    listRefreshing = isRefreshing,
+                )
             )
         }
     }
@@ -48,11 +64,11 @@ class ResultsScreenModel : ScreenModel {
         genEd: List<String>,
         searchType: String
     ) {
+
+        setListRefresh(true)
+
         val useDepartment = (Regex("^[A-Za-z]{2,4}$").matches(department) && departmentList.contains(department.uppercase()))
         val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
-
-//        if (useDepartment)  Log.d(TAG, "Using department")
-//        if (useCourseNumber)  Log.d(TAG, "Using course number")
         screenModelScope.launch(Dispatchers.IO) {
             try {
 //                _uiState.update { currentState ->
@@ -77,8 +93,12 @@ class ResultsScreenModel : ScreenModel {
                 Logger.d(result.toString(), tag = TAG)
                 _uiState.update { currentState ->
                     currentState.copy(
-                        resultsList = result,
-                        dataLoaded = true,
+//                        resultsList = result,
+//                        dataLoaded = true,
+                        currentState.listPane.copy(
+                            resultsList = result,
+                            listDataLoaded = true,
+                        )
                     )
                 }
                 Logger.d(_uiState.toString(), tag = TAG)
@@ -97,7 +117,7 @@ class ResultsScreenModel : ScreenModel {
                     }
                 }
             } finally {
-                setRefresh(false)
+                setListRefresh(false)
             }
         }
     }
@@ -106,7 +126,10 @@ class ResultsScreenModel : ScreenModel {
         screenModelScope.launch(Dispatchers.IO) {
             _uiState.update { currentState ->
                 currentState.copy(
-                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
+//                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                    currentState.listPane.copy(
+                        favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                    )
                 )
             }
         }
@@ -126,7 +149,10 @@ class ResultsScreenModel : ScreenModel {
 
             _uiState.update { currentState ->
                 currentState.copy(
-                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
+//                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                    currentState.listPane.copy(
+                        favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                    )
                 )
             }
         }
@@ -134,7 +160,9 @@ class ResultsScreenModel : ScreenModel {
 
     private fun setFavoritesMessage(message: String) {
         _uiState.value = _uiState.value.copy(
-            favoriteMessage = message
+            listPane = _uiState.value.listPane.copy(
+                favoriteMessage = message
+            )
         )
     }
 
@@ -143,88 +171,55 @@ class ResultsScreenModel : ScreenModel {
             errorMessage = ""
         )
     }
+
+    // Detail stuff
+    fun getCourseInfo(term: String, courseNum: String) {
+        screenModelScope.launch(Dispatchers.IO) {
+            Logger.d("Getting course info", tag=TAG)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    detailPane = currentState.detailPane.copy(
+                        detailRefreshing = true
+                    )
+                )
+            }
+            try {
+                val courseInfo = classAPIResponse(term, courseNum)
+                _uiState.update { currentState ->
+//                    courseInfo = courseInfo,
+//                    dataLoaded = true
+                    currentState.copy(
+                        detailPane = currentState.detailPane.copy(
+                            courseInfo = courseInfo,
+                            detailDataLoaded = true
+                        )
+                    )
+                }
+            }  catch (e: Exception) {
+                Logger.d("Exception in detailed results: $e", tag = TAG)
+                val errorMessage = when (e) {
+                    is UnresolvedAddressException -> "No Internet connection"
+                    is SocketTimeoutException -> "Connection timed out"
+                    else -> "Error: ${e.message}"
+                }
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        errorMessage = errorMessage
+                    )
+                }
+            } finally {
+                _uiState.update { currentState ->
+                    currentState.copy(
+//                        refreshing = false
+                        detailPane = currentState.detailPane.copy(
+                            detailRefreshing = false
+                        )
+                    )
+                }
+            }
+        }
+    }
+
 }
 
-// list of departments
-val departmentList = setOf(
-    "APLX",
-    "AM",
-    "ARBC",
-    "ART",
-    "ARTG",
-    "ASTR",
-    "BIOC",
-    "BIOL",
-    "BIOE",
-    "BME",
-    "CRSN",
-    "CHEM",
-    "CHIN",
-    "CSP",
-    "CLNI",
-    "CMMU",
-    "CMPM",
-    "CSE",
-    "COWL",
-    "CRES",
-    "CRWN",
-    "DANM",
-    "EART",
-    "ECON",
-    "EDUC",
-    "ECE",
-    "ESCI",
-    "ENVS",
-    "FMST",
-    "FILM",
-    "FREN",
-    "GAME",
-    "GERM",
-    "GCH",
-    "GRAD",
-    "GREE",
-    "HEBR",
-    "HIS",
-    "HAVC",
-    "HISC",
-    "HCI",
-    "HUMN",
-    "ITAL",
-    "JAPN",
-    "JRLC",
-    "KRSG",
-    "LAAD",
-    "LATN",
-    "LALS",
-    "LGST",
-    "LING",
-    "LIT",
-    "MATH",
-    "MERR",
-    "METX",
-    "MUSC",
-    "NLP",
-    "OAKS",
-    "OCEA",
-    "PERS",
-    "PHIL",
-    "PBS",
-    "PHYE",
-    "PHYS",
-    "POLI",
-    "PRTR",
-    "PORT",
-    "PSYC",
-    "SCIC",
-    "SOCD",
-    "SOCY",
-    "SPAN",
-    "SPHS",
-    "STAT",
-    "STEV",
-    "TIM",
-    "THEA",
-    "UCDC",
-    "VAST",
-    "WRIT"
-)
+// list of departments imported from ResultsScreenModel

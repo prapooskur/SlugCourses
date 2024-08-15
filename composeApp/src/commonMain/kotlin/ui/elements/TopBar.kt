@@ -50,7 +50,8 @@ fun CollapsingLargeTopBar(
 @Composable
 fun BoringNormalTopBar(
     titleText: String,
-    navigator: Navigator,
+    onBack: () -> Unit,
+    showBack: Boolean = true
 ) {
     TopAppBar(
         title = {
@@ -61,16 +62,17 @@ fun BoringNormalTopBar(
             )
         },
         navigationIcon = {
-            IconButton(
-                onClick = {
-                    navigator.pop()
-//                    navController.navigateUp()
+            if (showBack) {
+                IconButton(
+                    onClick = {
+                        onBack()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                )
             }
         },
     )

@@ -58,60 +58,30 @@ data class DetailedResultsScreen(
         }
 
         val courseInfo = uiState.value.courseInfo
+
         Scaffold(
-            // custom insets necessary to render behind nav bar
             contentWindowInsets = WindowInsets(0.dp),
             topBar = {
                 BoringNormalTopBar(
                     titleText = courseInfo.primary_section.title_long,
-                    navigator = navigator
+                    onBack = {
+                        navigator.pop()
+                    },
                 )
             },
             content = { paddingValues ->
 
-                val pullRefreshState = rememberPullRefreshState(
-                    uiState.value.refreshing,
+                CourseDetailPane(
+                    courseInfo = courseInfo,
+                    courseUrl = url,
+                    dataLoaded = uiState.value.dataLoaded,
+                    refreshing = uiState.value.refreshing,
                     onRefresh = {
-                        Logger.d("updating?", tag = TAG)
+                        Logger.d("updating.", tag = TAG)
                         screenModel.getCourseInfo(term, courseNumber)
-                    },
+                    }
                 )
 
-                Box(Modifier.pullRefresh(pullRefreshState).padding(paddingValues)) {
-                    LazyColumn(
-                        Modifier
-//                            .padding(paddingValues)
-                            .fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (uiState.value.dataLoaded) {
-                            item {
-                                Column(Modifier.widthIn(max=800.dp)) {
-                                    CourseDetailBox(courseInfo = courseInfo)
-                                    CourseDescriptionBox(courseInfo = courseInfo, url = url)
-                                    if (courseInfo.primary_section.requirements.isNotEmpty()) {
-                                        CourseRequirementsBox(courseInfo = courseInfo)
-                                    }
-                                    if (courseInfo.notes.isNotEmpty()) {
-                                        CourseNotesBox(courseInfo = courseInfo)
-                                    }
-                                    CourseMeetingsBox(courseInfo = courseInfo)
-                                    if (courseInfo.secondary_sections.isNotEmpty()) {
-                                        CourseSectionsBox(courseInfo = courseInfo)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    PullRefreshIndicator(
-                        uiState.value.refreshing,
-                        pullRefreshState,
-                        Modifier.align(Alignment.TopCenter),
-                        backgroundColor = MaterialTheme.colorScheme.surfaceBright,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                }
             }
         )
     }
@@ -119,6 +89,67 @@ data class DetailedResultsScreen(
 
 private val ELEV_VALUE = 4.dp
 private val PADDING_VALUE = 16.dp
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun CourseDetailPane(
+    courseInfo: CourseInfo,
+    courseUrl: String,
+    dataLoaded: Boolean,
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing,
+        onRefresh = {
+            Logger.d("updating?", tag = TAG)
+            onRefresh()
+        },
+    )
+
+    Box(Modifier.pullRefresh(pullRefreshState).then(modifier)) {
+        LazyColumn(
+            Modifier.fillMaxSize().widthIn(max = 800.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (dataLoaded) {
+                item {
+                    CourseDetailBox(courseInfo = courseInfo)
+                }
+                item {
+                    CourseDescriptionBox(courseInfo = courseInfo, url = courseUrl)
+                }
+                if (courseInfo.primary_section.requirements.isNotEmpty()) {
+                    item {
+                        CourseRequirementsBox(courseInfo = courseInfo)
+                    }
+                }
+                if (courseInfo.notes.isNotEmpty()) {
+                    item {
+                        CourseNotesBox(courseInfo = courseInfo)
+                    }
+                }
+                item {
+                    CourseMeetingsBox(courseInfo = courseInfo)
+                }
+                if (courseInfo.secondary_sections.isNotEmpty()) {
+                    item {
+                        CourseSectionsBox(courseInfo = courseInfo)
+                    }
+                }
+            }
+        }
+
+        PullRefreshIndicator(
+            refreshing,
+            pullRefreshState,
+            Modifier.align(Alignment.TopCenter),
+            backgroundColor = MaterialTheme.colorScheme.surfaceBright,
+            contentColor = MaterialTheme.colorScheme.primary
+        )
+    }
+}
 
 @Composable
 fun CourseDetailBox(

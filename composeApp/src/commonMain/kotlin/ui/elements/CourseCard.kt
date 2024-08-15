@@ -50,12 +50,13 @@ fun CourseCard(
             .widthIn(max = 800.dp),
 
         // this is only used in two-pane ui
-        colors = CardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.surfaceColorAtElevation(12.dp) else CardDefaults.cardColors().containerColor,
+        // disabled, since it looked bad
+        /*colors = CardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.surfaceColorAtElevation(32.dp) else CardDefaults.cardColors().containerColor,
             contentColor = CardDefaults.cardColors().contentColor,
             disabledContainerColor = CardDefaults.cardColors().disabledContainerColor,
             disabledContentColor = CardDefaults.cardColors().disabledContentColor,
-        )
+        )*/
     )
 
     {
