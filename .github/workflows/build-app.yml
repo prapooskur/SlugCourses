@@ -3,14 +3,7 @@ run-name: Building apps
 on:
   workflow_dispatch:
   push:
-    # only build if app files were modified
-    paths-ignore:
-      - '*.md'
-      - '.github/**'
-      - 'assets/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'metadata/**'
+    # only build if (non-ios) app files were modified
     paths:
       - 'app/**'
       - '!app/.idea/**'
