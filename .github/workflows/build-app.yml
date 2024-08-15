@@ -38,15 +38,10 @@ jobs:
           KEYSTORE_B64: ${{ secrets.keystore_b64 }}
         run: echo $KEYSTORE_B64 | base64 --decode > $GITHUB_WORKSPACE/signing-key.jks
 
-      #- name: Setup Gradle
-      #  working-directory: .
-      #  run: chmod +x ./gradlew
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build app
-        working-directory: .
         run: ./gradlew buildRelease
 
       - name: Sign app
@@ -54,7 +49,6 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.keystore_password }}
           KEY_ALIAS: ${{ secrets.key_alias }}
           KEY_PASSWORD: ${{ secrets.key_password }}
-        working-directory: .
         run: |
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
@@ -84,15 +78,10 @@ jobs:
         distribution: 'temurin'
         #cache: 'gradle'
 
-#    - name: Setup Gradle
-#      working-directory: .
-#      run: chmod +x ./gradlew
-
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
     - name: Build jar
-      working-directory: .
       run: ./gradlew packageUberJarForCurrentOS
 
     - name: Rename file
@@ -105,7 +94,6 @@ jobs:
         path: composeApp/build/compose/jars/com.pras.slugcourses.jar
 
     - name: Build exe
-      working-directory: .
       run: ./gradlew packageReleaseExe
 
     - name: Upload windows exe as artifact
