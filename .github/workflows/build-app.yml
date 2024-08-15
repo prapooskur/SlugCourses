@@ -85,7 +85,7 @@ jobs:
       run: ./gradlew packageUberJarForCurrentOS
 
     - name: Rename file
-      run: mv app/composeApp/build/compose/jars/com.pras.slugcourses-windows-x64-1.0.0.jar app/composeApp/build/compose/jars/com.pras.slugcourses.jar
+      run: mv composeApp/build/compose/jars/com.pras.slugcourses-windows-x64-1.0.0.jar composeApp/build/compose/jars/com.pras.slugcourses.jar
 
     - name: Upload jar as artifact
       uses: actions/upload-artifact@v4
