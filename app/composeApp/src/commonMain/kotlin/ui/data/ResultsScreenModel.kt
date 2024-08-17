@@ -37,6 +37,8 @@ data class ResultDetailUiState(
     val courseInfo: CourseInfo = CourseInfo(),
     val detailDataLoaded: Boolean = false,
     val detailRefreshing: Boolean = false,
+    val selectedId: Int = 0,
+    val selectedUrl: String = ""
 )
 
 
@@ -191,7 +193,7 @@ class ResultsScreenModel : ScreenModel {
                     currentState.copy(
                         detailPane = currentState.detailPane.copy(
                             courseInfo = courseInfo,
-                            detailDataLoaded = true
+                            detailDataLoaded = true,
                         )
                     )
                 }
@@ -218,6 +220,22 @@ class ResultsScreenModel : ScreenModel {
                 }
             }
         }
+    }
+
+    fun setSelectedId(newId: Int) {
+        _uiState.value = _uiState.value.copy(
+            detailPane = _uiState.value.detailPane.copy(
+                selectedId = newId
+            )
+        )
+    }
+
+    fun setSelectedUrl(newUrl: String) {
+        _uiState.value = _uiState.value.copy(
+            detailPane = _uiState.value.detailPane.copy(
+                selectedUrl = newUrl
+            )
+        )
     }
 
 }

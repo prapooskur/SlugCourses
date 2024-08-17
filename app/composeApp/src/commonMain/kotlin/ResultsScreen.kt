@@ -191,10 +191,6 @@ data class ResultsScreen(
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
 
-        // todo optimize?
-        var selectedId by rememberSaveable { mutableIntStateOf(0) }
-        var selectedUrl by rememberSaveable { mutableStateOf("") }
-
         Row(Modifier.fillMaxSize()) {
             // List pane
             var searchQuery by rememberSaveable{ mutableStateOf(query) }
@@ -253,8 +249,8 @@ data class ResultsScreen(
                                                 course = course,
                                                 // no need for parameters here
                                                 onClick = { _, _, _ ->
-                                                    selectedId = id
-                                                    selectedUrl = course.url
+                                                    screenModel.setSelectedId(id)
+                                                    screenModel.setSelectedUrl(course.url)
                                                 },
                                                 isFavorited = uiState.listPane.favoritesList.contains(course.id),
                                                 onFavorite = {
@@ -262,7 +258,7 @@ data class ResultsScreen(
                                                         screenModel.handleFavorite(course, database)
                                                     }
                                                 },
-                                                selected = (id == selectedId)
+                                                selected = (id == uiState.detailPane.selectedId)
                                             )
                                         }
                                     } else {
@@ -314,15 +310,15 @@ data class ResultsScreen(
                         Box(Modifier.padding(paddingValues).fillMaxSize()) {
                             CourseDetailPane(
                                 courseInfo = courseInfo,
-                                courseUrl = selectedUrl,
+                                courseUrl = uiState.detailPane.selectedUrl,
                                 dataLoaded = uiState.detailPane.detailDataLoaded,
                                 refreshing = uiState.detailPane.detailRefreshing,
                                 onRefresh = {
-                                    if (screenModel.uiState.value.listPane.resultsList.isNotEmpty()) {
+                                    if (uiState.listPane.resultsList.isNotEmpty()) {
                                         Logger.d("updating detail", tag = TAG)
                                         screenModel.getCourseInfo(
-                                            screenModel.uiState.value.listPane.resultsList[selectedId].term.toString(),
-                                            screenModel.uiState.value.listPane.resultsList[selectedId].id.substringAfter("_")
+                                            uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
+                                            uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
                                         )
                                     } else {
                                         Logger.d("not updating, results empty", tag = TAG)
@@ -336,28 +332,27 @@ data class ResultsScreen(
 
         }
 
-        // when a course is selected, update data pane
-        LaunchedEffect(selectedId) {
-            if (screenModel.uiState.value.listPane.resultsList.isNotEmpty()) {
-                Logger.d("selected "+screenModel.uiState.value.listPane.resultsList[selectedId].toString(), tag = TAG)
+        fun updateDetailData() {
+            if (uiState.listPane.resultsList.isNotEmpty() && uiState.listPane.listDataLoaded) {
+                Logger.d("selected "+uiState.listPane.resultsList[uiState.detailPane.selectedId].toString(), tag = TAG)
                 screenModel.getCourseInfo(
-                    screenModel.uiState.value.listPane.resultsList[selectedId].term.toString(),
-                    screenModel.uiState.value.listPane.resultsList[selectedId].id.substringAfter("_")
+                    uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
+                    uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
                 )
+                screenModel.setSelectedUrl(uiState.listPane.resultsList[uiState.detailPane.selectedId].url)
             }
+        }
+
+        // when a course is selected, update data pane
+        LaunchedEffect(uiState.detailPane.selectedId) {
+            updateDetailData()
         }
 
         // when the results list updates, update data pane
-        LaunchedEffect(screenModel.uiState.value.listPane.resultsList) {
-            if (screenModel.uiState.value.listPane.resultsList.isNotEmpty() && screenModel.uiState.value.listPane.listDataLoaded) {
-                Logger.d("selected "+screenModel.uiState.value.listPane.resultsList[selectedId].toString(), tag = TAG)
-                screenModel.getCourseInfo(
-                    screenModel.uiState.value.listPane.resultsList[selectedId].term.toString(),
-                    screenModel.uiState.value.listPane.resultsList[selectedId].id.substringAfter("_")
-                )
-            }
+        LaunchedEffect(uiState.listPane.resultsList) {
+            updateDetailData()
         }
-
+        
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

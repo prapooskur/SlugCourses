@@ -18,3 +18,4 @@ captures
 /composeApp/release/composeApp-release.apk
 .kotlin
 iosOut/
+.fleet/
