@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-build
-          path: composeApp/build/outputs/apk/release/composeApp-release.apk
+          path: app/composeApp/build/outputs/apk/release/composeApp-release.apk
 
   build-desktop:
     runs-on: windows-latest
@@ -91,7 +91,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: universal-jar-build
-        path: composeApp/build/compose/jars/com.pras.slugcourses.jar
+        path: app/composeApp/build/compose/jars/com.pras.slugcourses.jar
 
     - name: Build exe
       run: ./gradlew packageReleaseExe
@@ -100,7 +100,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: exe-build
-        path: composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0.exe
+        path: app/composeApp/build/compose/binaries/main-release/exe/com.pras.slugcourses-1.0.0.exe
 
 #  build-ios:
 #    runs-on: macos-latest
