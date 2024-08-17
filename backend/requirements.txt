@@ -1,7 +1,7 @@
 beautifulsoup4==4.12.3
 google-ai-haystack==0.0.1
 python-dotenv==1.0.0
-requests==2.31.0
+requests==2.32.2
 supabase==2.4.5
 tqdm==4.66.3
 haystack-ai==2.1.2
