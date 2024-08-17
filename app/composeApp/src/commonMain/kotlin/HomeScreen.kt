@@ -116,7 +116,7 @@ class HomeScreen : Screen {
                     }
                 ) { /* do nothing */ }
 
-                val widthMax = 600.dp
+                val widthMax = 380.dp
 
                 Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp).widthIn(max=widthMax)) {
                     LargeDropdownMenu(

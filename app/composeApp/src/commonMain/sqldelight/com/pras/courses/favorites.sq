@@ -2,18 +2,21 @@ CREATE TABLE favorites (
   id TEXT PRIMARY KEY NOT NULL
 );
 
-selectAll:
-SELECT *
-FROM favorites;
-
 select:
 SELECT *
 FROM favorites
 WHERE id = ?;
 
+selectAll:
+SELECT *
+FROM favorites;
+
 delete:
 DELETE FROM favorites
 WHERE id = ?;
+
+deleteAll:
+DELETE FROM favorites;
 
 insert:
 INSERT INTO favorites(id)

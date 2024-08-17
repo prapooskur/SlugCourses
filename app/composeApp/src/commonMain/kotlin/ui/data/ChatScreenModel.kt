@@ -46,7 +46,7 @@ data class ChatScreenState(
     val active: Boolean = true,
     val messageList: SnapshotStateList<ChatMessage> = mutableStateListOf(
         ChatMessage(
-            "Hello! I'm SlugBot, your personal assistant for all things UCSC. How can I help you today?",
+            "Hello! I'm SlugBot, your assistant for UCSC courses. How can I help you today?",
             Author.SYSTEM
         )
     ),

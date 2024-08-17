@@ -79,7 +79,8 @@ data class DetailedResultsScreen(
                     onRefresh = {
                         Logger.d("updating.", tag = TAG)
                         screenModel.getCourseInfo(term, courseNumber)
-                    }
+                    },
+                    modifier = Modifier.padding(paddingValues)
                 )
 
             }

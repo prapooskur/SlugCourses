@@ -2,6 +2,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -61,6 +63,9 @@ class FavoritesScreen : Screen {
                     },
                     onFavorite = { course ->
                         screenModel.handleFavorite(course, database)
+                    },
+                    onToggleDialog = {
+                        screenModel.toggleDeleteDialog()
                     }
                 )
             }
@@ -72,6 +77,21 @@ class FavoritesScreen : Screen {
                 },
                 onFavorite = { course ->
                     screenModel.handleFavorite(course, database)
+                },
+                onToggleDialog = {
+                    screenModel.toggleDeleteDialog()
+                }
+            )
+        }
+
+        if (screenModel.uiState.value.showDeleteDialog) {
+            DeleteAllDialog(
+                onDeleteAll = {
+                    screenModel.deleteFavorites(database)
+                    screenModel.toggleDeleteDialog()
+                },
+                onDismiss = {
+                    screenModel.toggleDeleteDialog()
                 }
             )
         }
@@ -113,7 +133,8 @@ class FavoritesScreen : Screen {
         favoriteFlow: State<Collection<String>>,
         onRefresh: () -> Unit,
         onSelect: (term: String, id: String, url: String) -> Unit,
-        onFavorite: (Course) -> Unit
+        onFavorite: (Course) -> Unit,
+        onToggleDialog: () -> Unit
     ) {
 
         val uiState by screenModel.uiState.collectAsState()
@@ -128,6 +149,15 @@ class FavoritesScreen : Screen {
                             overflow = TextOverflow.Ellipsis
                         )
                     },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                onToggleDialog()
+                            }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Clear favorites")
+                            }
+                    }
                 )
             },
             content = { paddingValues ->
@@ -158,7 +188,6 @@ class FavoritesScreen : Screen {
                                         CourseCard(
                                             course = course,
                                             onClick = { clickTerm, clickId, clickUrl ->
-//                                                navigator.push(DetailedResultsScreen(clickTerm, clickId, clickUrl))
                                                 onSelect(clickTerm, clickId, clickUrl)
                                             },
                                             isFavorited = favoriteFlow.value.contains(course.id),
@@ -201,7 +230,8 @@ class FavoritesScreen : Screen {
         screenModel: FavoritesScreenModel,
         favoriteFlow: State<Collection<String>>,
         onRefresh: () -> Unit,
-        onFavorite: (Course) -> Unit
+        onFavorite: (Course) -> Unit,
+        onToggleDialog: () -> Unit
     ) {
         // Two pane layout (large screens)
         val uiState by screenModel.uiState.collectAsState()
@@ -227,6 +257,9 @@ class FavoritesScreen : Screen {
                     },
                     onFavorite = {
                         onFavorite(it)
+                    },
+                    onToggleDialog = {
+                        onToggleDialog()
                     }
                 )
             }
@@ -269,6 +302,31 @@ class FavoritesScreen : Screen {
                 screenModel.getCourseInfo(selectedTerm, selectedId)
             }
         }
+    }
+
+    @Composable
+    private fun DeleteAllDialog(onDeleteAll: () -> Unit, onDismiss: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = {
+                onDismiss()
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onDeleteAll() }
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { onDismiss() }
+                ) {
+                    Text("Dismiss")
+                }
+            },
+            title = { Text("Clear Favorites") },
+            text = { Text("Are you sure you want to delete all favorited courses?") },
+        )
     }
     
 }

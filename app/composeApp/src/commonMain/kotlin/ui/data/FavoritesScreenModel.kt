@@ -26,6 +26,7 @@ private const val TAG = "FavoritesViewModel"
 data class FavoritesUiState(
     val listPane: FavoritesListPaneUiState = FavoritesListPaneUiState(),
     val detailPane: FavoritesDetailPaneUiState = FavoritesDetailPaneUiState(),
+    val showDeleteDialog: Boolean = false,
     val errorMessage: String = "",
     val favoriteMessage: String = "",
 )
@@ -112,7 +113,7 @@ class FavoritesScreenModel : ScreenModel {
         )
     }
 
-    suspend fun favoritesQuery(supabase: SupabaseClient, idList: List<String>): List<Course> {
+    private suspend fun favoritesQuery(supabase: SupabaseClient, idList: List<String>): List<Course> {
         val courseList = supabase.from("courses").select {
 
             filter {
@@ -169,6 +170,21 @@ class FavoritesScreenModel : ScreenModel {
             } finally {
                 setDetailRefresh(false)
             }
+        }
+    }
+
+    fun deleteFavorites(database: Database) {
+        screenModelScope.launch(Dispatchers.IO) {
+            database.favoritesQueries.deleteAll()
+            getFavorites(database)
+        }
+    }
+
+    fun toggleDeleteDialog() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                showDeleteDialog = !currentState.showDeleteDialog
+            )
         }
     }
 
