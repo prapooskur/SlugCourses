@@ -6,6 +6,7 @@ from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Document
 from course import Course
 from haystack.document_stores.in_memory import InMemoryDocumentStore
+import argparse
 
 def termToQuarterName(term : str) -> str:
     match term:
@@ -114,10 +115,23 @@ def populate_embeddings(documents: list[Document]):
 
 if __name__ == "__main__":
 
-    if "-c" in sys.argv:
-        populate()
+    parser = argparse.ArgumentParser(
+                prog='SlugCourses Embedding Generator',
+                description='Generates course embeddings for LLM backend'
+            )
+    
+    parser.add_argument("-c", "--cache", action='store_true', help='store course data in pickle cache')
+    parser.add_argument("-e", "--embed", action='store_true', help='generate embeddings from pickle cache')
 
-    if "-e" in sys.argv:
+    args = parser.parse_args()
+
+    if not args.cache and not args.embed:
+        parser.print_help()
+        parser.exit()
+    if args.cache:
+        populate()
+    
+    if args.embed:
         file = open("cache/updatedclasses", mode="rb")
         detailedInfo = pickle.load(file)
         file.close()
