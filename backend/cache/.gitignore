@@ -1,0 +1,3 @@
+# ignore files in this dir in git
+*
+!.gitignore
