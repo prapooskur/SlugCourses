@@ -7,7 +7,6 @@ from haystack import Document
 from course import Course
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 import argparse
-from time import sleep
 
 def termToQuarterName(term : str) -> str:
     match term:
@@ -58,39 +57,33 @@ def populate():
     #print(classNums)
     print("beginning download")
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(10) as executor:
         # Using a set for dupe protection
         unique_results = set()
 
         # Define a function to fetch course data
         def fetch_course_data(course_input):
-            try:
-                baseurl = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
-                url = f"{baseurl}{course_input[0]}/{course_input[1]}"
-                raw = requests.get(url, timeout=300).json()
-                detailedCourse = raw.get('primary_section')
+            term = course_input[0]
+            baseurl = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/" + term + "/"
+            raw = requests.get(baseurl + course_input[1]).json()
+            detailedCourse = raw.get('primary_section')
 
-                # Dupe protection
-                courseName = detailedCourse.get('subject')+detailedCourse.get('catalog_nbr')
-                if (courseName) not in unique_results:
-                    unique_results.add(courseName)
-                    course = Course(
-                        termToQuarterName(detailedCourse.get('strm')),
-                        detailedCourse.get('acad_career'),
-                        detailedCourse.get('subject'),
-                        detailedCourse.get('catalog_nbr'),
-                        detailedCourse.get('title_long'),
-                        detailedCourse.get('description'),
-                        detailedCourse.get('gened'),
-                        detailedCourse.get('requirements'),
-                        raw.get('notes'),
-                    ).to_dict()
-                    # a small sleep timer to avoid getting rate limited (hopefully)
-                    sleep(.5)
-                    return course
-                
-            except requests.exceptions.Timeout:
-                print(f"Timeout occurred for {url}")
+            # Dupe protection
+            courseName = detailedCourse.get('subject')+detailedCourse.get('catalog_nbr')
+            if (courseName) not in unique_results:
+                unique_results.add(courseName)
+                course = Course(
+                    termToQuarterName(detailedCourse.get('strm')),
+                    detailedCourse.get('acad_career'),
+                    detailedCourse.get('subject'),
+                    detailedCourse.get('catalog_nbr'),
+                    detailedCourse.get('title_long'),
+                    detailedCourse.get('description'),
+                    detailedCourse.get('gened'),
+                    detailedCourse.get('requirements'),
+                    raw.get('notes'),
+                ).to_dict()
+                return course
 
         # Use tqdm for the progress bar
         results = list(tqdm(executor.map(fetch_course_data, classNums), total=len(classNums)))
@@ -104,15 +97,11 @@ def populate():
     picklefile = open("cache/updatedclasses", mode="wb")
     pickle.dump(detailedInfo, picklefile)
     picklefile.close()    
-    print("Wrote course data picklefile to cache/updatedclasses")
 
 
     jsonfile = open("cache/updatedclasses.json", mode="w")
     json.dump(detailedInfo, jsonfile)
     jsonfile.close()
-    print("Wrote human-readable course data json to cache/updatedclasses.json")
-
-    
 
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
@@ -123,7 +112,6 @@ def populate_embeddings(documents: list[Document]):
     picklefile = open("cache/classembeddings", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
-    print("Wrote embeddings picklefile to cache/classembeddings")
 
 if __name__ == "__main__":
 

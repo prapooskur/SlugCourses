@@ -41,12 +41,13 @@ data class ChatList(
     val messages: List<ChatMessage>
 )
 
+const val initMessage = "Hello! I'm SlugBot, your assistant for UCSC courses. How can I help you today?"
 data class ChatScreenState(
     val message: String = "",
     val active: Boolean = true,
     val messageList: SnapshotStateList<ChatMessage> = mutableStateListOf(
         ChatMessage(
-            "Hello! I'm SlugBot, your assistant for UCSC courses. How can I help you today?",
+            initMessage,
             Author.SYSTEM
         )
     ),
@@ -75,14 +76,14 @@ class ChatScreenModel : ScreenModel {
             message = "",
             messageList = mutableStateListOf(
                 ChatMessage(
-                    "Hello! I'm SlugBot, your personal assistant for all things UCSC. How can I help you today?",
+                    initMessage,
                     Author.SYSTEM
                 )
             )
         )
     }
 
-    fun addMessage(chatMessage: ChatMessage) {
+    private fun addMessage(chatMessage: ChatMessage) {
         _uiState.value.messageList.add(chatMessage)
     }
 
