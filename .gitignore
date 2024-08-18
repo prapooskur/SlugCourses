@@ -1,2 +1,3 @@
 backend/.env
+backend/__pycache__
 .idea
