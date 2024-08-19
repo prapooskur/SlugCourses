@@ -1,4 +1,4 @@
-import pickle, os, re, asyncio, time, json
+import pickle, os, re, time, json
 #from haystack import Pipeline
 from haystack.components.joiners.document_joiner import DocumentJoiner
 from haystack.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
@@ -84,7 +84,7 @@ document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
 
 # instantiate llm tools
-def retrieve_courses(input: str):
+def retrieve_general(input: str):
     """Searches the list of course vectors and returns relevant courses. Use for general queries that are too broad for query_course_database."""
     # (2) generate text embeddings based on user input
     textEmbeddings = text_embedder.run(input)
@@ -105,10 +105,11 @@ def retrieve_courses(input: str):
     """
     prompt_builder = PromptBuilder(template=prompt_template)
     finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"])["prompt"]
+    # print(mergedDocs["documents"])
     return finalizedPrompt
 
 
-def query_course_database(sql_input: str):
+def retrieve_specific(sql_input: str):
     """
     Queries the course SQL database (read-only). Use for queries about a specific class, instructor, department, or location.
     Example: SELECT * FROM courses WHERE department = 'BME' AND course_number = 160 AND course_letter = ''
@@ -135,13 +136,13 @@ def query_course_database(sql_input: str):
     summer_session	Indicates which summer session a course belongs to (if applicable).
     description     A description of the course and the topics it covers.
     """
-
     conn = psycopg2.connect("user=postgres.cdmaojsmfcuyscmphhjk password="+supaPass+" host=aws-0-us-west-1.pooler.supabase.com port=6543 dbname=postgres")
     conn.set_session(readonly=True)
 
     cur = conn.cursor()
+    # sanitize input
     sql_input = sql_input.replace("\"","'").replace("\\","")
-    print(sql_input)
+    print("executing: "+sql_input)
 
     cur.execute(sql_input)
     output = cur.fetchall()
@@ -183,9 +184,13 @@ def query_course_database(sql_input: str):
 # create LLM
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
-The current term is Spring 2024. The next term is Summer 2024, followed by Fall 2024.
+The current term is Summer 2024. The next term is Fall 2024. The Winter 2024 catalog is not currently available.
 """
-tool_list=[retrieve_courses, query_course_database]
+tool_list=[retrieve_general, retrieve_specific]
+tool_dict = {
+    "retrieve_general": retrieve_general,
+    "retrieve_specific": retrieve_specific
+}
 genai.configure(api_key=geminiKey)
 model = genai.GenerativeModel('gemini-1.5-flash-latest',tools=tool_list, system_instruction = init_message)
 
@@ -203,49 +208,75 @@ class Chat(BaseModel):
 @classRecommender.post("/chat/")
 def get_stream_history(chat: Chat):
 
-    finalized_messages = []
+    messages = []
     
     for message in chat.messages[1:]:
         if message.author == Author.USER:
-            finalized_messages.append({"role":"user", "parts": [message.message]})
+            messages.append({"role":"user", "parts": [message.message]})
         else:
-            finalized_messages.append({"role":"model", "parts": [message.message]})
+            messages.append({"role":"model", "parts": [message.message]})
     # finalized_messages[-1]["parts"] = [finalized_prompt]
 
-    print(finalized_messages)
+    print(messages)
     # (7) Send prompt to LLM
-    #response = model.generate_content(finalized_messages, stream=True)
-    response = model.generate_content(finalized_messages, tools = tool_list, tool_config={'function_calling_config':'ANY'}, stream = True)
-    fcall = False
-    response.resolve()
-    function_calls = {}
-    for part in response.parts:
-        if fn := part.function_call:
-            fcall = True
-            function_calls[fn.name] = globals()[fn.name](**fn.args)
-    response_parts = [
-        glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
-        for fn, val in function_calls.items()
-    ]
-    while fcall:   
-        finalized_messages.append({"role":"model", "parts": response_parts})
-        response = model.generate_content(finalized_messages, tools = tool_list, stream = True, request_options={"timeout": 600})
-        response.resolve()
+    response = model.generate_content(messages, tools = tool_list, stream = True)
+    # fcall = False
+    # response.resolve()
+    # function_calls = {}
+
+    # for part in response.parts:
+    #     if fn := part.function_call:
+    #         fcall = True
+    #         function_calls[fn.name] = globals()[fn.name](**fn.args)
+    # response_parts = [
+    #     glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
+    #     for fn, val in function_calls.items()
+    # ]
+    # while fcall:   
+    #     messages.append({"role":"model", "parts": response_parts})
+    #     response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+    #     response.resolve()
         
-        fcall = False
-        function_calls = {}
-        for part in response.parts:
-            if fn := part.function_call:
-                fcall = True
-                function_calls[fn.name] = globals()[fn.name](**fn.args)
-        response_parts = [
-            glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
-            for fn, val in function_calls.items()
-        ]
+    #     fcall = False
+    #     function_calls = {}
+    #     for part in response.parts:
+    #         if fn := part.function_call:
+    #             fcall = True
+    #             function_calls[fn.name] = globals()[fn.name](**fn.args)
+    #     response_parts = [
+    #         glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
+    #         for fn, val in function_calls.items()
+    #     ]
 
     def stream_data():
-        for chunk in response:
-            yield chunk.text
+        for chunk in response: 
+            fcall = False
+            for part in chunk.parts:
+                if fn := part.function_call:
+                    fcall = True
+                    
+                    # print(fn) 
+                    # human-readable
+                    # args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                    # print(f"{fn.name}({args})")
+
+                    # since there's only one argument for both functions, just hardcode it
+                    # first item is always the input name so ignore
+                    args = ", ".join(f"{val}" for key, val in fn.args.items())
+                    print(f"passing: {args}")
+
+                    func_response = tool_dict[fn.name](args)
+                    print(f"received: {func_response}") 
+                    response_parts = [
+                        genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
+                    ]
+
+                    messages.append({"role":"model", "parts": response_parts})
+                    new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+                    for new_chunk in new_response:
+                        yield new_chunk.text
+            if not fcall and chunk.text:
+                yield chunk.text
 
     return StreamingResponse(stream_data())
 
