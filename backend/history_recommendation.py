@@ -85,7 +85,14 @@ document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
 # instantiate llm tools
 def retrieve_general(input: str):
-    """Searches the list of course vectors and returns relevant courses. Use for general queries that are too broad for query_course_database."""
+    """
+    Performs a comprehensive search across course vectors to retrieve relevant courses based on a general query.
+    
+    Use this function for queries like:
+    - "What courses about data science are available?"
+    - "Tell me about art history classes"
+    - "Which courses cover environmental sustainability?"
+    """
     # (2) generate text embeddings based on user input
     textEmbeddings = text_embedder.run(input)
 
@@ -114,6 +121,23 @@ def retrieve_specific(sql_input: str):
     Queries the course SQL database (read-only). Use for queries about a specific class, instructor, department, or location.
     Example: SELECT * FROM courses WHERE department = 'BME' AND course_number = 160 AND course_letter = ''
     Example: SELECT * FROM courses WHERE department = 'HIS' AND course_number = 80 AND course_letter = 'Y'
+
+    Example User Inputs:
+    1. "Find all Computer Science courses for Spring 2024"
+       SQL: SELECT * FROM courses WHERE department = 'CSE' AND term = 2242
+
+    2. "What are the details for PSYC 1?"
+       SQL: SELECT * FROM courses WHERE department = 'PSYC' AND course_number = 1 AND course_letter = ''
+
+    3. "Who's teaching Organic Chemistry this Fall?"
+       SQL: SELECT name, instructor FROM courses WHERE department = 'CHEM' AND name LIKE '%Organic Chemistry%' AND term = 2248
+
+    4. "Show me all courses taught by Professor Johnson in the History department"
+       SQL: SELECT * FROM courses WHERE department = 'HIS' AND instructor LIKE '%Johnson%'
+
+    5. "What are the available evening classes for the upcoming Fall term?"
+       SQL: SELECT * FROM courses WHERE term = 2248 AND time LIKE '%PM%'
+
     Table: courses
     id	            Unique identifier for each course offering. Combines term and course number.
     term	        The term a course is taught. Only use if asked. (2228 - Fall 2022, 2230 - Winter 2023, 2232 - Spring 2023, 2234 - Summer 2023, 2238 - Fall 2023, 2240 - Winter 2024, 2242 - Spring 2024, 2244 - Summer 2024, 2248 - Fall 2024, etc.)
@@ -185,6 +209,7 @@ def retrieve_specific(sql_input: str):
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
 The current term is Summer 2024. The next term is Fall 2024. The Winter 2024 catalog is not currently available.
+Terms are ordered Fall->Winter->Spring->Summer (i.e. Fall 2023, Winter 2024, Spring 2024, Summer 2024.) Use this order in your responses.
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -263,10 +288,10 @@ def get_stream_history(chat: Chat):
                     # since there's only one argument for both functions, just hardcode it
                     # first item is always the input name so ignore
                     args = ", ".join(f"{val}" for key, val in fn.args.items())
-                    print(f"passing: {args}")
+                    print(f"{fn.name}({args})")
 
                     func_response = tool_dict[fn.name](args)
-                    print(f"received: {func_response}") 
+                    # print(f"received: {func_response}") 
                     response_parts = [
                         genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
                     ]
