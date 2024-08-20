@@ -16,6 +16,9 @@ import google.ai.generativelanguage as glm
 from pydantic import BaseModel
 from typing import List
 from enum import Enum
+from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
+from haystack_integrations.components.retrievers.pgvector import PgvectorKeywordRetriever, PgvectorEmbeddingRetriever
+from haystack.utils import Secret
 
 
 # create app and load .env
@@ -51,13 +54,21 @@ Answer:'''
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-bm25_file = open("cache/classdocuments", mode="rb")
-bm25_store = pickle.load(bm25_file)
-bm25_file.close()
+# bm25_file = open("cache/classdocuments", mode="rb")
+# bm25_store = pickle.load(bm25_file)
+# bm25_file.close()
 
-embeddings_file = open("cache/classembeddings", mode="rb")
-embeddings_cache = pickle.load(embeddings_file)
-embeddings_file.close()
+# embeddings_file = open("cache/classembeddings", mode="rb")
+# embeddings_cache = pickle.load(embeddings_file)
+# embeddings_file.close()
+
+# (1) intialize store
+document_store = PgvectorDocumentStore(
+    connection_string = Secret.from_env_var("PG_CONN_STRING"),
+    embedding_dimension=1024,
+    vector_function="cosine_similarity",
+    search_strategy="hnsw",
+)
 
 
 # create and warm up sentence embedder
@@ -65,15 +76,19 @@ query_instruction = "Represent this sentence for searching relevant passages: "
 text_embedder = SentenceTransformersTextEmbedder(model="WhereIsAI/UAE-Large-V1", prefix=query_instruction)
 text_embedder.warm_up()
 
+# create retrievers
+keyword_retriever = PgvectorKeywordRetriever(document_store=document_store)
+embedding_retriever = PgvectorEmbeddingRetriever(document_store=document_store)
 
-# create bm25 retriever
-bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
+
+# # create bm25 retriever
+# bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 
 
-# write embeddings to store and create retriever
-embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-embeddings_store.write_documents(embeddings_cache['documents'])
-embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
+# # write embeddings to store and create retriever
+# embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+# embeddings_store.write_documents(embeddings_cache['documents'])
+# embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
 # create document joiner using reciprocal rank fusion method
@@ -91,16 +106,16 @@ def retrieve_general(input: str):
     - "Which courses cover environmental sustainability?"
     """
     # (2) generate text embeddings based on user input
-    textEmbeddings = text_embedder.run(input)
+    text_embeddings = text_embedder.run(input)
 
     # (3) keyword based document search
-    bm25Docs = bm25_retriever.run(query=input)
+    keyword_docs = keyword_retriever.run(query=input)
 
     # (4) create embeddings for vector based document search
-    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
+    embedding_docs = embedding_retriever.run(query_embedding=text_embeddings['embedding'])
 
     # (5) merge vector-based docs and keyword-based docs
-    mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
+    mergedDocs = document_joiner.run([keyword_docs["documents"], embedding_docs["documents"]])
     prompt_template = """
     Documents:
     {% for doc in documents %}
@@ -202,8 +217,8 @@ def get_quarter_from_term(term_input: int):
 # create LLM
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
-The current term is Summer 2024. The next term is Fall 2024. The Winter 2024 catalog is not currently available.
-Terms are ordered Fall->Winter->Spring->Summer (i.e. Fall 2023, Winter 2024, Spring 2024, Summer 2024.) Use this order in your responses.
+Terms are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
+The current term is Summer 2024. The next term is Fall 2024. The Winter 2025 catalog is not currently available.
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -286,6 +301,11 @@ def get_stream_history(chat: Chat):
 
     return StreamingResponse(stream_data())
 
+# suggestions for chat screen
+@classRecommender.get("/suggestions")
+def get_suggestions():
+    return "temp"
+
 #old endpoint (injects documents into prompt directly, only general search)
 @classRecommender.get("/")
 async def get_stream(userInput : str):
@@ -293,7 +313,7 @@ async def get_stream(userInput : str):
     textEmbeddings = text_embedder.run(userInput)
 
     # (3) keyword based document search
-    bm25Docs = bm25_retriever.run(query=userInput)
+    bm25Docs = keyword_retriever.run(query=userInput)
 
     # (4) create embeddings for vector based document search
     embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
