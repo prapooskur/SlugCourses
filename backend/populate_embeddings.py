@@ -1,4 +1,4 @@
-import pickle, json, sys
+import pickle, json, sys, os
 from tqdm import trange, tqdm
 import requests
 import concurrent.futures
@@ -32,8 +32,6 @@ def termToQuarterName(term : str) -> str:
             return "Summer 2022"
         case "2222":
             return "Spring 2022"
-
-
 
 def populate():
     print("updating cache...")
@@ -103,15 +101,37 @@ def populate():
     json.dump(detailedInfo, jsonfile)
     jsonfile.close()
 
+
+embeddings_model = "WhereIsAI/UAE-Large-V1"
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
-    #document_embedder = SentenceTransformersDocumentEmbedder(model="BAAI/bge-large-en-v1.5")
-    document_embedder = SentenceTransformersDocumentEmbedder(model="WhereIsAI/UAE-Large-V1")
+    document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
     document_embedder.warm_up()
     documents_with_embeddings = document_embedder.run(documents)
     picklefile = open("cache/classembeddings", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
+
+from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
+from haystack.document_stores.types.policy import DuplicatePolicy
+from haystack.utils import Secret
+def populate_supabase_embeddings(documents: list[Document]):
+    print("updating supabase embeddings...")
+    document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
+    document_embedder.warm_up()
+    embeddings = document_embedder.run(documents)
+    
+    document_store = PgvectorDocumentStore(
+        connection_string = Secret.from_env_var("PG_CONN_STRING"),
+        embedding_dimension=1024,
+        vector_function="cosine_similarity",
+        recreate_table=True,
+        search_strategy="hnsw",
+    )
+
+    document_store.write_documents(documents, policy=DuplicatePolicy.OVERWRITE)
+    document_store.write_documents(embeddings['documents'], policy=DuplicatePolicy.OVERWRITE)
+
 
 if __name__ == "__main__":
 
@@ -121,25 +141,27 @@ if __name__ == "__main__":
             )
     
     parser.add_argument("-c", "--cache", action='store_true', help='store course data in pickle cache')
-    parser.add_argument("-e", "--embed", action='store_true', help='generate embeddings from pickle cache')
+    parser.add_argument("-e", "--embed", action='store_true', help='generate embeddings from pickle cache and store locally')
+    parser.add_argument("-s", "--supabase-embed", action='store_true', help='generate embeddings from pickle cache and store in supabase')
 
     args = parser.parse_args()
 
-    if not args.cache and not args.embed:
+    if not args.cache and not args.embed and not args.supabase_embed:
         parser.print_help()
         parser.exit()
+
     if args.cache:
         populate()
     
     if args.embed:
         file = open("cache/updatedclasses", mode="rb")
-        detailedInfo = pickle.load(file)
+        detailed_info = pickle.load(file)
         file.close()
 
+        # Write documents to InMemoryDocumentStore  
         document_store = InMemoryDocumentStore()
-        # Write documents to InMemoryDocumentStore
         documents = []
-        for i in detailedInfo:
+        for i in detailed_info:
             documents.append(Document(content=str(i)))
 
         document_store.write_documents(documents)
@@ -148,3 +170,11 @@ if __name__ == "__main__":
         pickle.dump(document_store, doc_picklefile)
         
         populate_embeddings(documents)
+    
+    if args.supabase_embed:
+        with open("cache/updatedclasses", "rb") as file:
+            detailed_info = pickle.load(file)
+
+        documents = [Document(content=str(item)) for item in detailed_info]
+        populate_supabase_embeddings(documents)
+
