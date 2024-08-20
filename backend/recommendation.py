@@ -19,7 +19,10 @@ from enum import Enum
 
 
 # create app and load .env
-classRecommender = FastAPI()
+classRecommender = FastAPI(
+    docs_url=None, # Disable docs (Swagger UI)
+    redoc_url=None, # Disable redoc
+)
 
 # load API keys from .env
 load_dotenv()
@@ -57,27 +60,23 @@ embeddings_cache = pickle.load(embeddings_file)
 embeddings_file.close()
 
 
-# (2) create text embeddings for instruction
-# textEmbeddings -> a list of floats
+# create and warm up sentence embedder
 query_instruction = "Represent this sentence for searching relevant passages: "
 text_embedder = SentenceTransformersTextEmbedder(model="WhereIsAI/UAE-Large-V1", prefix=query_instruction)
 text_embedder.warm_up()
 
 
-# (3) find documents based on keyword matches (sparse models)
-# bm25Docs -> dictionary of documents
+# create bm25 retriever
 bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 
 
-# (4) find documents based on documents (dense models)
-# embeddingDocs -> dictionary of documents
+# write embeddings to store and create retriever
 embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
 embeddings_store.write_documents(embeddings_cache['documents'])
 embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
-# (5) merge embeddingDocs and bm25Docs via reciprocal rank fusion method
-# mergedDocs -> list of documents 
+# create document joiner using reciprocal rank fusion method
 document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
 
@@ -120,7 +119,7 @@ def retrieve_specific(sql_input: str):
 
     Example User Inputs:
     1. "Find all Computer Science courses for Spring 2024"
-       SQL: SELECT * FROM llm_view WHERE department = 'CSE' AND term = 2242
+       SQL: SELECT * FROM llm_view WHERE department = 'CSE' AND term_name = "Spring 2024"
 
     2. "What are the details for PSYC 1?"
        SQL: SELECT * FROM llm_view WHERE department = 'PSYC' AND course_number = 1 AND course_letter = ''
@@ -132,20 +131,19 @@ def retrieve_specific(sql_input: str):
        SQL: SELECT * FROM llm_view WHERE department = 'HIS' AND instructor LIKE '%Johnson%'
 
     5. "What are the available evening classes for the upcoming Fall term?"
-       SQL: SELECT * FROM llm_view WHERE term = 2248 AND time LIKE '%PM%'
+       SQL: SELECT * FROM llm_view WHERE term_name = "Fall 2024" AND time LIKE '%PM%'
 
     6. "Describe all BME courses in detail."
        SQL: SELECT * FROM llm_view WHERE department = 'BME'
 
 
     Table: llm_view
-    term	        The term a course is taught. Only use if asked.
+    term_name	    The term a course is taught.
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
     course_letter	Optional letter suffix for course number. If no letter was specified, use '' instead.
     section_number	Numerical code to distinguish different sections of the same course within a term.
-    short_name	    A concise title or abbreviation of the course (e.g., Math Methods I, Israel-Palestine, Adv Photography).
-    name	        The full title of the course.
+    name	        The title of the course.
     instructor	    Name(s) of the professor(s) teaching the course.
     location	    Building and room where the course is held (LEC: Lecture, STU: Studio, SEM: Seminar, FLD: Field).
     time	        Regular meeting days and times for the course.
@@ -155,7 +153,7 @@ def retrieve_specific(sql_input: str):
     type	        Instruction mode (e.g., In Person, Asynchronous Online, Synchronous Online, Hybrid).
     enrolled	    Current enrollment status, showing the number of students enrolled and the capacity.
     status	        Whether the course is Open or Closed for enrollment.
-    url	            Link to the detailed course information page.
+    url	            Link to the course enrollment page. Use hyperlink syntax with course name when showing. (i.e. [CSE 101](https://pisa.ucsc.edu/class_search/index.php?action=detail&class_data=YToyOntzOjU6IjpTVFJNIjtzOjQ6IjIyNDgiO3M6MTA6IjpDTEFTU19OQlIiO3M6NToiMTE4NzUiO30%253D))
     summer_session	Indicates which summer session a course belongs to (if applicable).
     description     A description of the course and the topics it covers.
     """
@@ -236,6 +234,7 @@ class ChatMessage(BaseModel):
 class Chat(BaseModel):
     messages: List[ChatMessage]
 
+#new endpoint (exposes tools to llm, both general and specific search)
 @classRecommender.post("/chat/")
 def get_stream_history(chat: Chat):
 
@@ -251,33 +250,6 @@ def get_stream_history(chat: Chat):
     print(messages)
     # (7) Send prompt to LLM
     response = model.generate_content(messages, tools = tool_list, stream = True)
-    # fcall = False
-    # response.resolve()
-    # function_calls = {}
-
-    # for part in response.parts:
-    #     if fn := part.function_call:
-    #         fcall = True
-    #         function_calls[fn.name] = globals()[fn.name](**fn.args)
-    # response_parts = [
-    #     glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
-    #     for fn, val in function_calls.items()
-    # ]
-    # while fcall:   
-    #     messages.append({"role":"model", "parts": response_parts})
-    #     response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
-    #     response.resolve()
-        
-    #     fcall = False
-    #     function_calls = {}
-    #     for part in response.parts:
-    #         if fn := part.function_call:
-    #             fcall = True
-    #             function_calls[fn.name] = globals()[fn.name](**fn.args)
-    #     response_parts = [
-    #         glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
-    #         for fn, val in function_calls.items()
-    #     ]
 
     def stream_data():
         try:
@@ -314,8 +286,7 @@ def get_stream_history(chat: Chat):
 
     return StreamingResponse(stream_data())
 
-#legacy endpoint
-# uvicorn backend.recommendation:classRecommender
+#old endpoint (injects documents into prompt directly, only general search)
 @classRecommender.get("/")
 async def get_stream(userInput : str):
     # (2) generate text embeddings based on user input
