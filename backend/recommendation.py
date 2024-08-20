@@ -1,4 +1,4 @@
-import pickle, os, re, asyncio, time, json
+import pickle, os, re, time, json
 #from haystack import Pipeline
 from haystack.components.joiners.document_joiner import DocumentJoiner
 from haystack.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
@@ -6,11 +6,16 @@ from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack_integrations.components.generators.google_ai import GoogleAIGeminiGenerator
 from haystack.components.builders.prompt_builder import PromptBuilder
+import psycopg2
 from supabase import create_client, client
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
+import google.ai.generativelanguage as glm
+from pydantic import BaseModel
+from typing import List
+from enum import Enum
 
 
 # create app and load .env
@@ -18,9 +23,8 @@ classRecommender = FastAPI()
 
 # load API keys from .env
 load_dotenv()
-geminiKey = os.getenv("GEMINIKEY")
-supaKey = os.getenv("SUPAKEY")
-supaUrl = os.getenv("SUPAURL")
+GEMINI_KEY = os.getenv("GEMINI_KEY")
+PG_CONN_STRING = os.getenv("PG_CONN_STRING")
 
 
 prompt_template = '''
@@ -77,15 +81,243 @@ embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store
 document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
 
 
+# instantiate llm tools
+def retrieve_general(input: str):
+    """
+    Performs a comprehensive search across course vectors to retrieve relevant courses based on a general query.
+    
+    Use this function for queries like:
+    - "What courses about data science are available?"
+    - "Tell me about art history classes"
+    - "Which courses cover environmental sustainability?"
+    """
+    # (2) generate text embeddings based on user input
+    textEmbeddings = text_embedder.run(input)
+
+    # (3) keyword based document search
+    bm25Docs = bm25_retriever.run(query=input)
+
+    # (4) create embeddings for vector based document search
+    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
+
+    # (5) merge vector-based docs and keyword-based docs
+    mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
+    prompt_template = """
+    Documents:
+    {% for doc in documents %}
+        {{ doc.content }}
+    {% endfor %}
+    """
+    prompt_builder = PromptBuilder(template=prompt_template)
+    finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"])["prompt"]
+    # print(mergedDocs["documents"])
+    return finalizedPrompt
+
+
+def retrieve_specific(sql_input: str):
+    """
+    Queries the course SQL database (read-only). Use for queries about a specific class, instructor, department, or location.
+
+    Example User Inputs:
+    1. "Find all Computer Science courses for Spring 2024"
+       SQL: SELECT * FROM llm_view WHERE department = 'CSE' AND term = 2242
+
+    2. "What are the details for PSYC 1?"
+       SQL: SELECT * FROM llm_view WHERE department = 'PSYC' AND course_number = 1 AND course_letter = ''
+
+    3. "Who's teaching Organic Chemistry this Fall?"
+       SQL: SELECT name, instructor FROM llm_view WHERE department = 'CHEM' AND name LIKE '%Organic Chemistry%' AND term = 2248
+
+    4. "Show me all courses taught by Professor Johnson in the History department"
+       SQL: SELECT * FROM llm_view WHERE department = 'HIS' AND instructor LIKE '%Johnson%'
+
+    5. "What are the available evening classes for the upcoming Fall term?"
+       SQL: SELECT * FROM llm_view WHERE term = 2248 AND time LIKE '%PM%'
+
+    6. "Describe all BME courses in detail."
+       SQL: SELECT * FROM llm_view WHERE department = 'BME'
+
+
+    Table: llm_view
+    term	        The term a course is taught. Only use if asked.
+    department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
+    course_number	The numerical part of the course code (e.g., 10, 130, 158).
+    course_letter	Optional letter suffix for course number. If no letter was specified, use '' instead.
+    section_number	Numerical code to distinguish different sections of the same course within a term.
+    short_name	    A concise title or abbreviation of the course (e.g., Math Methods I, Israel-Palestine, Adv Photography).
+    name	        The full title of the course.
+    instructor	    Name(s) of the professor(s) teaching the course.
+    location	    Building and room where the course is held (LEC: Lecture, STU: Studio, SEM: Seminar, FLD: Field).
+    time	        Regular meeting days and times for the course.
+    alt_location	If applicable, a secondary location for the course (sometimes indicates separate sections).
+    alt_time	    If applicable, a secondary meeting time for the course.
+    gen_ed	        General education code(s) the course fulfills (e.g., MF, CC, ER).
+    type	        Instruction mode (e.g., In Person, Asynchronous Online, Synchronous Online, Hybrid).
+    enrolled	    Current enrollment status, showing the number of students enrolled and the capacity.
+    status	        Whether the course is Open or Closed for enrollment.
+    url	            Link to the detailed course information page.
+    summer_session	Indicates which summer session a course belongs to (if applicable).
+    description     A description of the course and the topics it covers.
+    """
+    conn = psycopg2.connect(PG_CONN_STRING)
+    conn.set_session(readonly=True)
+
+    cur = conn.cursor()
+    # sanitize input
+    sql_input = sql_input.replace("\"","'").replace("\\","")
+    print("executing: "+sql_input)
+
+    cur.execute(sql_input)
+    output = cur.fetchall()
+    print(f"retrieved: {output}")
+    cur.close()
+
+    return output
+
+def get_quarter_from_term(term_input: int):
+    """
+    Given a term from the database, returns a quarter.
+    """
+    match term_input:
+        case 2248:
+            quarter = "Fall 2024"
+        case 2244:
+            quarter = "Summer 2024"
+        case 2242:
+            quarter = "Spring 2024"
+        case 2240:
+            quarter = "Winter 2024"
+        case 2238:
+            quarter = "Fall 2023"
+        case 2234:
+            quarter = "Summer 2023"
+        case 2232:
+            quarter = "Spring 2023"
+        case 2230:
+            quarter = "Winter 2023"
+        case 2228:
+            quarter = "Fall 2022"
+        case _:
+            return term_input
+    return quarter
+
 # create LLM
-genai.configure(api_key=geminiKey)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+init_message = """
+You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
+The current term is Summer 2024. The next term is Fall 2024. The Winter 2024 catalog is not currently available.
+Terms are ordered Fall->Winter->Spring->Summer (i.e. Fall 2023, Winter 2024, Spring 2024, Summer 2024.) Use this order in your responses.
+"""
+tool_list=[retrieve_general, retrieve_specific]
+tool_dict = {
+    "retrieve_general": retrieve_general,
+    "retrieve_specific": retrieve_specific
+}
+genai.configure(api_key=GEMINI_KEY)
+model = genai.GenerativeModel(
+    'gemini-1.5-flash-latest',
+    tools=tool_list, 
+    system_instruction = init_message,
+    generation_config = genai.types.GenerationConfig(
+        # Only one candidate for now.
+        candidate_count=1,
+        # limit temp for more deterministic responses
+        temperature=0.1
+    ),
+)
 
+class Author(str, Enum):
+    USER = "USER"
+    SYSTEM = "SYSTEM"
 
+class ChatMessage(BaseModel):
+    message: str
+    author: Author
+
+class Chat(BaseModel):
+    messages: List[ChatMessage]
+
+@classRecommender.post("/chat/")
+def get_stream_history(chat: Chat):
+
+    messages = []
+    
+    for message in chat.messages[1:]:
+        if message.author == Author.USER:
+            messages.append({"role":"user", "parts": [message.message]})
+        else:
+            messages.append({"role":"model", "parts": [message.message]})
+    # finalized_messages[-1]["parts"] = [finalized_prompt]
+
+    print(messages)
+    # (7) Send prompt to LLM
+    response = model.generate_content(messages, tools = tool_list, stream = True)
+    # fcall = False
+    # response.resolve()
+    # function_calls = {}
+
+    # for part in response.parts:
+    #     if fn := part.function_call:
+    #         fcall = True
+    #         function_calls[fn.name] = globals()[fn.name](**fn.args)
+    # response_parts = [
+    #     glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
+    #     for fn, val in function_calls.items()
+    # ]
+    # while fcall:   
+    #     messages.append({"role":"model", "parts": response_parts})
+    #     response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+    #     response.resolve()
+        
+    #     fcall = False
+    #     function_calls = {}
+    #     for part in response.parts:
+    #         if fn := part.function_call:
+    #             fcall = True
+    #             function_calls[fn.name] = globals()[fn.name](**fn.args)
+    #     response_parts = [
+    #         glm.Part(function_response=glm.FunctionResponse(name=fn, response={"result": val}))
+    #         for fn, val in function_calls.items()
+    #     ]
+
+    def stream_data():
+        try:
+            for chunk in response: 
+                fcall = False
+                for part in chunk.parts:
+                    if fn := part.function_call:
+                        fcall = True
+                        
+                        # print(fn) 
+                        # human-readable
+                        # args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                        # print(f"{fn.name}({args})")
+
+                        # since there's only one argument for both functions, just hardcode it
+                        # first item is always the input name so ignore
+                        args = ", ".join(f"{val}" for key, val in fn.args.items())
+                        print(f"{fn.name}({args})")
+
+                        func_response = tool_dict[fn.name](args)
+                        # print(f"received: {func_response}") 
+                        response_parts = [
+                            genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
+                        ]
+
+                        messages.append({"role":"model", "parts": response_parts})
+                        new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+                        for new_chunk in new_response:
+                            yield new_chunk.text
+                if not fcall and chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            yield f"An error occured: {e}."
+
+    return StreamingResponse(stream_data())
+
+#legacy endpoint
 # uvicorn backend.recommendation:classRecommender
 @classRecommender.get("/")
 async def get_stream(userInput : str):
-
     # (2) generate text embeddings based on user input
     textEmbeddings = text_embedder.run(userInput)
 
@@ -117,7 +349,9 @@ async def get_stream(userInput : str):
         
     return StreamingResponse(stream_data())
 
+
 def docToDict(doc) -> dict:
+
     return {
         "content": str(doc.content)
     }
