@@ -198,7 +198,7 @@ fun CourseDetailBox(
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Enrolled: ${courseInfo.primary_section.enrl_total}", overflow = TextOverflow.Ellipsis)
                         Text("Capacity: ${courseInfo.primary_section.capacity}")
-                        if(courseInfo.primary_section.waitlist_capacity != "0") {
+                        if(courseInfo.primary_section.waitlist_capacity != "0" || courseInfo.primary_section.waitlist_total != "0") {
                             Text("Waitlisted: ${courseInfo.primary_section.waitlist_total}")
                         } else {
                             Text("Waitlist: Closed")
