@@ -13,16 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import api.Type
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.pras.courses.Terms
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.slug
 import ui.data.HomeScreenModel
+import ui.data.NavigatorScreenModel
 import ui.elements.LargeDropdownMenu
 import ui.elements.LargeDropdownMenuMultiSelect
 
@@ -33,9 +42,10 @@ class HomeScreen : Screen {
     override fun Content() {
         val navigator: Navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { HomeScreenModel() }
+        val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
         val uiState by screenModel.uiState.collectAsState()
 
-        val termMap = mapOf(
+        /*val defaultTermMap = mapOf(
             "Fall 2024"   to 2248,
             "Summer 2024" to 2244,
             "Spring 2024" to 2242,
@@ -46,26 +56,36 @@ class HomeScreen : Screen {
             "Winter 2023" to 2230,
             "Fall 2022"   to 2228,
             "Summer 2022" to 2224
+        )*/
+
+        val defaultTermList = listOf(
+            Terms(2248, "Fall 2024"),
+            Terms(2244, "Summer 2024"),
+            Terms(2242, "Spring 2024"),
+            Terms(2240, "Winter 2024"),
+            Terms(2238, "Fall 2023"),
+            Terms(2234, "Summer 2023"),
+            Terms(2232, "Spring 2023"),
+            Terms(2230, "Winter 2023"),
+            Terms(2228, "Fall 2022"),
+            Terms(2224, "Summer 2022")
         )
 
+        val database = navScreenModel.uiState.value.database
+        val termFlow: Flow<List<Terms>> = database?.termsQueries?.selectAll()?.asFlow()?.mapToList(Dispatchers.IO) ?: emptyFlow()
+        val termList: List<Terms> = (termFlow.collectAsState(defaultTermList).value).sortedByDescending { it.id }
+
+        val termNames = termList.map { it.name }
+
         val genEdList = listOf("CC", "ER", "IM", "MF", "SI", "SR", "TA", "PE", "PR", "C")
-//        val selectedGenEdList = remember { mutableStateListOf<String>() }
-
-        val termList = termMap.keys.toList()
         var selectedTermIndex by rememberSaveable { mutableIntStateOf(0) }
-
         val typeList = listOf("Hybrid", "Async Online", "Sync Online", "In Person")
-//        val selectedTypeList = remember { mutableStateListOf("Async Online", "Hybrid", "Sync Online", "In Person") }
-
         var selectedStatusIndex by rememberSaveable { mutableIntStateOf(1) }
         
         fun searchHandler() {
 
-            val term = termMap.values.toList()[selectedTermIndex]
-
-//            val status = Json.encodeToString(Status.ALL)
+            val term = termList[selectedTermIndex].id.toInt()
             val classType: List<Type> = uiState.selectedTypeList.map { Type.valueOf(it.replace(" ","_").uppercase()) }
-//            val encodedType = Json.encodeToString(classType)
 
             // dear god why is this necessary
             val geList = mutableListOf<String>()
@@ -124,7 +144,7 @@ class HomeScreen : Screen {
                             .weight(.5f)
                             .padding(end = 8.dp),
                         label = "Term",
-                        items = termList,
+                        items = termNames,
                         selectedIndex = selectedTermIndex,
                         onItemSelected = { index, _ -> selectedTermIndex = index },
                     )

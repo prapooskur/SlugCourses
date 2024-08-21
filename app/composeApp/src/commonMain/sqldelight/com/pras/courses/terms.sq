@@ -1,0 +1,28 @@
+CREATE TABLE terms (
+  id INTEGER PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL
+);
+
+select:
+SELECT *
+FROM terms
+WHERE id = ?;
+
+selectAll:
+SELECT *
+FROM terms;
+
+delete:
+DELETE FROM terms
+WHERE id = ?;
+
+deleteAll:
+DELETE FROM terms;
+
+insert:
+INSERT INTO terms(id, name)
+VALUES (?, ?);
+
+upsert:
+INSERT OR REPLACE INTO terms(id, name)
+VALUES (?, ?);

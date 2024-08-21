@@ -1,0 +1,27 @@
+CREATE TABLE suggestions (
+  suggestion TEXT NOT NULL
+);
+
+select:
+SELECT *
+FROM suggestions
+WHERE suggestion = ?;
+
+selectAll:
+SELECT *
+FROM suggestions;
+
+delete:
+DELETE FROM suggestions
+WHERE suggestion = ?;
+
+deleteAll:
+DELETE FROM suggestions;
+
+insert:
+INSERT INTO suggestions(suggestion)
+VALUES (?);
+
+upsert:
+INSERT OR REPLACE INTO suggestions(suggestion)
+VALUES (?);

@@ -50,7 +50,7 @@ enum class Type {
 }
 
 suspend fun supabaseQuery(
-    term: Int = 2242,
+    term: Int = 2248,
     status: Status = Status.ALL,
     department: String = "",
     courseNumber: Int = -1,
@@ -132,4 +132,17 @@ suspend fun supabaseQuery(
 
     Logger.d(courseList.toString(), tag = TAG)
     return courseList
+}
+
+@Serializable
+data class Term(val term_id: Int, val term_name: String)
+suspend fun getTerms(): List<Term> {
+    val supabase = getSupabaseClient()
+
+    val termList = supabase.from("terms").select {
+        order(column = "term_id", order = Order.DESCENDING)
+    }.decodeList<Term>()
+
+    Logger.d("Terms: $termList", tag = TAG)
+    return termList
 }

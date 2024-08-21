@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS terms (
+  id INTEGER PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS suggestions (
+    suggestion TEXT NOT NULL
+);

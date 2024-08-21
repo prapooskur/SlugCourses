@@ -29,7 +29,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
-import kotlinx.coroutines.delay
 import ui.data.Author
 import ui.data.ChatScreenModel
 import ui.data.NavigatorScreenModel
@@ -54,6 +53,15 @@ class ChatScreen : Screen {
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
 
         val listState = rememberLazyListState()
+
+        LaunchedEffect(Unit) {
+            val database = navScreenModel.getDb()
+            if (database == null) {
+                Logger.d("Database is null, exiting", tag = TAG)
+                return@LaunchedEffect
+            }
+            screenModel.updateSuggestions(database)
+        }
 
         LaunchedEffect(sendMessage.value) {
             if (sendMessage.value) {
@@ -110,7 +118,11 @@ class ChatScreen : Screen {
                 bottomBar = {
                     Column {
                         Spacer(Modifier.padding(top = 2.dp))
-                        SuggestionBar(screenModel)
+                        SuggestionBar(
+                            suggestions = screenModel.uiState.value.messageSuggestions,
+                            visible = (screenModel.uiState.value.messageList.size == 1),
+                            onSelect = { screenModel.setMessage(it); screenModel.sendMessage() }
+                        )
                         Spacer(Modifier.padding(top = 4.dp))
                         ChatMessageBar(screenModel, sendMessage)
                     }
@@ -120,48 +132,21 @@ class ChatScreen : Screen {
     }
 
     @Composable
-    private fun SuggestionBar(screenModel: ChatScreenModel) {
-        val suggestionList = listOf(
-            "Courses that fulfill the IM gen ed",
-            "Courses taught by Prof. Tantalo next quarter",
-            "Open CSE courses this summer",
-            "Is CSE 115a still open this fall?",
-            "How many people are currently enrolled in CSE 130?",
-            "Which professors are teaching CSE 30 in fall?",
-            "What are the prerequisites for CSE 101?",
-            "What time is ECON 1 held?",
-            "Who teaches ECE 101?",
-            "What are the prerequisites for LING 50?",
-            "What is LING 80K?",
-            "MATH 100 course description",
-            "Courses about ethics",
-            "List all quarters PHIL 9 was taught.",
-            "List all professors for JRLC 1."
-        )
-        var randomSuggestions by remember { mutableStateOf(suggestionList.shuffled().take(4)) }
-
-        LaunchedEffect(screenModel.uiState.value.message, screenModel.uiState.value.messageList.size) {
-            if (screenModel.uiState.value.message.isEmpty() && screenModel.uiState.value.messageList.size > 1) {
-                // a small delay so the list goes offscreen before it's updated
-                delay(150)
-                randomSuggestions = suggestionList.shuffled().take(4)
-            }
-        }
+    private fun SuggestionBar(suggestions: List<String>, visible: Boolean, onSelect: (String) -> Unit) {
 
         AnimatedVisibility(
-            visible = (screenModel.uiState.value.message.isEmpty() && screenModel.uiState.value.messageList.size == 1),
+            visible = (visible && suggestions.isNotEmpty()),
             enter = fadeIn() + slideInVertically( initialOffsetY = { it/2 } ) + expandVertically(),
             exit = fadeOut() + slideOutVertically( targetOffsetY = { it/2 } ) + shrinkVertically(),
             label = "suggestions"
         ) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(horizontal = 6.dp)) {
-                items(randomSuggestions.size) { index ->
+                items(suggestions.size) { index ->
                     SuggestionChip(
                         onClick = {
-                            screenModel.setMessage(randomSuggestions[index])
-                            screenModel.sendMessage()
+                            onSelect(suggestions[index])
                         },
-                        label = { Text(randomSuggestions[index]) },
+                        label = { Text(suggestions[index]) },
                     )
                 }
             }

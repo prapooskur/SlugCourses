@@ -4,6 +4,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -76,6 +77,12 @@ fun App(driverFactory: DriverFactory) {
                     Navigator(HomeScreen()) { navigator ->
                         val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
                         screenModel.setDb(database)
+
+                        LaunchedEffect(Unit) {
+                            screenModel.updateTerms()
+                            screenModel.updateSuggestions()
+                        }
+
                         Scaffold(
                             // custom insets necessary to render behind nav bar
                             contentWindowInsets = WindowInsets(0.dp),

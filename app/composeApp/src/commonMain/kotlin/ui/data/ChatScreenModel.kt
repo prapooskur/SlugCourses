@@ -2,11 +2,11 @@ package ui.data
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
+import com.pras.Database
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -45,19 +45,19 @@ const val initMessage = "Hello! I'm SlugBot, your assistant for UCSC courses. Ho
 data class ChatScreenState(
     val message: String = "",
     val active: Boolean = true,
-    val messageList: SnapshotStateList<ChatMessage> = mutableStateListOf(
+    val messageList: List<ChatMessage> = listOf(
         ChatMessage(
             initMessage,
             Author.SYSTEM
         )
     ),
+    val messageSuggestions: List<String> = listOf(),
     val errorMessage: String = ""
 )
 
 private const val TAG = "ChatScreenModel"
 private const val CHAT_BASE_URL = "https://gem.arae.me"
-private const val CHAT_URL = "$CHAT_BASE_URL/?userInput="
-private const val CHAT_URL_POST = "$CHAT_BASE_URL/chat/"
+private const val CHAT_URL = "$CHAT_BASE_URL/chat/"
 
 class ChatScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(ChatScreenState())
@@ -83,10 +83,6 @@ class ChatScreenModel : ScreenModel {
         )
     }
 
-    private fun addMessage(chatMessage: ChatMessage) {
-        _uiState.value.messageList.add(chatMessage)
-    }
-
     fun sendMessage() {
         try {
             screenModelScope.launch {
@@ -100,8 +96,7 @@ class ChatScreenModel : ScreenModel {
 
                     addMessage(ChatMessage("|||", Author.SYSTEM))
 
-                    //queryChat(message, _uiState.value.messageList)
-                    queryChatPost(_uiState.value.messageList)
+                    queryChat(_uiState.value.messageList)
 
                 }
             }
@@ -116,36 +111,18 @@ class ChatScreenModel : ScreenModel {
         }
     }
 
-//    suspend fun queryChat(query: String, chatList: SnapshotStateList<ChatMessage>) {
-//        val response = mutableStateOf("")
-//
-//        client.prepareGet(CHAT_URL + query.encodeURLPath()) .execute { httpResponse ->
-//            val channel: ByteReadChannel = httpResponse.body()
-//            while (!channel.isClosedForRead) {
-//                val line = channel.readUTF8Line(99999) ?: continue
-//
-//                if (line.isBlank()) {
-//                    response.value+="\n"
-//                } else {
-//                    response.value+=line
-//                    if (!channel.isClosedForRead) {
-//                        response.value+="\n"
-//                    }
-//                }
-//
-//                chatList[chatList.lastIndex] = (ChatMessage(
-//                    response.value,
-//                    Author.SYSTEM
-//                ))
-//                //Log.d(TAG, line)
-//            }
-//        }
-//    }
+    private fun addMessage(chatMessage: ChatMessage) {
+        _uiState.value = _uiState.value.copy(
+            messageList = _uiState.value.messageList.toMutableStateList().apply {
+                add(chatMessage)
+            }
+        )
+    }
 
-    suspend fun queryChatPost(chatList: SnapshotStateList<ChatMessage>) {
+    private suspend fun queryChat(chatList: List<ChatMessage>) {
         val response = mutableStateOf("")
 
-        client.preparePost(CHAT_URL_POST) {
+        client.preparePost(CHAT_URL) {
             contentType(ContentType.Application.Json)
             setBody(ChatList(chatList.toList().dropLast(1)))
         } .execute { httpResponse ->
@@ -162,12 +139,28 @@ class ChatScreenModel : ScreenModel {
                     }
                 }
 
-                chatList[chatList.lastIndex] = (ChatMessage(
-                    response.value,
-                    Author.SYSTEM
-                ))
-                //Log.d(TAG, line)
+                _uiState.value = _uiState.value.copy(
+                    messageList = chatList.toMutableStateList().apply {
+                        removeLast()
+                        add(ChatMessage(response.value, Author.SYSTEM))
+                    }
+                )
+
+//                chatList[chatList.lastIndex] = (ChatMessage(
+//                    response.value,
+//                    Author.SYSTEM
+//                ))
             }
+        }
+    }
+
+    fun updateSuggestions(database: Database) {
+        try {
+            val suggestions = database.suggestionsQueries.selectAll().executeAsList()
+            // get a random 4 suggestions
+            _uiState.value = _uiState.value.copy(messageSuggestions = suggestions.shuffled().take(4))
+        } catch (e: Exception) {
+            Logger.d("Error getting suggestions: ${e.message}", tag = TAG)
         }
     }
 

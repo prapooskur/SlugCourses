@@ -5,3 +5,10 @@
 -dontwarn java.awt.event.ActionListener
 -dontwarn javax.swing.SwingUtilities
 -dontwarn javax.swing.Timer
+
+# the app is open-source anyway
+-dontobfuscate
+
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+-keepattributes SourceFile,LineNumberTable
