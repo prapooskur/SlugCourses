@@ -21,6 +21,7 @@ sentence-transformers = "^3.0.1"
 psycopg2-binary = "^2.9.9"
 google-generativeai = "^0.7.2"
 torch = { version = "2.4.0", source = "pytorch" }
+pgvector-haystack = "^0.5.1"
 
 [[tool.poetry.source]]
 # for gpu acceleration

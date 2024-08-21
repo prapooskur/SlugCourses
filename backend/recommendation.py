@@ -16,6 +16,9 @@ import google.ai.generativelanguage as glm
 from pydantic import BaseModel
 from typing import List
 from enum import Enum
+from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
+from haystack_integrations.components.retrievers.pgvector import PgvectorKeywordRetriever, PgvectorEmbeddingRetriever
+from haystack.utils import Secret
 
 
 # create app and load .env
@@ -51,13 +54,21 @@ Answer:'''
 # 7) Query LLM and return response. 
 
 # (1) load documents into store
-bm25_file = open("cache/classdocuments", mode="rb")
-bm25_store = pickle.load(bm25_file)
-bm25_file.close()
+# bm25_file = open("cache/classdocuments", mode="rb")
+# bm25_store = pickle.load(bm25_file)
+# bm25_file.close()
 
-embeddings_file = open("cache/classembeddings", mode="rb")
-embeddings_cache = pickle.load(embeddings_file)
-embeddings_file.close()
+# embeddings_file = open("cache/classembeddings", mode="rb")
+# embeddings_cache = pickle.load(embeddings_file)
+# embeddings_file.close()
+
+# (1) intialize store
+document_store = PgvectorDocumentStore(
+    connection_string = Secret.from_env_var("PG_CONN_STRING"),
+    embedding_dimension=1024,
+    vector_function="cosine_similarity",
+    search_strategy="hnsw",
+)
 
 
 # create and warm up sentence embedder
@@ -65,15 +76,19 @@ query_instruction = "Represent this sentence for searching relevant passages: "
 text_embedder = SentenceTransformersTextEmbedder(model="WhereIsAI/UAE-Large-V1", prefix=query_instruction)
 text_embedder.warm_up()
 
+# create retrievers
+keyword_retriever = PgvectorKeywordRetriever(document_store=document_store)
+embedding_retriever = PgvectorEmbeddingRetriever(document_store=document_store)
 
-# create bm25 retriever
-bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
+
+# # create bm25 retriever
+# bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
 
 
-# write embeddings to store and create retriever
-embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-embeddings_store.write_documents(embeddings_cache['documents'])
-embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
+# # write embeddings to store and create retriever
+# embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+# embeddings_store.write_documents(embeddings_cache['documents'])
+# embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
 
 
 # create document joiner using reciprocal rank fusion method
@@ -91,16 +106,16 @@ def retrieve_general(input: str):
     - "Which courses cover environmental sustainability?"
     """
     # (2) generate text embeddings based on user input
-    textEmbeddings = text_embedder.run(input)
+    text_embeddings = text_embedder.run(input)
 
     # (3) keyword based document search
-    bm25Docs = bm25_retriever.run(query=input)
+    keyword_docs = keyword_retriever.run(query=input)
 
     # (4) create embeddings for vector based document search
-    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
+    embedding_docs = embedding_retriever.run(query_embedding=text_embeddings['embedding'])
 
     # (5) merge vector-based docs and keyword-based docs
-    mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
+    mergedDocs = document_joiner.run([keyword_docs["documents"], embedding_docs["documents"]])
     prompt_template = """
     Documents:
     {% for doc in documents %}
@@ -141,7 +156,7 @@ def retrieve_specific(sql_input: str):
     term_name	    The term a course is taught.
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
-    course_letter	Optional letter suffix for course number. If no letter was specified, use '' instead.
+    course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, use '' instead.
     section_number	Numerical code to distinguish different sections of the same course within a term.
     name	        The title of the course.
     instructor	    Name(s) of the professor(s) teaching the course.
@@ -153,7 +168,7 @@ def retrieve_specific(sql_input: str):
     type	        Instruction mode (e.g., In Person, Asynchronous Online, Synchronous Online, Hybrid).
     enrolled	    Current enrollment status, showing the number of students enrolled and the capacity.
     status	        Whether the course is Open or Closed for enrollment.
-    url	            Link to the course enrollment page. Use hyperlink syntax with course name when showing. (i.e. [CSE 101](https://pisa.ucsc.edu/class_search/index.php?action=detail&class_data=YToyOntzOjU6IjpTVFJNIjtzOjQ6IjIyNDgiO3M6MTA6IjpDTEFTU19OQlIiO3M6NToiMTE4NzUiO30%253D))
+    url	            Link to the course enrollment page.
     summer_session	Indicates which summer session a course belongs to (if applicable).
     description     A description of the course and the topics it covers.
     """
@@ -202,8 +217,8 @@ def get_quarter_from_term(term_input: int):
 # create LLM
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
-The current term is Summer 2024. The next term is Fall 2024. The Winter 2024 catalog is not currently available.
-Terms are ordered Fall->Winter->Spring->Summer (i.e. Fall 2023, Winter 2024, Spring 2024, Summer 2024.) Use this order in your responses.
+Terms are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
+The current term is Summer 2024. The next term is Fall 2024. The Winter 2025 catalog is not currently available.
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -286,6 +301,31 @@ def get_stream_history(chat: Chat):
 
     return StreamingResponse(stream_data())
 
+# suggestions for chat screen
+import random
+@classRecommender.get("/suggestions")
+def get_suggestions():
+    suggested_messages = [
+        "Courses that fulfill the IM gen ed",
+        "Courses taught by Prof. Tantalo next quarter",
+        "Open CSE courses this summer",
+        "Is CSE 115a still open this fall?",
+        "How many people are currently enrolled in CSE 130?",
+        "Which professors are teaching CSE 30 in fall?",
+        "What are the prerequisites for CSE 101?",
+        "What time is ECON 1 held?",
+        "Who teaches ECE 101?",
+        "What are the prerequisites for LING 50?",
+        "What is LING 80K?",
+        "MATH 100 course description",
+        "Courses about ethics",
+        "List all quarters PHIL 9 was taught.",
+        "List all professors for JRLC 1.",
+        "Find artificial intelligence courses",
+        "Show available online courses for next quarter."
+    ]
+    return suggested_messages
+
 #old endpoint (injects documents into prompt directly, only general search)
 @classRecommender.get("/")
 async def get_stream(userInput : str):
@@ -293,7 +333,7 @@ async def get_stream(userInput : str):
     textEmbeddings = text_embedder.run(userInput)
 
     # (3) keyword based document search
-    bm25Docs = bm25_retriever.run(query=userInput)
+    bm25Docs = keyword_retriever.run(query=userInput)
 
     # (4) create embeddings for vector based document search
     embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])

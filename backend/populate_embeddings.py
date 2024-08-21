@@ -6,6 +6,9 @@ from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Document
 from course import Course
 from haystack.document_stores.in_memory import InMemoryDocumentStore
+from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
+from haystack.document_stores.types.policy import DuplicatePolicy
+from haystack.utils import Secret
 import argparse
 
 def termToQuarterName(term : str) -> str:
@@ -112,9 +115,6 @@ def populate_embeddings(documents: list[Document]):
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
 
-from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
-from haystack.document_stores.types.policy import DuplicatePolicy
-from haystack.utils import Secret
 def populate_supabase_embeddings(documents: list[Document]):
     print("updating supabase embeddings...")
     document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
@@ -125,7 +125,7 @@ def populate_supabase_embeddings(documents: list[Document]):
         connection_string = Secret.from_env_var("PG_CONN_STRING"),
         embedding_dimension=1024,
         vector_function="cosine_similarity",
-        recreate_table=True,
+        recreate_table=False,
         search_strategy="hnsw",
     )
 
