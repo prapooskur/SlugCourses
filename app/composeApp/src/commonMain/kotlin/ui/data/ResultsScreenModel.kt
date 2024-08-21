@@ -71,6 +71,22 @@ class ResultsScreenModel : ScreenModel {
 
         val useDepartment = (Regex("^[A-Za-z]{2,4}$").matches(department) && departmentList.contains(department.uppercase()))
         val useCourseNumber = (Regex("\\d{1,3}[a-zA-Z]?").matches(courseNumber))
+
+        val genEd = genEd.toMutableList()
+        if ("PR" in genEd) {
+            genEd.remove("PR")
+            genEd.add("PR-C")
+            genEd.add("PR-E")
+            genEd.add("PR-S")
+        }
+
+        if ("PE" in genEd) {
+            genEd.remove("PE")
+            genEd.add("PE-E")
+            genEd.add("PE-H")
+            genEd.add("PE-T")
+        }
+
         screenModelScope.launch(Dispatchers.IO) {
             try {
 //                _uiState.update { currentState ->
