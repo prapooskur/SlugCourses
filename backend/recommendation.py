@@ -156,7 +156,7 @@ def retrieve_specific(sql_input: str):
     term_name	    The term a course is taught.
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
-    course_letter	Optional letter suffix for course number. If no letter was specified, use '' instead.
+    course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, use '' instead.
     section_number	Numerical code to distinguish different sections of the same course within a term.
     name	        The title of the course.
     instructor	    Name(s) of the professor(s) teaching the course.
@@ -168,7 +168,7 @@ def retrieve_specific(sql_input: str):
     type	        Instruction mode (e.g., In Person, Asynchronous Online, Synchronous Online, Hybrid).
     enrolled	    Current enrollment status, showing the number of students enrolled and the capacity.
     status	        Whether the course is Open or Closed for enrollment.
-    url	            Link to the course enrollment page. Use hyperlink syntax with course name when showing. (i.e. [CSE 101](https://pisa.ucsc.edu/class_search/index.php?action=detail&class_data=YToyOntzOjU6IjpTVFJNIjtzOjQ6IjIyNDgiO3M6MTA6IjpDTEFTU19OQlIiO3M6NToiMTE4NzUiO30%253D))
+    url	            Link to the course enrollment page.
     summer_session	Indicates which summer session a course belongs to (if applicable).
     description     A description of the course and the topics it covers.
     """
@@ -302,9 +302,29 @@ def get_stream_history(chat: Chat):
     return StreamingResponse(stream_data())
 
 # suggestions for chat screen
+import random
 @classRecommender.get("/suggestions")
 def get_suggestions():
-    return "temp"
+    suggested_messages = [
+        "Courses that fulfill the IM gen ed",
+        "Courses taught by Prof. Tantalo next quarter",
+        "Open CSE courses this summer",
+        "Is CSE 115a still open this fall?",
+        "How many people are currently enrolled in CSE 130?",
+        "Which professors are teaching CSE 30 in fall?",
+        "What are the prerequisites for CSE 101?",
+        "What time is ECON 1 held?",
+        "Who teaches ECE 101?",
+        "What are the prerequisites for LING 50?",
+        "What is LING 80K?",
+        "MATH 100 course description",
+        "Courses about ethics",
+        "List all quarters PHIL 9 was taught.",
+        "List all professors for JRLC 1.",
+        "Find artificial intelligence courses",
+        "Show available online courses for next quarter."
+    ]
+    return suggested_messages
 
 #old endpoint (injects documents into prompt directly, only general search)
 @classRecommender.get("/")
