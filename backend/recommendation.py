@@ -1,15 +1,11 @@
-import pickle, os, re, time, json
+import os
 #from haystack import Pipeline
 from haystack.components.joiners.document_joiner import DocumentJoiner
-from haystack.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
-from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.embedders import SentenceTransformersTextEmbedder
-from haystack_integrations.components.generators.google_ai import GoogleAIGeminiGenerator
 from haystack.components.builders.prompt_builder import PromptBuilder
 import psycopg2
-from supabase import create_client, client
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
 import google.ai.generativelanguage as glm
@@ -19,6 +15,7 @@ from enum import Enum
 from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
 from haystack_integrations.components.retrievers.pgvector import PgvectorKeywordRetriever, PgvectorEmbeddingRetriever
 from haystack.utils import Secret
+from haystack.components.rankers import TransformersSimilarityRanker
 
 
 # create app and load .env
@@ -53,15 +50,6 @@ Answer:'''
 # 6) Insert merged document list and user input into prompt
 # 7) Query LLM and return response. 
 
-# (1) load documents into store
-# bm25_file = open("cache/classdocuments", mode="rb")
-# bm25_store = pickle.load(bm25_file)
-# bm25_file.close()
-
-# embeddings_file = open("cache/classembeddings", mode="rb")
-# embeddings_cache = pickle.load(embeddings_file)
-# embeddings_file.close()
-
 # (1) intialize store
 document_store = PgvectorDocumentStore(
     connection_string = Secret.from_env_var("PG_CONN_STRING"),
@@ -80,25 +68,19 @@ text_embedder.warm_up()
 keyword_retriever = PgvectorKeywordRetriever(document_store=document_store)
 embedding_retriever = PgvectorEmbeddingRetriever(document_store=document_store)
 
-
-# # create bm25 retriever
-# bm25_retriever = InMemoryBM25Retriever(document_store=bm25_store)
-
-
-# # write embeddings to store and create retriever
-# embeddings_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-# embeddings_store.write_documents(embeddings_cache['documents'])
-# embedding_retriever = InMemoryEmbeddingRetriever(document_store=embeddings_store)
-
-
 # create document joiner using reciprocal rank fusion method
 document_joiner = DocumentJoiner(join_mode="reciprocal_rank_fusion")
+
+# create and warm up reranker
+document_ranker = TransformersSimilarityRanker("BAAI/bge-reranker-v2-m3")
+document_ranker.warm_up()
 
 
 # instantiate llm tools
 def retrieve_general(input: str):
     """
-    Performs a comprehensive search across course vectors to retrieve relevant courses based on a general query.
+    Performs a search across course vectors to retrieve relevant courses based on a general query.
+    Does not return a comprehensive list of courses.
     
     Use this function for queries like:
     - "What courses about data science are available?"
@@ -114,8 +96,10 @@ def retrieve_general(input: str):
     # (4) create embeddings for vector based document search
     embedding_docs = embedding_retriever.run(query_embedding=text_embeddings['embedding'])
 
-    # (5) merge vector-based docs and keyword-based docs
-    mergedDocs = document_joiner.run([keyword_docs["documents"], embedding_docs["documents"]])
+    # (5) merge vector-based docs and keyword-based docs, then rerank
+    merged_docs = document_joiner.run([keyword_docs["documents"], embedding_docs["documents"]])
+    ranked_docs = document_ranker.run(query = input, documents = merged_docs["documents"], top_k = 7)
+
     prompt_template = """
     Documents:
     {% for doc in documents %}
@@ -123,7 +107,7 @@ def retrieve_general(input: str):
     {% endfor %}
     """
     prompt_builder = PromptBuilder(template=prompt_template)
-    finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"])["prompt"]
+    finalizedPrompt = prompt_builder.run(documents=ranked_docs["documents"])["prompt"]
     # print(mergedDocs["documents"])
     return finalizedPrompt
 
@@ -134,26 +118,26 @@ def retrieve_specific(sql_input: str):
 
     Example User Inputs:
     1. "Find all Computer Science courses for Spring 2024"
-       SQL: SELECT * FROM llm_view WHERE department = 'CSE' AND term_name = "Spring 2024"
+       SQL: SELECT * FROM llm_view WHERE department = 'CSE' AND quarter = "Spring 2024"
 
     2. "What are the details for PSYC 1?"
        SQL: SELECT * FROM llm_view WHERE department = 'PSYC' AND course_number = 1 AND course_letter = ''
 
     3. "Who's teaching Organic Chemistry this Fall?"
-       SQL: SELECT name, instructor FROM llm_view WHERE department = 'CHEM' AND name LIKE '%Organic Chemistry%' AND term = 2248
+       SQL: SELECT name, instructor FROM llm_view WHERE department = 'CHEM' AND name LIKE '%Organic Chemistry%' AND quarter = "Fall 2024"
 
     4. "Show me all courses taught by Professor Johnson in the History department"
        SQL: SELECT * FROM llm_view WHERE department = 'HIS' AND instructor LIKE '%Johnson%'
 
-    5. "What are the available evening classes for the upcoming Fall term?"
-       SQL: SELECT * FROM llm_view WHERE term_name = "Fall 2024" AND time LIKE '%PM%'
+    5. "What are the available evening classes for the upcoming Fall quarter?"
+       SQL: SELECT * FROM llm_view WHERE quarter = "Fall 2024" AND time LIKE '%PM%'
 
     6. "Describe all BME courses in detail."
        SQL: SELECT * FROM llm_view WHERE department = 'BME'
 
 
     Table: llm_view
-    term_name	    The term a course is taught.
+    quarter	        The quarter a course is taught.
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
     course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, use '' instead.
@@ -171,6 +155,8 @@ def retrieve_specific(sql_input: str):
     url	            Link to the course enrollment page.
     summer_session	Indicates which summer session a course belongs to (if applicable).
     description     A description of the course and the topics it covers.
+    requirements    The prerequisites for the course. If empty, the course has no prerequisites.
+    notes           Notes about the course. If empty, the course has no notes.
     """
     conn = psycopg2.connect(PG_CONN_STRING)
     conn.set_session(readonly=True)
@@ -218,7 +204,7 @@ def get_quarter_from_term(term_input: int):
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
 Terms are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
-The current term is Summer 2024. The next term is Fall 2024. The Winter 2025 catalog is not currently available.
+The earliest term you have access to is Spring 2022. The current term is Summer 2024. The next term is Fall 2024. The Winter 2025 catalog is not currently available.
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -291,9 +277,10 @@ def get_stream_history(chat: Chat):
                         ]
 
                         messages.append({"role":"model", "parts": response_parts})
-                        new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
-                        for new_chunk in new_response:
-                            yield new_chunk.text
+                if fcall:
+                    new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+                    for new_chunk in new_response:
+                        yield new_chunk.text
                 if not fcall and chunk.text:
                     yield chunk.text
         except Exception as e:
@@ -359,10 +346,3 @@ async def get_stream(userInput : str):
             yield chunk.text
         
     return StreamingResponse(stream_data())
-
-
-def docToDict(doc) -> dict:
-
-    return {
-        "content": str(doc.content)
-    }
