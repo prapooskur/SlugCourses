@@ -106,10 +106,13 @@ class ChatScreen : Screen {
                         state = listState
                     ) {
                         items(uiState.value.messageList) { chat ->
-                            Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
-                                when (chat.author) {
-                                    Author.USER -> ChatMessageBubble(chat.message.trimEnd())
-                                    Author.SYSTEM -> ChatResponseBubble(chat.message.trimEnd(), incomplete = (chat.message == "|||"))
+                            if (chat.author == Author.SYSTEM || chat.author == Author.USER) {
+                                Row(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
+                                    when (chat.author) {
+                                        Author.USER -> ChatMessageBubble(chat.message.trimEnd())
+                                        Author.SYSTEM -> ChatResponseBubble(chat.message.trimEnd(), incomplete = (chat.message == "|||"))
+                                        else -> {} /* will never happen */
+                                    }
                                 }
                             }
                         }

@@ -15,19 +15,18 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
 enum class Author {
     USER,
-    SYSTEM
+    SYSTEM,
+    FUNCTION
 }
 
 @Serializable
@@ -96,7 +95,7 @@ class ChatScreenModel : ScreenModel {
 
                     addMessage(ChatMessage("|||", Author.SYSTEM))
 
-                    queryChat(_uiState.value.messageList)
+                    queryChat()
 
                 }
             }
@@ -119,16 +118,34 @@ class ChatScreenModel : ScreenModel {
         )
     }
 
-    private suspend fun queryChat(chatList: List<ChatMessage>) {
+
+    private suspend fun queryChat() {
         val response = mutableStateOf("")
+
+        fun isValidJson(jsonString: String) = runCatching {
+            Json.parseToJsonElement(jsonString)
+        }.isSuccess
 
         client.preparePost(CHAT_URL) {
             contentType(ContentType.Application.Json)
-            setBody(ChatList(chatList.toList().dropLast(1)))
+            setBody(ChatList(_uiState.value.messageList.toList().dropLast(1)))
         } .execute { httpResponse ->
             val channel: ByteReadChannel = httpResponse.body()
             while (!channel.isClosedForRead) {
                 val line = channel.readUTF8Line(99999) ?: continue
+                Logger.d("$line\n", tag=TAG)
+
+                if (isValidJson(line)) {
+                    _uiState.value = _uiState.value.copy(
+                        messageList = _uiState.value.messageList.toMutableStateList().apply {
+                            add(_uiState.value.messageList.size-1, ChatMessage(line, Author.FUNCTION))
+                        }
+                    )
+                    print(uiState.value.messageList.toList())
+                    continue
+                }
+
+
 
                 if (line.isBlank()) {
                     response.value+="\n"
@@ -140,17 +157,13 @@ class ChatScreenModel : ScreenModel {
                 }
 
                 _uiState.value = _uiState.value.copy(
-                    messageList = chatList.toMutableStateList().apply {
-                        removeLast()
+                    messageList = _uiState.value.messageList.toMutableStateList().apply {
+                        if (_uiState.value.messageList.last().author == Author.SYSTEM) { removeLast() }
                         add(ChatMessage(response.value, Author.SYSTEM))
                     }
                 )
-
-//                chatList[chatList.lastIndex] = (ChatMessage(
-//                    response.value,
-//                    Author.SYSTEM
-//                ))
             }
+            println("message list: "+uiState.value.messageList.toList())
         }
     }
 
