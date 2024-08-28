@@ -141,19 +141,19 @@ if __name__ == "__main__":
             )
     
     parser.add_argument("-c", "--cache", action='store_true', help='store course data in pickle cache')
-    parser.add_argument("-e", "--embed", action='store_true', help='generate embeddings from pickle cache and store locally')
+    parser.add_argument("-l", "--local-embed", action='store_true', help='generate embeddings from pickle cache and store locally')
     parser.add_argument("-s", "--supabase-embed", action='store_true', help='generate embeddings from pickle cache and store in supabase')
 
     args = parser.parse_args()
 
-    if not args.cache and not args.embed and not args.supabase_embed:
+    if not args.cache and not args.local_embed and not args.supabase_embed:
         parser.print_help()
         parser.exit()
 
     if args.cache:
         populate()
     
-    if args.embed:
+    if args.local_embed:
         file = open("cache/updatedclasses", mode="rb")
         detailed_info = pickle.load(file)
         file.close()

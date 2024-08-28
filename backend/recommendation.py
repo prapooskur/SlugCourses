@@ -1,9 +1,8 @@
-import os
+import os, psycopg2, json
 #from haystack import Pipeline
 from haystack.components.joiners.document_joiner import DocumentJoiner
 from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.builders.prompt_builder import PromptBuilder
-import psycopg2
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -141,7 +140,7 @@ def retrieve_specific(sql_input: str):
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
     course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, use '' instead.
-    section_number	Numerical code to distinguish different sections of the same course within a term.
+    section_number	Numerical code to distinguish different sections of the same course within a quarter. Stored as text. One-digit numbers have leading zeros.
     name	        The title of the course.
     instructor	    Name(s) of the professor(s) teaching the course.
     location	    Building and room where the course is held (LEC: Lecture, STU: Studio, SEM: Seminar, FLD: Field).
@@ -158,12 +157,19 @@ def retrieve_specific(sql_input: str):
     requirements    The prerequisites for the course. If empty, the course has no prerequisites.
     notes           Notes about the course. If empty, the course has no notes.
     """
+
+    if not sql_input:
+        return "Function requires an input"
+
     conn = psycopg2.connect(PG_CONN_STRING)
     conn.set_session(readonly=True)
 
     cur = conn.cursor()
     # sanitize input
     sql_input = sql_input.replace("\"","'").replace("\\","")
+    # force sorting order if not specified, unless it would break the query
+    if "ORDER BY" not in sql_input and "DISTINCT" not in sql_input:
+        sql_input+=" ORDER BY quarter DESC, department ASC, course_number ASC, course_LETTER ASC, section_number ASC"
     print("executing: "+sql_input)
 
     cur.execute(sql_input)
@@ -173,38 +179,13 @@ def retrieve_specific(sql_input: str):
 
     return output
 
-def get_quarter_from_term(term_input: int):
-    """
-    Given a term from the database, returns a quarter.
-    """
-    match term_input:
-        case 2248:
-            quarter = "Fall 2024"
-        case 2244:
-            quarter = "Summer 2024"
-        case 2242:
-            quarter = "Spring 2024"
-        case 2240:
-            quarter = "Winter 2024"
-        case 2238:
-            quarter = "Fall 2023"
-        case 2234:
-            quarter = "Summer 2023"
-        case 2232:
-            quarter = "Spring 2023"
-        case 2230:
-            quarter = "Winter 2023"
-        case 2228:
-            quarter = "Fall 2022"
-        case _:
-            return term_input
-    return quarter
-
 # create LLM
 init_message = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
-Terms are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
-The earliest term you have access to is Spring 2022. The current term is Summer 2024. The next term is Fall 2024. The Winter 2025 catalog is not currently available.
+Quarters are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
+The earliest quarter you have access to is Spring 2022. The current quarter is Summer 2024. The next quarter is Fall 2024. The Winter 2025 catalog is not currently available.
+Fall 2024 is currently open for enrollment. All other quarters are not.
+All data you have access to is public. Do not refuse to share data because of privacy concerns. If asked about course details (enrollment status/count, professor, etc.), check both the current and next quarters.
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -214,6 +195,8 @@ tool_dict = {
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel(
     'gemini-1.5-flash-latest',
+    # too smart
+    #'gemini-1.5-flash-exp-0827',
     tools=tool_list, 
     system_instruction = init_message,
     generation_config = genai.types.GenerationConfig(
@@ -227,6 +210,7 @@ model = genai.GenerativeModel(
 class Author(str, Enum):
     USER = "USER"
     SYSTEM = "SYSTEM"
+    FUNCTION = "FUNCTION"
 
 class ChatMessage(BaseModel):
     message: str
@@ -242,13 +226,34 @@ def get_stream_history(chat: Chat):
     messages = []
     
     for message in chat.messages[1:]:
-        if message.author == Author.USER:
-            messages.append({"role":"user", "parts": [message.message]})
-        else:
-            messages.append({"role":"model", "parts": [message.message]})
+        match (message.author):
+            case Author.USER:
+                messages.append({"role":"user", "parts": [message.message]})
+            case Author.FUNCTION:
+                fcall = json.loads(message.message)
+                print(fcall)
+                if "input" in fcall:
+                    messages.append({
+                        "role": "model",
+                        "parts": [
+                            genai.protos.Part(function_call=genai.protos.FunctionCall(name=fcall["name"], args={"input": fcall["input"]}))
+                        ]
+                    })
+                elif "response" in fcall:
+                    messages.append({
+                        "role": "model",
+                        "parts": [
+                            genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fcall["name"], response={"result": fcall["response"]}))
+                        ]
+                    })
+                else:
+                    raise "Invalid function call type"
+            case _:
+                messages.append({"role":"model", "parts": [message.message]})
+            
     # finalized_messages[-1]["parts"] = [finalized_prompt]
 
-    print(messages)
+    print("messages: "+str(messages))
     # (7) Send prompt to LLM
     response = model.generate_content(messages, tools = tool_list, stream = True)
 
@@ -267,16 +272,33 @@ def get_stream_history(chat: Chat):
 
                         # since there's only one argument for both functions, just hardcode it
                         # first item is always the input name so ignore
-                        args = ", ".join(f"{val}" for key, val in fn.args.items())
-                        print(f"{fn.name}({args})")
+                        func_args = ", ".join(f"{val}" for key, val in fn.args.items())
+                        print(f"{fn.name}({func_args})")
 
-                        func_response = tool_dict[fn.name](args)
+                        call_parts = [
+                            genai.protos.Part(function_call=genai.protos.FunctionCall(name=fn.name, args={"input": func_args}))
+                        ]
+
+                        call_message = {"role":"model", "parts": call_parts}
+                        messages.append(call_message)
+
+                        # yield str(call_message)
+                        # print(FuncCall(name=fn.name, input=func_args))
+                        yield json.dumps({"name": fn.name, "input": str(func_args)})+"\n"
+
+                        func_response = tool_dict[fn.name](func_args)
                         # print(f"received: {func_response}") 
                         response_parts = [
                             genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
                         ]
+                        #print(response_parts)
 
-                        messages.append({"role":"model", "parts": response_parts})
+                        response_message = {"role":"model", "parts": response_parts}
+                        messages.append(response_message)
+
+                        # yield str(response_message)
+                        # print(FuncResponse(name=fn.name, response=str(func_response)))
+                        yield json.dumps({"name": fn.name, "response": str(func_response)})+"\n"
                 if fcall:
                     new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
                     for new_chunk in new_response:
