@@ -147,7 +147,7 @@ class ChatScreen : Screen {
                 items(suggestions.size) { index ->
                     SuggestionChip(
                         onClick = {
-                            onSelect(suggestions[index])
+                            if (visible) onSelect(suggestions[index])
                         },
                         label = { Text(suggestions[index]) },
                     )
