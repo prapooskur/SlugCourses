@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -29,9 +31,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
-import org.jetbrains.compose.resources.painterResource
 import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.stop
+import org.jetbrains.compose.resources.vectorResource
 import ui.data.Author
 import ui.data.ChatScreenModel
 import ui.data.NavigatorScreenModel
@@ -51,6 +53,7 @@ class ChatScreen : Screen {
 
         val screenModel = rememberScreenModel { ChatScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
+
         val navigator = LocalNavigator.currentOrThrow
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
         val haptics = LocalHapticFeedback.current
@@ -80,9 +83,14 @@ class ChatScreen : Screen {
         }
 
         LaunchedEffect(uiState.value.messageList[uiState.value.messageList.lastIndex]) {
+            Logger.d("scroll offset: "+listState.firstVisibleItemScrollOffset.toString(), tag=TAG)
             // force scroll to bottom
-            if (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == listState.layoutInfo.totalItemsCount - 1 && !listState.isScrollInProgress) {
-                listState.scrollToItem(uiState.value.messageList.lastIndex, 9999)
+            if (
+                (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) == listState.layoutInfo.totalItemsCount - 1 &&
+                !listState.isScrollInProgress
+//                listState.firstVisibleItemScrollOffset == 0
+            ) {
+                listState.animateScrollToItem(uiState.value.messageList.lastIndex, 9999)
             }
         }
 
@@ -199,53 +207,82 @@ class ChatScreen : Screen {
                 placeholder = { Text("Type a message...") },
             )
             //external circle
-            val sendActive = !sendMessage.value && message.isNotBlank()
-            Box(
-                contentAlignment= Alignment.Center,
-                modifier = Modifier
-                    .size(56.dp)
-                    .aspectRatio(1f)
-                    .padding(4.dp)
-                    .clip(CircleShape)
-                    .background(
-                        ButtonDefaults.filledTonalButtonColors().containerColor
-                    )
-                    .alpha(
-                        ALPHA_FULL
-                    )
-                    .combinedClickable (
-                        onClick = {
-                            if (!active && message.isNotBlank()) {
-                                onSend()
-                            } else if (active) {
-                                onCancel()
-                            }
-                        },
-                        onLongClick = {
-                            if (!active) {
-                                onReset()
-                            }
-                        }
-                    )
-            ){
-                //internal circle with icon
-                if (!active) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Click to send, hold to clear messages",
-                        modifier = Modifier
-                            .size(ButtonDefaults.IconSize),
-                    )
-                } else {
-                    Icon(
-                        painterResource(Res.drawable.stop),
-                        contentDescription = "Click to cancel generation",
-                        modifier = Modifier
-                            .size(ButtonDefaults.IconSize),
-                    )
-                }
+            val sendActive = active || message.isNotBlank()
+            val canSend = !active && message.isNotBlank()
 
-            }
+            CircularIconButton(
+                onClick = {
+                    if (canSend) {
+                        onSend()
+                    } else if (active) {
+                        onCancel()
+                    }
+                },
+                onLongClick = {
+                    if (!sendMessage.value) {
+                        onReset()
+                    }
+                },
+                icon = if (!active) Icons.AutoMirrored.Default.Send else vectorResource(Res.drawable.stop),
+                contentDescription = "Click to send or cancel, hold to clear messages",
+                containerColor = if (sendActive) {
+                    ButtonDefaults.filledTonalButtonColors().containerColor
+                } else {
+                    ButtonDefaults.filledTonalButtonColors().disabledContainerColor
+                },
+                iconColor = if (sendActive) {
+                    ButtonDefaults.filledTonalButtonColors().contentColor
+                } else {
+                    ButtonDefaults.filledTonalButtonColors().disabledContentColor
+                },
+                alpha = if (sendActive) {
+                    ALPHA_FULL
+                } else {
+                    ALPHA_DISABLED
+                }
+            )
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    private fun CircularIconButton(
+        onClick: () -> Unit,
+        onLongClick: () -> Unit,
+        icon: ImageVector,
+        contentDescription: String? = null,
+        containerColor: Color = ButtonDefaults.filledTonalButtonColors().containerColor,
+        iconColor: Color = ButtonDefaults.filledTonalButtonColors().contentColor,
+        alpha: Float = ALPHA_FULL,
+        modifier: Modifier = Modifier
+    ) {
+        Box(
+            contentAlignment= Alignment.Center,
+            modifier = Modifier
+                .size(56.dp)
+                .aspectRatio(1f)
+                .padding(4.dp)
+                .clip(CircleShape)
+                .background(containerColor)
+                .alpha(alpha)
+                .combinedClickable (
+                    onClick = {
+                        onClick()
+                    },
+                    onLongClick = {
+                        onLongClick()
+                    }
+                )
+                .then(modifier)
+        ) {
+            //internal circle with icon
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier
+                    .size(ButtonDefaults.IconSize),
+                tint = iconColor
+            )
         }
     }
 

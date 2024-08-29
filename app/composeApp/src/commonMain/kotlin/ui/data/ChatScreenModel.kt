@@ -81,11 +81,13 @@ class ChatScreenModel : ScreenModel {
                     initMessage,
                     Author.SYSTEM
                 )
-            )
+            ),
+            active = false
         )
     }
 
     fun sendMessage() {
+        _uiState.value = _uiState.value.copy(active = true)
         currentJob = screenModelScope.launch(Dispatchers.IO) {
             try {
                 addMessage(ChatMessage(uiState.value.message, Author.USER))
@@ -169,6 +171,8 @@ class ChatScreenModel : ScreenModel {
             }
             println("message list: "+uiState.value.messageList.toList())
         }
+
+        _uiState.value = _uiState.value.copy(active = false)
     }
 
     fun updateSuggestions(database: Database) {
