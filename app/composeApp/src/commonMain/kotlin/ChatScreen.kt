@@ -29,6 +29,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
+import org.jetbrains.compose.resources.painterResource
+import slugcourses.composeapp.generated.resources.Res
+import slugcourses.composeapp.generated.resources.stop
 import ui.data.Author
 import ui.data.ChatScreenModel
 import ui.data.NavigatorScreenModel
@@ -48,10 +51,9 @@ class ChatScreen : Screen {
 
         val screenModel = rememberScreenModel { ChatScreenModel() }
         val uiState = screenModel.uiState.collectAsState()
-
         val navigator = LocalNavigator.currentOrThrow
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
-
+        val haptics = LocalHapticFeedback.current
         val listState = rememberLazyListState()
 
         LaunchedEffect(Unit) {
@@ -127,7 +129,19 @@ class ChatScreen : Screen {
                             onSelect = { screenModel.setMessage(it); screenModel.sendMessage() }
                         )
                         Spacer(Modifier.padding(top = 4.dp))
-                        ChatMessageBar(screenModel, sendMessage)
+                        ChatMessageBar(
+                            message = uiState.value.message,
+                            active = uiState.value.active,
+                            sendMessage = sendMessage,
+                            onValueChange = { screenModel.setMessage(it) },
+                            onSend = { sendMessage.value = true },
+                            onCancel = { screenModel.cancelMessage() },
+                            onReset = {
+                                screenModel.resetMessages()
+                                navScreenModel.getDb()?.let { screenModel.updateSuggestions(database = it) }
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                        )
                     }
                 }
             )
@@ -158,8 +172,15 @@ class ChatScreen : Screen {
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    private fun ChatMessageBar(screenModel: ChatScreenModel, sendMessage: MutableState<Boolean>) {
-        val uiState = screenModel.uiState.collectAsState()
+    private fun ChatMessageBar(
+        message: String,
+        active: Boolean,
+        sendMessage: MutableState<Boolean>,
+        onValueChange: (String) -> Unit,
+        onSend: () -> Unit,
+        onCancel: () -> Unit,
+        onReset: () -> Unit
+    ) {
 
         Row(
             Modifier
@@ -170,16 +191,15 @@ class ChatScreen : Screen {
         ) {
             OutlinedTextField(
                 modifier = Modifier.weight(1f),
-                value = uiState.value.message,
-                onValueChange = { screenModel.setMessage(it) },
+                value = message,
+                onValueChange = { onValueChange(it) },
                 singleLine = false,
                 maxLines = 3,
                 shape = RoundedCornerShape(16.dp),
                 placeholder = { Text("Type a message...") },
             )
             //external circle
-            val sendActive = !sendMessage.value && uiState.value.message.isNotBlank()
-            val haptics = LocalHapticFeedback.current
+            val sendActive = !sendMessage.value && message.isNotBlank()
             Box(
                 contentAlignment= Alignment.Center,
                 modifier = Modifier
@@ -188,46 +208,43 @@ class ChatScreen : Screen {
                     .padding(4.dp)
                     .clip(CircleShape)
                     .background(
-                        if (sendActive) {
-                            ButtonDefaults.filledTonalButtonColors().containerColor
-                        } else {
-                            ButtonDefaults.filledTonalButtonColors().disabledContainerColor
-                        }
+                        ButtonDefaults.filledTonalButtonColors().containerColor
                     )
                     .alpha(
-                        if (sendActive) {
-                            ALPHA_FULL
-                        } else {
-                            ALPHA_DISABLED
-                        }
+                        ALPHA_FULL
                     )
                     .combinedClickable (
                         onClick = {
-                            if (sendActive) {
-                                sendMessage.value = true
+                            if (!active && message.isNotBlank()) {
+                                onSend()
+                            } else if (active) {
+                                onCancel()
                             }
                         },
                         onLongClick = {
-                            if (!sendMessage.value) {
-                                screenModel.resetMessages()
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            if (!active) {
+                                onReset()
                             }
                         }
                     )
             ){
                 //internal circle with icon
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = "Click to send, hold to clear messages",
-                    modifier = Modifier
-                        .size(ButtonDefaults.IconSize),
-//                    .padding(2.dp),
-                    tint = if (sendActive) {
-                        ButtonDefaults.filledTonalButtonColors().contentColor
-                    } else {
-                        ButtonDefaults.filledTonalButtonColors().disabledContentColor
-                    }
-                )
+                if (!active) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Click to send, hold to clear messages",
+                        modifier = Modifier
+                            .size(ButtonDefaults.IconSize),
+                    )
+                } else {
+                    Icon(
+                        painterResource(Res.drawable.stop),
+                        contentDescription = "Click to cancel generation",
+                        modifier = Modifier
+                            .size(ButtonDefaults.IconSize),
+                    )
+                }
+
             }
         }
     }

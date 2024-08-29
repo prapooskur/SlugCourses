@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 
 @Serializable
 enum class Author {
@@ -43,7 +44,7 @@ data class ChatList(
 const val initMessage = "Hello! I'm SlugBot, your assistant for UCSC courses. How can I help you today?"
 data class ChatScreenState(
     val message: String = "",
-    val active: Boolean = true,
+    val active: Boolean = false,
     val messageList: List<ChatMessage> = listOf(
         ChatMessage(
             initMessage,
@@ -61,6 +62,8 @@ private const val CHAT_URL = "$CHAT_BASE_URL/chat/"
 class ChatScreenModel : ScreenModel {
     private val _uiState = MutableStateFlow(ChatScreenState())
     val uiState: StateFlow<ChatScreenState> = _uiState.asStateFlow()
+
+    private var currentJob: Job? = null
 
     fun setMessage(message: String) {
         _uiState.value = _uiState.value.copy(message = message)
@@ -83,30 +86,24 @@ class ChatScreenModel : ScreenModel {
     }
 
     fun sendMessage() {
-        try {
-            screenModelScope.launch {
-                withContext(Dispatchers.IO) {
-//                val message = uiState.value.message
-                    addMessage(ChatMessage(uiState.value.message, Author.USER))
-                    //Log.d(TAG, ChatMessage(uiState.value.message, Author.USER).toString())
-
-                    clearMessage()
-                    _uiState.value = _uiState.value.copy(active = true)
-
-                    addMessage(ChatMessage("|||", Author.SYSTEM))
-
-                    queryChat()
-
-                }
+        currentJob = screenModelScope.launch(Dispatchers.IO) {
+            try {
+                addMessage(ChatMessage(uiState.value.message, Author.USER))
+                clearMessage()
+                _uiState.value = _uiState.value.copy(active = true)
+                addMessage(ChatMessage("|||", Author.SYSTEM))
+                queryChat()
+            } catch (e: CancellationException) {
+                Logger.d("Generation cancelled", tag = TAG)
+            } catch (e: Exception) {
+                Logger.d("Error: ${e.message}", tag = TAG)
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = e.message ?: "error: no exception message",
+                    messageList = _uiState.value.messageList.dropLast(1).toMutableStateList()
+                )
+            } finally {
+                _uiState.value = _uiState.value.copy(active = false)
             }
-        } catch (e: Exception) {
-            Logger.d("Error: ${e.message}", tag = TAG)
-            _uiState.value = _uiState.value.copy(
-                errorMessage = e.message ?: "error: no exception message",
-                messageList = _uiState.value.messageList.dropLast(1).toMutableStateList()
-            )
-        } finally {
-            _uiState.value = _uiState.value.copy(active = false)
         }
     }
 
@@ -118,6 +115,12 @@ class ChatScreenModel : ScreenModel {
         )
     }
 
+    fun cancelMessage() {
+        // kill ktor request
+        currentJob?.cancel()
+        currentJob = null
+        _uiState.value = _uiState.value.copy(active = false)
+    }
 
     private suspend fun queryChat() {
         val response = mutableStateOf("")
@@ -178,7 +181,7 @@ class ChatScreenModel : ScreenModel {
     }
 
     private companion object {
-        val client = HttpClient() {
+        val client = HttpClient {
             install(HttpTimeout) {
                 connectTimeoutMillis = 60000
                 socketTimeoutMillis = 10000
