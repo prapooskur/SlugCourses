@@ -42,11 +42,18 @@ class NavigatorScreenModel : ScreenModel {
         }
 
         screenModelScope.launch(Dispatchers.IO) {
-            val newTerms = getTerms()
-            database.termsQueries.deleteAll()
-            newTerms.forEach {
-                database.termsQueries.insert(it.term_id.toLong(), it.term_name)
+            try {
+                val newTerms = getTerms()
+                if (newTerms.isNotEmpty()) {
+                    database.termsQueries.deleteAll()
+                    newTerms.forEach {
+                        database.termsQueries.insert(it.term_id.toLong(), it.term_name)
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.e("Error updating terms: $e", tag = TAG)
             }
+
         }
     }
 
