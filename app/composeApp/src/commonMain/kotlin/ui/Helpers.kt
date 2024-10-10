@@ -12,8 +12,8 @@ private const val TAG = "Helpers"
 
 val supabaseClientInstance: SupabaseClient by lazy {
     createSupabaseClient(
-        supabaseUrl = "https://cdmaojsmfcuyscmphhjk.supabase.co",
-        supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkbWFvanNtZmN1eXNjbXBoaGprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDU3MTg2MzYsImV4cCI6MjAyMTI5NDYzNn0.q_DWwkjq8F3CG5GjDj0UA21nvfirVZkrGkMkDuKRN7c"
+        supabaseUrl = "https://wavqdavgfeimdhcabzhf.supabase.co",
+        supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhdnFkYXZnZmVpbWRoY2FiemhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1MDk5MzMsImV4cCI6MjA0NDA4NTkzM30.Tz1AbHupgRu3xG7aejKJvxoEPtxEwqXj5dFBG9zISVA"
     ) {
         install(Postgrest)
     }
