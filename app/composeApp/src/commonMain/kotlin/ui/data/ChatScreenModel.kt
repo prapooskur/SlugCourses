@@ -139,7 +139,7 @@ class ChatScreenModel : ScreenModel {
         } .execute { httpResponse ->
             val channel: ByteReadChannel = httpResponse.body()
             while (!channel.isClosedForRead) {
-                // bumped max from 99999, sinnce large json responses can exceed it
+                // bumped max from 99999, since large json responses can exceed it
                 val line = channel.readUTF8Line(999999) ?: continue
                 Logger.d("${line.length}\n", tag=TAG)
 

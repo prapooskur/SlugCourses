@@ -363,26 +363,32 @@ data class ResultsScreen(
         onSearch: (String) -> Unit,
         onBack: () -> Unit,
         modifier: Modifier = Modifier.padding(bottom = 8.dp),
-        scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+        scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
     ) {
         TopAppBar(
             title = {
                 SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { newQuery ->
-                        onQueryChange(newQuery)
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = searchQuery,
+                            onQueryChange = { newQuery ->
+                                onQueryChange(newQuery)
+                            },
+                            onSearch = {
+                                onSearch(searchQuery)
+                            },
+                            expanded = false,
+                            onExpandedChange = { /* do nothing */ },
+                            enabled = true,
+                            placeholder = { Text("Search for classes...") },
+                            trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
+                                onSearch(searchQuery)
+                            }) },
+                        )
                     },
-                    active = false,
-                    onActiveChange = { /* do nothing */ },
-                    placeholder = { Text("Search for classes...") },
-                    trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
-                        onSearch(searchQuery)
-                    }) },
-                    onSearch = {
-                        onSearch(searchQuery)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { /* do nothing */ }
+                    expanded = false,
+                    onExpandedChange = { /* do nothing */ },
+                    modifier = Modifier.fillMaxHeight(0.91f).fillMaxWidth()) {}
             },
             navigationIcon = {
                 IconButton(
@@ -395,6 +401,7 @@ data class ResultsScreen(
                         contentDescription = "Back",
                     )
                 }
+
             },
             modifier = modifier,
             scrollBehavior = scrollBehavior

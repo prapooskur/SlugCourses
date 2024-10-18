@@ -68,6 +68,7 @@ class NavigatorScreenModel : ScreenModel {
         screenModelScope.launch(Dispatchers.IO) {
             try {
                 val newSuggestions = getSuggestions()
+                Logger.d(newSuggestions.toString(), tag=TAG)
                 database.suggestionsQueries.deleteAll()
                 newSuggestions.forEach {
                     database.suggestionsQueries.insert(it)

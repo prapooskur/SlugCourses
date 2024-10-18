@@ -37,7 +37,7 @@ import ui.elements.LargeDropdownMenuMultiSelect
 
 
 class HomeScreen : Screen {
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator: Navigator = LocalNavigator.currentOrThrow
@@ -100,7 +100,7 @@ class HomeScreen : Screen {
 
         }
 
-
+        val widthMax = 380.dp
         LazyColumn(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -119,14 +119,37 @@ class HomeScreen : Screen {
                         .widthIn(max = 250.dp)
                         .fillMaxHeight(0.25f)
                 )
+
                 SearchBar(
-                    modifier = Modifier.padding(16.dp),
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = uiState.searchQuery,
+                            onQueryChange = { newQuery->
+                                screenModel.setQuery(newQuery)
+                            },
+                            onSearch = {
+                                searchHandler()
+                            },
+                            expanded = false,
+                            onExpandedChange = { /* do nothing */ },
+                            placeholder = { Text("Search for classes...") },
+                            trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
+                                searchHandler()
+                            }) }
+                        )
+                    },
+                    expanded = false,
+                    onExpandedChange = { /* do nothing */ },
+                ) { /* do nothing */ }
+
+                /*SearchBar(
+                    modifier = Modifier.padding(16.dp).widthIn(max=widthMax),
                     query = uiState.searchQuery,
                     onQueryChange = { newQuery->
                         screenModel.setQuery(newQuery)
                     },
                     active = false,
-                    onActiveChange = { /* do nothing */ },
+                    onActiveChange = { *//* do nothing *//* },
                     placeholder = { Text("Search for classes...") },
                     trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Search icon", modifier = Modifier.clickable {
                         searchHandler()
@@ -134,9 +157,9 @@ class HomeScreen : Screen {
                     onSearch = {
                         searchHandler()
                     }
-                ) { /* do nothing */ }
+                ) { *//* do nothing *//* }*/
 
-                val widthMax = 380.dp
+
 
                 Row(Modifier.padding(horizontal = 32.dp, vertical = 16.dp).widthIn(max=widthMax)) {
                     LargeDropdownMenu(
