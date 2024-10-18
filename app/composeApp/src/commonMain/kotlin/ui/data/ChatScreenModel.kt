@@ -74,6 +74,7 @@ class ChatScreenModel : ScreenModel {
     }
 
     fun resetMessages() {
+        cancelMessage()
         _uiState.value = _uiState.value.copy(
             message = "",
             messageList = mutableStateListOf(
