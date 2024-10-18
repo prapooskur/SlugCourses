@@ -127,6 +127,7 @@ class ChatScreenModel : ScreenModel {
 
     private suspend fun queryChat() {
         val response = mutableStateOf("")
+        val messageQueue = mutableListOf<ChatMessage>()
 
         fun isValidJson(jsonString: String) = runCatching {
             Json.parseToJsonElement(jsonString)
@@ -143,11 +144,12 @@ class ChatScreenModel : ScreenModel {
                 Logger.d("${line.length}\n", tag=TAG)
 
                 if (isValidJson(line)) {
-                    _uiState.value = _uiState.value.copy(
+                    /*_uiState.value = _uiState.value.copy(
                         messageList = _uiState.value.messageList.toMutableStateList().apply {
                             add(_uiState.value.messageList.size-1, ChatMessage(line, Author.FUNCTION))
                         }
-                    )
+                    )*/
+                    messageQueue.add(ChatMessage(line, Author.FUNCTION))
                     print(uiState.value.messageList.toList())
                     continue
                 }
@@ -165,7 +167,14 @@ class ChatScreenModel : ScreenModel {
 
                 _uiState.value = _uiState.value.copy(
                     messageList = _uiState.value.messageList.toMutableStateList().apply {
-                        if (_uiState.value.messageList.last().author == Author.SYSTEM) { removeLast() }
+                        if (messageQueue.isNotEmpty()) {
+                            // the loop shouldn't be necessary here but putting it in for safety
+                            for (message in messageQueue) {
+                                add(_uiState.value.messageList.size-1, message)
+                            }
+                            messageQueue.clear()
+                        }
+                        if (lastOrNull()?.author == Author.SYSTEM) { removeLast() }
                         add(ChatMessage(response.value, Author.SYSTEM))
                     }
                 )
