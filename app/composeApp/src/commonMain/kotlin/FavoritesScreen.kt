@@ -150,13 +150,15 @@ class FavoritesScreen : Screen {
                         )
                     },
                     actions = {
-                        IconButton(
-                            onClick = {
-                                onToggleDialog()
+                        if (uiState.listPane.favoritesList.isNotEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    onToggleDialog()
+                                }
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Clear favorites")
                             }
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Clear favorites")
-                            }
+                        }
                     }
                 )
             },
