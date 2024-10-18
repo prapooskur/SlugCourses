@@ -121,7 +121,7 @@ class ChatScreen : Screen {
                                     when (chat.author) {
                                         Author.USER -> ChatMessageBubble(chat.message.trimEnd())
                                         Author.SYSTEM -> ChatResponseBubble(chat.message.trimEnd(), incomplete = (chat.message == "|||"))
-                                        else -> {} /* will never happen */
+                                        else -> {} /* author.function should be hidden */
                                     }
                                 }
                             }
@@ -178,7 +178,6 @@ class ChatScreen : Screen {
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun ChatMessageBar(
         message: String,
@@ -296,7 +295,7 @@ class ChatScreen : Screen {
                 horizontalArrangement = Arrangement.End
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = ChatMessageShape
                 ) {
                     SelectionContainer {
