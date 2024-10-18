@@ -1,26 +1,27 @@
 [versions]
-agp = "8.2.0"
-android-compileSdk = "34"
+agp = "8.5.2"
+android-compileSdk = "35"
 android-minSdk = "24"
-android-targetSdk = "34"
-androidx-activityCompose = "1.9.1"
+android-targetSdk = "35"
+androidx-activityCompose = "1.9.3"
 androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
-compose = "1.7.0-rc01"
-compose-plugin = "1.6.11"
+compose = "1.7.4"
+compose-plugin = "1.7.0"
 junit = "4.13.2"
-kotlin = "2.0.0"
+kotlin = "2.0.21"
 voyager = "1.0.0"
-kermit = "2.0.3"
-supabase = "2.5.0"
-ktor = "2.3.12"
+kermit = "2.0.4"
+supabase = "3.0.1"
+ktor = "3.0.0"
 sqlDelight = "2.0.2"
-markdown-renderer = "0.25.0"
-coroutines-version = "1.8.1"
+markdown-renderer = "0.26.0"
+coroutines-version = "1.9.0"
+multiplatform-settings="1.2.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -53,6 +54,7 @@ sqldelight-ktx = { group = "app.cash.sqldelight", name = "coroutines-extensions"
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqlDelight" }
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdown-renderer" }
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
+multiplatform-settings-no-arg = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
