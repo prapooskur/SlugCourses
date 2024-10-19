@@ -26,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.slug
@@ -100,7 +99,7 @@ class HomeScreen : Screen {
 
         }
 
-        val widthMax = 380.dp
+        val widthMax = 350.dp
         LazyColumn(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -140,6 +139,7 @@ class HomeScreen : Screen {
                     },
                     expanded = false,
                     onExpandedChange = { /* do nothing */ },
+                    modifier = Modifier.padding(16.dp).widthIn(max=widthMax)
                 ) { /* do nothing */ }
 
                 /*SearchBar(

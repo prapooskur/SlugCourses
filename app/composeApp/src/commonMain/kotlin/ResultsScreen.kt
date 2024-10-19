@@ -61,7 +61,8 @@ data class ResultsScreen(
         }
 
         LaunchedEffect(Unit) {
-            if (!screenModel.uiState.value.listPane.listDataLoaded) {
+            // todo figure out why i put an if here earlier
+            /*if (!screenModel.uiState.value.listPane.listDataLoaded) {
                 screenModel.clearError()
                 screenModel.getCourses(
                     term,
@@ -73,7 +74,19 @@ data class ResultsScreen(
                     searchType
                 )
                 screenModel.getFavorites(database)
-            }
+            }*/
+
+            screenModel.clearError()
+            screenModel.getCourses(
+                term,
+                department,
+                courseNumber,
+                query,
+                type,
+                genEd,
+                searchType
+            )
+            screenModel.getFavorites(database)
         }
 
         LaunchedEffect(screenModel.uiState.value.errorMessage) {

@@ -150,6 +150,8 @@ class ChatScreen : Screen {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             }
                         )
+                        // kinda cursed but no better way to get padding for taskbar without messing up other insets
+                        Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
                     }
                 }
             )
