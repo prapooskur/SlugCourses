@@ -44,19 +44,6 @@ class HomeScreen : Screen {
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
         val uiState by screenModel.uiState.collectAsState()
 
-        /*val defaultTermMap = mapOf(
-            "Fall 2024"   to 2248,
-            "Summer 2024" to 2244,
-            "Spring 2024" to 2242,
-            "Winter 2024" to 2240,
-            "Fall 2023"   to 2238,
-            "Summer 2023" to 2234,
-            "Spring 2023" to 2232,
-            "Winter 2023" to 2230,
-            "Fall 2022"   to 2228,
-            "Summer 2022" to 2224
-        )*/
-
         val defaultTermList = listOf(
             Terms(2248, "Fall 2024"),
             Terms(2244, "Summer 2024"),

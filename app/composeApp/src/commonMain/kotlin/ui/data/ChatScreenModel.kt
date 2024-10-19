@@ -168,8 +168,7 @@ class ChatScreenModel : ScreenModel {
                 _uiState.value = _uiState.value.copy(
                     messageList = _uiState.value.messageList.toMutableStateList().apply {
                         if (messageQueue.isNotEmpty()) {
-                            // the loop shouldn't be necessary here but putting it in for safety
-                            for (message in messageQueue) {
+                            for (message in messageQueue.reversed()) {
                                 add(_uiState.value.messageList.size-1, message)
                             }
                             messageQueue.clear()
