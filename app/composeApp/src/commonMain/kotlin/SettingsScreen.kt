@@ -1,12 +1,14 @@
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import api.Theme
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -30,23 +32,50 @@ class SettingsScreen : Screen {
         val showFavorites = settingsRepository.getShowFavoritesFlow().collectAsState(initial = settingsRepository.getShowFavorites()).value
 
         Column {
-            BoringNormalTopBar(titleText = "Settings", onBack = { navigator.pop() }, showBack = (LocalScreenSize.current.width < 600 ))
-            ThemeSwitcher(
-                labels = listOf("System", "Light", "Dark"),
-                current = currentTheme.name,
-                onSwitch = { theme -> settingsRepository.setTheme(Theme.valueOf(theme)) }
-            )
-            PrefSwitcher(
-                label = "Show chat",
-                isEnabled = showChat,
-                onSwitch = { settingsRepository.setShowChat(!showChat) }
-            )
-            PrefSwitcher(
-                label = "Show favorites",
-                isEnabled = showFavorites,
-                onSwitch = { settingsRepository.setShowFavorites(!showFavorites) }
-            )
+            BoringNormalTopBar(titleText = "Settings", onBack = { navigator.pop() }, showBack = false)
+            LazyColumn {
+                item {
+                    SectionText("Theme")
+                }
+                item {
+                    ThemeSwitcher(
+                        labels = listOf("System", "Light", "Dark"),
+                        current = currentTheme.name,
+                        onSwitch = { theme -> settingsRepository.setTheme(Theme.valueOf(theme)) }
+                    )
+                }
+                item {
+                    HorizontalDivider()
+                    SectionText("Section visibility")
+                }
+                item {
+                    PrefSwitcher(
+                        label = "Show chat",
+                        isEnabled = showChat,
+                        onSwitch = { settingsRepository.setShowChat(!showChat) }
+                    )
+                }
+                item {
+                    PrefSwitcher(
+                        label = "Show favorites",
+                        isEnabled = showFavorites,
+                        onSwitch = { settingsRepository.setShowFavorites(!showFavorites) }
+                    )
+                }
+            }
         }
+    }
+
+    @Composable
+    private fun SectionText(text: String) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
+        )
     }
 
     @Composable
