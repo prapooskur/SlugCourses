@@ -1,12 +1,14 @@
 package ui.data
 
 import androidx.compose.material3.SnackbarHostState
+import api.SettingsRepository
 import api.getSuggestions
 import api.getTerms
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +20,12 @@ private const val TAG = "NavigatorScreenModel"
 
 data class NavUiState(
     val database: Database?,
+    val settingsRepository: SettingsRepository,
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 )
 
 class NavigatorScreenModel : ScreenModel {
-    private val _uiState = MutableStateFlow(NavUiState(null))
+    private val _uiState = MutableStateFlow(NavUiState(null, SettingsRepository()))
     val uiState: StateFlow<NavUiState> = _uiState.asStateFlow()
 
     fun setDb(database: Database) {
@@ -31,6 +34,14 @@ class NavigatorScreenModel : ScreenModel {
 
     fun getDb(): Database? {
         return uiState.value.database
+    }
+
+//    fun setSettings(settings: Settings) {
+//        _uiState.value = _uiState.value.copy(settings = settings)
+//    }
+
+    fun getSettingsRepository(): SettingsRepository {
+        return uiState.value.settingsRepository
     }
     
     fun updateTerms() {

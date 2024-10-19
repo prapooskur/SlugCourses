@@ -94,6 +94,8 @@ kotlin {
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.m3)
 
+            implementation(libs.multiplatform.settings.noarg)
+            implementation(libs.multiplatform.settings.coroutines)
         }
 
         desktopMain.dependencies {
