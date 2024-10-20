@@ -16,5 +16,22 @@
       "outputFile": "composeApp-release.apk"
     }
   ],
-  "elementType": "File"
+  "elementType": "File",
+  "baselineProfiles": [
+    {
+      "minApi": 28,
+      "maxApi": 30,
+      "baselineProfiles": [
+        "baselineProfiles/1/composeApp-release.dm"
+      ]
+    },
+    {
+      "minApi": 31,
+      "maxApi": 2147483647,
+      "baselineProfiles": [
+        "baselineProfiles/0/composeApp-release.dm"
+      ]
+    }
+  ],
+  "minSdkVersionForDexing": 24
 }

@@ -42,7 +42,7 @@
                 <!-- Accepts URIs that begin with "http://www.example.com/gizmos” -->
                 <data android:scheme="https"
                       android:host="pisa.ucsc.edu"
-                      android:pathPrefix="/class_search" />
+                      android:pathPattern="/class_search/index.php" />
                 <!-- note that the leading "/" is required for pathPrefix-->
             </intent-filter>
 
@@ -52,7 +52,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- Accepts URIs that begin with "example://gizmos" -->
                 <data android:scheme="slugcourses"
-                      android:host="/detail" />
+                      android:host="detail" />
             </intent-filter>
         </activity>
     </application>

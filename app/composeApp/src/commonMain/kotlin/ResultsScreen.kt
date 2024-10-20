@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -204,12 +206,14 @@ data class ResultsScreen(
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
 
+        var searchTopBarHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current  // Get density in composable context
+
         Row(Modifier.fillMaxSize()) {
             // List pane
             var searchQuery by rememberSaveable{ mutableStateOf(query) }
             Column(Modifier.fillMaxHeight().weight(0.5f)) {
                 Scaffold(
-                    contentWindowInsets = WindowInsets(0.dp),
                     topBar = {
                         SearchTopBar(
                             searchQuery,
@@ -222,6 +226,12 @@ data class ResultsScreen(
                             onBack = {
                                 navigator.pop()
                             },
+                            modifier = Modifier.padding(bottom=8.dp).onGloballyPositioned { coordinates ->
+                                // Convert pixels to dp
+                                searchTopBarHeight = with(density) {
+                                    coordinates.size.height.toDp()
+                                }
+                            }
                         )
                     },
                     content = { paddingValues ->
@@ -246,7 +256,7 @@ data class ResultsScreen(
                             },
                         )
 
-                        Box(Modifier.pullRefresh(pullRefreshState).padding(paddingValues)) {
+                        Box(Modifier.pullRefresh(pullRefreshState).padding(top = paddingValues.calculateTopPadding())) {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize(),
@@ -316,11 +326,11 @@ data class ResultsScreen(
                                     )
                                 }
                             },
-                            modifier = Modifier.heightIn(min=56.dp)
+                            modifier = Modifier.height(searchTopBarHeight)
                         )
                     },
                     content = { paddingValues ->
-                        Box(Modifier.padding(paddingValues).fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding()+8.dp)) {
                             CourseDetailPane(
                                 courseInfo = courseInfo,
                                 courseUrl = uiState.detailPane.selectedUrl,
@@ -438,3 +448,17 @@ data class ResultsScreen(
         )
     }
 }
+
+/*
+@Preview
+@Composable
+fun ResultsPreview() {
+    ResultsScreen(
+        term=2248,
+        query="",
+        type = listOf(Type.IN_PERSON,Type.HYBRID,Type.SYNC_ONLINE,Type.ASYNC_ONLINE),
+        genEd = emptyList(),
+        searchType = ""
+    )
+}
+*/

@@ -105,11 +105,12 @@ class ChatScreen : Screen {
             contentAlignment = Alignment.Center
         ) {
             Scaffold(
-                modifier = Modifier.widthIn(max = 1200.dp),
+                modifier = Modifier.widthIn(max = 1200.dp).systemBarsPadding(),
                 content = { paddingValues ->
+                    Logger.d(paddingValues.toString(), tag =TAG )
                     LazyColumn(
                         Modifier
-                            .padding(paddingValues)
+                            .padding(paddingValues=paddingValues)
                             .padding(horizontal = 8.dp)
                             .fillMaxSize(),
                         verticalArrangement = Arrangement.Bottom,
@@ -151,7 +152,7 @@ class ChatScreen : Screen {
                             }
                         )
                         // kinda cursed but no better way to get padding for taskbar without messing up other insets
-                        Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
+//                        Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
                     }
                 }
             )
