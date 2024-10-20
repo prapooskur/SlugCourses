@@ -37,7 +37,6 @@ data class DetailedResultsScreen(
     val courseNumber: String,
     val url: String
 ) : Screen {
-    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
@@ -91,7 +90,7 @@ data class DetailedResultsScreen(
 private val ELEV_VALUE = 4.dp
 private val PADDING_VALUE = 16.dp
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun CourseDetailPane(
     courseInfo: CourseInfo,

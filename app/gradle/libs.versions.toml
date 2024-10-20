@@ -22,6 +22,7 @@ sqlDelight = "2.0.2"
 markdown-renderer = "0.26.0"
 coroutines-version = "1.9.0"
 multiplatform-settings="1.2.0"
+rinku="1.2.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -56,6 +57,8 @@ markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-ren
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
 multiplatform-settings-noarg = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
 multiplatform-settings-coroutines = { group = "com.russhwolf", name = "multiplatform-settings-coroutines", version.ref = "multiplatform-settings" }
+rinku = { group = "dev.theolm", name = "rinku", version.ref = "rinku"}
+rinku-compose = { group = "dev.theolm", name = "rinku-compose-ext", version.ref = "rinku"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

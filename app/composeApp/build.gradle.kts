@@ -39,6 +39,7 @@ kotlin {
             baseName = "ComposeApp"
             binaryOption("bundleId", "com.pras.slugcourses.SlugCoursesiOS")
             isStatic = false
+            export(libs.rinku)
         }
     }
 
@@ -96,6 +97,9 @@ kotlin {
 
             implementation(libs.multiplatform.settings.noarg)
             implementation(libs.multiplatform.settings.coroutines)
+
+            implementation(libs.rinku)
+            implementation(libs.rinku.compose)
         }
 
         desktopMain.dependencies {
