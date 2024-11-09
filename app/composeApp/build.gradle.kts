@@ -100,6 +100,8 @@ kotlin {
 
             implementation(libs.rinku)
             implementation(libs.rinku.compose)
+
+            implementation(libs.koalaplot.core)
         }
 
         desktopMain.dependencies {

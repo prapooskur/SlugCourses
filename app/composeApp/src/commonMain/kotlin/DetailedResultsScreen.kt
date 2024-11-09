@@ -11,24 +11,38 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import api.CourseInfo
+import api.Grade
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
-import ui.elements.BoringNormalTopBar
+import io.github.koalaplot.core.ChartLayout
+import io.github.koalaplot.core.bar.*
+import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
+import io.github.koalaplot.core.util.VerticalRotation
+import io.github.koalaplot.core.util.rotateVertically
+import io.github.koalaplot.core.util.toString
+import io.github.koalaplot.core.xygraph.FloatLinearAxisModel
+import io.github.koalaplot.core.xygraph.TickPosition
+import io.github.koalaplot.core.xygraph.XYGraph
+import io.github.koalaplot.core.xygraph.rememberAxisStyle
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.open_in_new
 import ui.data.DetailedResultsScreenModel
+import ui.elements.BoringNormalTopBar
 
 private const val TAG = "DetailedResults"
 
@@ -57,6 +71,7 @@ data class DetailedResultsScreen(
         }
 
         val courseInfo = uiState.value.courseInfo
+        val gradeInfo = uiState.value.gradeInfo
 
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
@@ -72,6 +87,7 @@ data class DetailedResultsScreen(
 
                 CourseDetailPane(
                     courseInfo = courseInfo,
+                    gradesInfo = gradeInfo,
                     courseUrl = url,
                     dataLoaded = uiState.value.dataLoaded,
                     refreshing = uiState.value.refreshing,
@@ -94,6 +110,7 @@ private val PADDING_VALUE = 16.dp
 @Composable
 fun CourseDetailPane(
     courseInfo: CourseInfo,
+    gradesInfo: List<Grade>,
     courseUrl: String,
     dataLoaded: Boolean,
     refreshing: Boolean,
@@ -138,6 +155,12 @@ fun CourseDetailPane(
                         CourseSectionsBox(courseInfo = courseInfo)
                     }
                 }
+                if (gradesInfo.isNotEmpty()) {
+                    item {
+                        CourseGradesBox(courseInfo, gradesInfo)
+                    }
+                }
+
             }
         }
 
@@ -504,6 +527,185 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalKoalaPlotApi::class)
+@Composable
+fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
+    Box(
+        Modifier
+            .padding(12.dp)
+            .fillMaxWidth()
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(ELEV_VALUE),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(PADDING_VALUE - 4.dp)
+            ) {
+                Row {
+                    Text(
+                        text = "Grade History",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                Row(Modifier.fillMaxWidth().heightIn(max=300.dp)) {
+                    BuildGradesChart(courseInfo, gradesInfo[0])
+                }
+
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalKoalaPlotApi::class)
+@Composable
+private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
+    val gradeList = listOf(
+        gradeInfo.aPlus,
+        gradeInfo.a,
+        gradeInfo.aMinus,
+        gradeInfo.bPlus,
+        gradeInfo.b,
+        gradeInfo.bMinus,
+        gradeInfo.cPlus,
+        gradeInfo.c,
+        gradeInfo.cMinus,
+        gradeInfo.dPlus,
+        gradeInfo.d,
+        gradeInfo.dMinus,
+        gradeInfo.f,
+        gradeInfo.p,
+        gradeInfo.np,
+//        gradeInfo.s,
+//        gradeInfo.u,
+        gradeInfo.i,
+        gradeInfo.w
+    )
+
+    val gradeNameList = listOf(
+        "A+",
+        "A",
+        "A-",
+        "B+",
+        "B",
+        "B-",
+        "C+",
+        "C",
+        "C-",
+        "D+",
+        "D",
+        "D-",
+        "F",
+        "P",
+        "NP",
+//    "S",  // Include these if needed
+//    "U",
+        "I",
+        "W",
+        "x", // dummy values, should never be shown
+        "x",
+        "x"
+    )
+
+    val barChartEntries = buildList<VerticalBarPlotEntry<Float, Float>> {
+        gradeList.forEachIndexed { index, grade ->
+            add(DefaultVerticalBarPlotEntry((index + 1).toFloat()-0.3f, DefaultVerticalBarPosition(0f, grade.toFloat())))
+        }
+    }
+
+    ChartLayout(
+//        modifier = paddingMod,
+        title = { Text("Grades") }
+    ) {
+        XYGraph(
+            xAxisModel = FloatLinearAxisModel(
+//                XAxisRange,
+                range = 0f..gradeList.size.toFloat(),
+                minimumMajorTickIncrement = 1f,
+                minimumMajorTickSpacing = 10.dp,
+                zoomRangeLimit = 3f,
+                minorTickCount = 0
+            ),
+            yAxisModel = FloatLinearAxisModel(
+                0f..(20 * ((gradeList.max() + 10) / 20)).toFloat(),
+                minimumMajorTickIncrement = 1f,
+                minorTickCount = 0
+            ),
+            xAxisStyle = rememberAxisStyle(
+                tickPosition = TickPosition.None,
+                color = Color.LightGray
+            ),
+            xAxisLabels = { index ->
+                Logger.d("${index.toInt()}", tag="WTF")
+                if (index.toInt() > 0) {
+                    Column(Modifier.fillMaxWidth()) {
+                        AxisLabel(gradeNameList[index.toInt()-1])
+                    }
+                }
+            },
+            xAxisTitle = {},
+            yAxisStyle = rememberAxisStyle(tickPosition = TickPosition.Outside),
+            yAxisLabels = {
+                Text (it.toString(0))
+            },
+            yAxisTitle = {
+                Text(
+                    "Students",
+                    modifier = Modifier.rotateVertically(VerticalRotation.COUNTER_CLOCKWISE)
+                        .padding(bottom = 4.dp)
+                )
+            },
+            verticalMajorGridLineStyle = null
+        ) {
+            VerticalBarPlot(
+                barChartEntries,
+                bar = { index ->
+                    DefaultVerticalBar(
+                        brush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        HoverSurface { Text(gradeNameList[index]+": "+barChartEntries[index].y.yMax.toString(0)) }
+                    }
+                },
+                barWidth = 0.8f
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun AxisLabel(label: String, modifier: Modifier = Modifier) {
+    Text(
+        label,
+        color = MaterialTheme.colorScheme.onBackground,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = modifier,
+        overflow = TextOverflow.Ellipsis,
+        maxLines = 1,
+        textAlign = TextAlign.Center
+    )
+}
+
+@Composable
+private fun HoverSurface(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Surface(
+        shadowElevation = 2.dp,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier.padding(8.dp)
+    ) {
+        Box(modifier = Modifier.padding(8.dp)) {
+            content()
         }
     }
 }

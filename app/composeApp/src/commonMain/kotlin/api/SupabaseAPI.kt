@@ -5,6 +5,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ui.getSupabaseClient
 
@@ -145,4 +146,127 @@ suspend fun getTerms(): List<Term> {
 
     Logger.d("Terms: $termList", tag = TAG)
     return termList
+}
+
+@Serializable
+data class Grade(
+    val id: Long = 0,
+
+    @SerialName("term")
+    val term: Int,
+
+    @SerialName("department")
+    val department: String = "",
+
+    @SerialName("course_number")
+    val courseNumber: Int,
+
+    @SerialName("course_letter")
+    val courseLetter: String = "",
+
+    @SerialName("short_name")
+    val shortName: String = "",
+
+    @SerialName("instructor")
+    val instructor: String = "",
+
+    @SerialName("a_plus")
+    val aPlus: Int = 0,
+
+    @SerialName("a")
+    val a: Int = 0,
+
+    @SerialName("a_minus")
+    val aMinus: Int = 0,
+
+    @SerialName("b_plus")
+    val bPlus: Int = 0,
+
+    @SerialName("b")
+    val b: Int = 0,
+
+    @SerialName("b_minus")
+    val bMinus: Int = 0,
+
+    @SerialName("c_plus")
+    val cPlus: Int = 0,
+
+    @SerialName("c")
+    val c: Int = 0,
+
+    @SerialName("c_minus")
+    val cMinus: Int = 0,
+
+    @SerialName("d_plus")
+    val dPlus: Int = 0,
+
+    @SerialName("d")
+    val d: Int = 0,
+
+    @SerialName("d_minus")
+    val dMinus: Int = 0,
+
+    @SerialName("f")
+    val f: Int = 0,
+
+    @SerialName("p")
+    val p: Int = 0,
+
+    @SerialName("np")
+    val np: Int = 0,
+
+    @SerialName("s")
+    val s: Int = 0,
+
+    @SerialName("u")
+    val u: Int = 0,
+
+    @SerialName("i")
+    val i: Int = 0,
+
+    @SerialName("w")
+    val w: Int = 0
+)
+
+suspend fun getGradeInfo(courseInfo: CourseInfo): List<Grade> {
+    val courseNumber = if (courseInfo.primary_section.catalog_nbr.last().isLetter()) {
+        courseInfo.primary_section.catalog_nbr.substring(0, courseInfo.primary_section.catalog_nbr.length - 1)
+    } else {
+        courseInfo.primary_section.catalog_nbr
+    }
+
+    val courseLetter = if (courseInfo.primary_section.catalog_nbr.last().isLetter()) {
+        courseInfo.primary_section.catalog_nbr.last()
+    } else {
+        ""
+    }
+
+    val instructors = courseInfo.meetings[0].instructors.joinToString(" ") { it.name.split(",")[0] }
+    val gradeInfo = getCourseGrades(
+        term = courseInfo.primary_section.strm.toInt(),
+        courseNumber = courseNumber.toInt(),
+        courseLetter = courseLetter.toString(),
+        shortName = courseInfo.primary_section.title,
+        instructors = instructors
+    )
+
+    return gradeInfo
+}
+
+suspend fun getCourseGrades(term: Int, courseNumber: Int, courseLetter: String, shortName: String, instructors: String): List<Grade> {
+    val supabase = getSupabaseClient()
+
+    val gradeList = supabase.from("grades").select {
+        order(column = "term", order = Order.DESCENDING)
+
+        filter {
+//            eq("term", term)
+            eq("course_number", courseNumber)
+            eq("course_letter", courseLetter)
+            eq("short_name", shortName)
+            eq("instructor", instructors)
+        }
+    }.decodeList<Grade>()
+
+    return gradeList
 }

@@ -333,6 +333,7 @@ data class ResultsScreen(
                         Box(Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding()+8.dp)) {
                             CourseDetailPane(
                                 courseInfo = courseInfo,
+                                gradesInfo = uiState.detailPane.gradeInfo,
                                 courseUrl = uiState.detailPane.selectedUrl,
                                 dataLoaded = uiState.detailPane.detailDataLoaded,
                                 refreshing = uiState.detailPane.detailRefreshing,

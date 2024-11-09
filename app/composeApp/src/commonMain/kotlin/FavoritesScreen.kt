@@ -278,6 +278,7 @@ class FavoritesScreen : Screen {
                     content = { paddingValues ->
                         CourseDetailPane(
                             courseInfo = uiState.detailPane.courseInfo,
+                            gradesInfo = listOf(),
                             courseUrl = selectedUrl,
                             dataLoaded = uiState.detailPane.detailDataLoaded,
                             refreshing = uiState.detailPane.detailRefreshing,

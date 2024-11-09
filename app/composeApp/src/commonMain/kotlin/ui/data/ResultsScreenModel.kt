@@ -35,6 +35,7 @@ data class ResultListUiState(
 
 data class ResultDetailUiState(
     val courseInfo: CourseInfo = CourseInfo(),
+    val gradeInfo: List<Grade> = emptyList(),
     val detailDataLoaded: Boolean = false,
     val detailRefreshing: Boolean = false,
     val selectedId: Int = 0,
@@ -203,12 +204,16 @@ class ResultsScreenModel : ScreenModel {
             }
             try {
                 val courseInfo = classAPIResponse(term, courseNum)
+                val gradeInfo = getGradeInfo(courseInfo)
+                Logger.d(gradeInfo.toString(), tag=TAG)
+
                 _uiState.update { currentState ->
 //                    courseInfo = courseInfo,
 //                    dataLoaded = true
                     currentState.copy(
                         detailPane = currentState.detailPane.copy(
                             courseInfo = courseInfo,
+                            gradeInfo = gradeInfo,
                             detailDataLoaded = true,
                         )
                     )

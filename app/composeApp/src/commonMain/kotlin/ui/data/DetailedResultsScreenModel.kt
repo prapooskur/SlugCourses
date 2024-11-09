@@ -1,8 +1,7 @@
 package ui.data
 
+import api.*
 import cafe.adriel.voyager.core.model.ScreenModel
-import api.CourseInfo
-import api.classAPIResponse
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import io.ktor.client.network.sockets.*
@@ -19,6 +18,7 @@ private const val TAG = "ResultsViewModel"
 
 data class DetailedResultsUiState(
     val courseInfo: CourseInfo = CourseInfo(),
+    val gradeInfo: List<Grade> = emptyList(),
     val dataLoaded: Boolean = false,
     val errorMessage: String = "",
     val refreshing: Boolean = false,
@@ -40,9 +40,13 @@ class DetailedResultsScreenModel : ScreenModel {
             try {
                 //Log.d(TAG, "term: $term, courseNumber: $courseNum")
                 val courseInfo = classAPIResponse(term, courseNum)
+                val gradeInfo = getGradeInfo(courseInfo)
+                Logger.d(gradeInfo.toString(), tag=TAG)
+
                 _uiState.update { currentState ->
                     currentState.copy(
                         courseInfo = courseInfo,
+                        gradeInfo = gradeInfo,
                         dataLoaded = true
                     )
                 }
