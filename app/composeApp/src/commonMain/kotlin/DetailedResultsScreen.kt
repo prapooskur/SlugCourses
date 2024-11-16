@@ -1,14 +1,13 @@
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +42,7 @@ import slugcourses.composeapp.generated.resources.Res
 import slugcourses.composeapp.generated.resources.open_in_new
 import ui.data.DetailedResultsScreenModel
 import ui.elements.BoringNormalTopBar
+import kotlin.math.max
 
 private const val TAG = "DetailedResults"
 
@@ -531,9 +531,37 @@ fun CourseSectionsBox(courseInfo: CourseInfo) {
     }
 }
 
-@OptIn(ExperimentalKoalaPlotApi::class)
 @Composable
 fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
+    val selectedTerm = remember { mutableIntStateOf(0) }
+    val termList = gradesInfo.map { it.term }
+    val termMap = mapOf(
+        2250 to "Winter 2025",
+        2248 to "Fall 2024",
+        2244 to "Summer 2024",
+        2242 to "Spring 2024",
+        2240 to "Winter 2024",
+        2238 to "Fall 2023",
+        2234 to "Summer 2023",
+        2232 to "Spring 2023",
+        2230 to "Winter 2023",
+        2228 to "Fall 2022",
+        2224 to "Summer 2022",
+        2222 to "Spring 2022",
+        2220 to "Winter 2022",
+        2218 to "Fall 2021",
+        2214 to "Summer 2021",
+        2212 to "Spring 2021",
+        2210 to "Winter 2021",
+        2208 to "Fall 2020",
+        2204 to "Summer 2020",
+        2202 to "Spring 2020",
+        2200 to "Winter 2020",
+        2198 to "Fall 2019",
+    )
+
+
+    Logger.d(termList.toString(), tag="WTF")
     Box(
         Modifier
             .padding(12.dp)
@@ -550,15 +578,39 @@ fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
             ) {
                 Row {
                     Text(
-                        text = "Grade History",
+                        text = "Grade History for ${courseInfo.primary_section.subject} ${courseInfo.primary_section.catalog_nbr} with ${courseInfo.meetings[0].instructors.joinToString(" and ") { it.name.split(",")[0] }}",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 24.sp,
                         modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                     )
                 }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    items(termList.size) { index ->
+                        FilterChip(
+                            onClick = {
+                                selectedTerm.value = index
+                            },
+                            label = {
+                                Text(termMap[termList[index]] ?: "Unknown: ${termList[index]}")
+                            },
+                            selected = selectedTerm.value == index,
+//                            leadingIcon = if (selectedTerm.value == index) {
+//                                {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.Done,
+//                                        contentDescription = "Selected term",
+//                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+//                                    )
+//                                }
+//                            } else {
+//                                null
+//                            },
+                        )
+                    }
+                }
                 HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth().heightIn(max=300.dp)) {
-                    BuildGradesChart(courseInfo, gradesInfo[0])
+                    BuildGradesChart(courseInfo, gradesInfo[selectedTerm.value])
                 }
 
             }
@@ -618,17 +670,19 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
 
     val barChartEntries = buildList<VerticalBarPlotEntry<Float, Float>> {
         gradeList.forEachIndexed { index, grade ->
-            add(DefaultVerticalBarPlotEntry((index + 1).toFloat()-0.3f, DefaultVerticalBarPosition(0f, grade.toFloat())))
+            if (index < 5)
+                add(DefaultVerticalBarPlotEntry((index + 1).toFloat()-0.3f, DefaultVerticalBarPosition(0f, grade.toFloat())))
         }
     }
 
+    Logger.d("$gradeList ${gradeList.max()}", tag="WTF")
+
     ChartLayout(
 //        modifier = paddingMod,
-        title = { Text("Grades") }
+//        title = { Text("Grade Distribution for ${courseInfo.primary_section.subject}${courseInfo.primary_section.class_nbr}") }
     ) {
         XYGraph(
             xAxisModel = FloatLinearAxisModel(
-//                XAxisRange,
                 range = 0f..gradeList.size.toFloat(),
                 minimumMajorTickIncrement = 1f,
                 minimumMajorTickSpacing = 10.dp,
@@ -636,7 +690,7 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
                 minorTickCount = 0
             ),
             yAxisModel = FloatLinearAxisModel(
-                0f..(20 * ((gradeList.max() + 10) / 20)).toFloat(),
+                0f..max(20,(20 * ((gradeList.max() + 10) / 20))).toFloat(),
                 minimumMajorTickIncrement = 1f,
                 minorTickCount = 0
             ),
@@ -646,7 +700,8 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
             ),
             xAxisLabels = { index ->
                 Logger.d("${index.toInt()}", tag="WTF")
-                if (index.toInt() > 0) {
+                // only display every other label if width is small
+                if (index.toInt() > 0 && (index.toInt() % 2 == 0 || LocalScreenSize.current.width.dp > 900.dp)) {
                     Column(Modifier.fillMaxWidth()) {
                         AxisLabel(gradeNameList[index.toInt()-1])
                     }

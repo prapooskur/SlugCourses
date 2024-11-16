@@ -358,7 +358,7 @@ data class ResultsScreen(
 
         fun updateDetailData() {
             if (uiState.listPane.resultsList.isNotEmpty() && uiState.listPane.listDataLoaded) {
-                Logger.d("selected "+uiState.listPane.resultsList[uiState.detailPane.selectedId].toString(), tag = TAG)
+//                Logger.d("selected "+uiState.listPane.resultsList[uiState.detailPane.selectedId].toString(), tag = TAG)
                 screenModel.getCourseInfo(
                     uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
                     uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
@@ -368,13 +368,21 @@ data class ResultsScreen(
         }
 
         // when a course is selected, update data pane
-        LaunchedEffect(uiState.detailPane.selectedId) {
-            updateDetailData()
-        }
+//        LaunchedEffect(uiState.detailPane.selectedId) {
+//            updateDetailData()
+//        }
+//
+//        // when the results list updates, update data pane
+//        LaunchedEffect(uiState.listPane.resultsList) {
+//            updateDetailData()
+//        }
 
-        // when the results list updates, update data pane
-        LaunchedEffect(uiState.listPane.resultsList) {
-            updateDetailData()
+        LaunchedEffect(uiState.detailPane.selectedId, uiState.listPane.resultsList) {
+            if (uiState.detailPane.selectedId < uiState.listPane.resultsList.size) {
+                updateDetailData()
+            } else {
+                Logger.d("selectedId ${uiState.detailPane.selectedId} out of bounds of resultsList ${uiState.listPane.resultsList}", tag = TAG)
+            }
         }
         
     }
