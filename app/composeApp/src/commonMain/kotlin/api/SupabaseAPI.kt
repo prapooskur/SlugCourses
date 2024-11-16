@@ -241,7 +241,9 @@ suspend fun getGradeInfo(courseInfo: CourseInfo): List<Grade> {
         ""
     }
 
-    val instructors = courseInfo.meetings[0].instructors.joinToString(" ") { it.name.split(",")[0] }
+    // mildly cursed
+    val instructors = courseInfo.meetings[0].instructors.joinToString(", ") { instructor -> instructor.name }
+    Logger.d("Instructors: $instructors", tag = TAG)
     val gradeInfo = getCourseGrades(
         term = courseInfo.primary_section.strm.toInt(),
         courseNumber = courseNumber.toInt(),
