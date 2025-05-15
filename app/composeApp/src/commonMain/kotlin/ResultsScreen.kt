@@ -45,14 +45,13 @@ data class ResultsScreen(
     val searchType: String,
 ) : Screen {
 
-    private val splitQuery = query.contains(" ")
-    private val department = if (splitQuery) { query.substringBefore(" ") } else { query }
-    private val courseNumber = if (splitQuery) { query.substringAfter(" ") } else { query }
+//    private val splitQuery = query.contains(" ")
+//    private val department = if (splitQuery) { query.substringBefore(" ") } else { query }
+//    private val courseNumber = if (splitQuery) { query.substringAfter(" ") } else { query }
 
     @Composable
     override fun Content() {
         val screenModel = rememberScreenModel { ResultsScreenModel() }
-
 
         val navigator = LocalNavigator.currentOrThrow
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
@@ -63,27 +62,23 @@ data class ResultsScreen(
         }
 
         LaunchedEffect(Unit) {
-            // todo figure out why i put an if here earlier
-            /*if (!screenModel.uiState.value.listPane.listDataLoaded) {
-                screenModel.clearError()
-                screenModel.getCourses(
-                    term,
-                    department,
-                    courseNumber,
-                    query,
-                    type,
-                    genEd,
-                    searchType
-                )
-                screenModel.getFavorites(database)
-            }*/
+
+            if (screenModel.uiState.value.listPane.useInitQuery) {
+                screenModel.updateQuery(query)
+            }
+
+            val resultsQuery = screenModel.uiState.value.listPane.resultsQuery
+
+            val splitQuery = resultsQuery.contains(" ")
+            val department = if (splitQuery) { resultsQuery.substringBefore(" ") } else { resultsQuery }
+            val courseNumber = if (splitQuery) { resultsQuery.substringAfter(" ") } else { resultsQuery }
 
             screenModel.clearError()
             screenModel.getCourses(
                 term,
                 department,
                 courseNumber,
-                query,
+                resultsQuery,
                 type,
                 genEd,
                 searchType
@@ -110,18 +105,17 @@ data class ResultsScreen(
         val uiState by screenModel.uiState.collectAsState()
         val coroutineScope = rememberCoroutineScope()
 
-        var searchQuery by rememberSaveable{ mutableStateOf(query) }
-
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
             topBar = {
                 SearchTopBar(
-                    searchQuery,
+                    uiState.listPane.resultsQuery,
                     onQueryChange = { newQuery ->
-                        searchQuery = newQuery
+//                        searchQuery = newQuery
+                        screenModel.updateQuery(newQuery)
                     },
                     onSearch = {
-                        searchHandler(screenModel, searchQuery)
+                        searchHandler(screenModel, uiState.listPane.resultsQuery)
                     },
                     onBack = {
                         navigator.pop()
@@ -134,12 +128,19 @@ data class ResultsScreen(
                     uiState.listPane.listRefreshing,
                     onRefresh = {
                         coroutineScope.launch {
+
+                            val resultsQuery = screenModel.uiState.value.listPane.resultsQuery
+
+                            val splitQuery = resultsQuery.contains(" ")
+                            val department = if (splitQuery) { resultsQuery.substringBefore(" ") } else { resultsQuery }
+                            val courseNumber = if (splitQuery) { resultsQuery.substringAfter(" ") } else { resultsQuery }
+
                             screenModel.clearError()
                             screenModel.getCourses(
                                 term,
                                 department,
                                 courseNumber,
-                                searchQuery,
+                                resultsQuery,
                                 type,
                                 genEd,
                                 searchType
@@ -216,12 +217,13 @@ data class ResultsScreen(
                 Scaffold(
                     topBar = {
                         SearchTopBar(
-                            searchQuery,
+                            uiState.listPane.resultsQuery,
                             onQueryChange = { newQuery ->
-                                searchQuery = newQuery
+//                                searchQuery = newQuery
+                                screenModel.updateQuery(newQuery)
                             },
                             onSearch = {
-                                searchHandler(screenModel, searchQuery)
+                                searchHandler(screenModel, uiState.listPane.resultsQuery)
                             },
                             onBack = {
                                 navigator.pop()
@@ -240,12 +242,18 @@ data class ResultsScreen(
                             uiState.listPane.listRefreshing,
                             onRefresh = {
                                 coroutineScope.launch {
+                                    val resultsQuery = screenModel.uiState.value.listPane.resultsQuery
+
+                                    val splitQuery = resultsQuery.contains(" ")
+                                    val department = if (splitQuery) { resultsQuery.substringBefore(" ") } else { resultsQuery }
+                                    val courseNumber = if (splitQuery) { resultsQuery.substringAfter(" ") } else { resultsQuery }
+
                                     screenModel.clearError()
                                     screenModel.getCourses(
                                         term,
                                         department,
                                         courseNumber,
-                                        searchQuery,
+                                        resultsQuery,
                                         type,
                                         genEd,
                                         searchType

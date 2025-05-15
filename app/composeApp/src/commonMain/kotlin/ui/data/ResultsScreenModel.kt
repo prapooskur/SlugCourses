@@ -26,6 +26,8 @@ data class ResultsUiState(
 
 data class ResultListUiState(
     // list
+    val resultsQuery: String = "",
+    val useInitQuery: Boolean = true,
     val resultsList: List<Course> = emptyList(),
     val favoritesList: List<String> = emptyList(),
     val listDataLoaded: Boolean = false,
@@ -53,6 +55,17 @@ class ResultsScreenModel : ScreenModel {
             currentState.copy(
                 listPane = currentState.listPane.copy(
                     listRefreshing = isRefreshing,
+                )
+            )
+        }
+    }
+
+    fun updateQuery(newQuery: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                listPane = currentState.listPane.copy(
+                    resultsQuery = newQuery,
+                    useInitQuery = false
                 )
             )
         }
