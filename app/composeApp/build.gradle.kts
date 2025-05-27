@@ -102,6 +102,8 @@ kotlin {
             implementation(libs.rinku.compose)
 
             implementation(libs.koalaplot.core)
+
+            implementation(libs.material.icons)
         }
 
         desktopMain.dependencies {

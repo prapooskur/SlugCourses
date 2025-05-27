@@ -45,6 +45,10 @@ class HomeScreen : Screen {
         val uiState by screenModel.uiState.collectAsState()
 
         val defaultTermList = listOf(
+            Terms(2258, "Fall 2025"),
+            Terms(2254, "Summer 2025"),
+            Terms(2252, "Spring 2025"),
+            Terms(2250, "Winter 2025"),
             Terms(2248, "Fall 2024"),
             Terms(2244, "Summer 2024"),
             Terms(2242, "Spring 2024"),
