@@ -686,7 +686,7 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
                 range = 0f..gradeList.size.toFloat(),
                 minimumMajorTickIncrement = 1f,
                 minimumMajorTickSpacing = 10.dp,
-                maxViewExtent = 3f,
+//                maxViewExtent = 3f,
                 minorTickCount = 0
             ),
             yAxisModel = FloatLinearAxisModel(
