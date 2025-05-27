@@ -123,7 +123,7 @@ jobs:
       - name: Upload wasm productionExecutable as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-build
+          name: wasm-build
           path: app/composeApp/build/dist/wasmJs/productionExecutable
 #  build-ios:
 #    runs-on: macos-latest
