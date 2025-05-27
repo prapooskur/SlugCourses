@@ -51,10 +51,8 @@ fun App(driverFactory: DriverFactory) {
     }
     val database = databaseState.value
 
-    // Show loading screen until database is ready
     if (database == null) {
-        // You can show a splash/loading indicator here
-        Box(Modifier.fillMaxSize()) {
+        Surface(Modifier.fillMaxSize()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
         return
