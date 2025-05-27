@@ -9,6 +9,7 @@ import io.github.jan.supabase.exceptions.BadRequestRestException
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.ktor.client.network.sockets.*
 import io.ktor.util.network.*
+import ioDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -101,7 +102,7 @@ class ResultsScreenModel : ScreenModel {
             genEd.add("PE-T")
         }
 
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             try {
 //                _uiState.update { currentState ->
 //                    currentState.copy(
@@ -155,7 +156,7 @@ class ResultsScreenModel : ScreenModel {
     }
 
     fun getFavorites(database: Database) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             _uiState.update { currentState ->
                 currentState.copy(
 //                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
@@ -170,7 +171,7 @@ class ResultsScreenModel : ScreenModel {
 
 
     suspend fun handleFavorite(course: Course, database: Database) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
@@ -206,7 +207,7 @@ class ResultsScreenModel : ScreenModel {
 
     // Detail stuff
     fun getCourseInfo(term: String, courseNum: String) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             Logger.d("Getting course info", tag=TAG)
             _uiState.update { currentState ->
                 currentState.copy(

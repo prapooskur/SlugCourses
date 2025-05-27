@@ -15,6 +15,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.ktor.client.network.sockets.*
 import io.ktor.util.network.*
+import ioDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,7 +62,7 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     fun getFavorites(database: Database) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             setListRefresh(true)
             try {
                 val idList = database.favoritesQueries.selectAll().executeAsList()
@@ -96,7 +97,7 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     fun handleFavorite(course: Course, database: Database) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
@@ -143,7 +144,7 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     fun getCourseInfo(term: String, id: String) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             setDetailRefresh(true)
             try {
                 val courseInfo = classAPIResponse(term, id.substringAfter("_"))
@@ -174,7 +175,7 @@ class FavoritesScreenModel : ScreenModel {
     }
 
     fun deleteFavorites(database: Database) {
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             database.favoritesQueries.deleteAll()
             getFavorites(database)
         }

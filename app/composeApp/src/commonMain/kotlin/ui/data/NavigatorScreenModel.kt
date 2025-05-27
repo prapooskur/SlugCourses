@@ -8,9 +8,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import com.russhwolf.settings.Settings
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import ioDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +50,7 @@ class NavigatorScreenModel : ScreenModel {
             return
         }
 
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             try {
                 val newTerms = getTerms()
                 if (newTerms.isNotEmpty()) {
@@ -76,7 +74,7 @@ class NavigatorScreenModel : ScreenModel {
             return
         }
 
-        screenModelScope.launch(Dispatchers.IO) {
+        screenModelScope.launch(ioDispatcher) {
             try {
                 val newSuggestions = getSuggestions()
                 Logger.d(newSuggestions.toString(), tag=TAG)

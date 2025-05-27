@@ -5,6 +5,7 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getBooleanFlow
 import com.russhwolf.settings.coroutines.getIntFlow
+import com.russhwolf.settings.observable.makeObservable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,7 +17,9 @@ enum class Theme {
 
 class SettingsRepository() {
     private val settings: Settings by lazy { Settings() }
-    private val observableSettings: ObservableSettings by lazy { settings as ObservableSettings }
+//    private val observableSettings: ObservableSettings by lazy { settings as ObservableSettings }
+    @OptIn(ExperimentalSettingsApi::class)
+    private val observableSettings: ObservableSettings = settings.makeObservable()
 
     private companion object {
         const val THEME = "theme"
@@ -28,11 +31,11 @@ class SettingsRepository() {
     }
 
     fun setTheme(theme: Theme) {
-        settings.putInt(THEME, theme.ordinal)
+        observableSettings.putInt(THEME, theme.ordinal)
     }
 
     fun getTheme(): Theme {
-        return Theme.entries[settings.getInt(THEME, defaultValue = Theme.SYSTEM.ordinal)]
+        return Theme.entries[observableSettings.getInt(THEME, defaultValue = Theme.SYSTEM.ordinal)]
     }
 
     @OptIn(ExperimentalSettingsApi::class)
@@ -42,30 +45,30 @@ class SettingsRepository() {
     }
 
     fun setShowChat(showChat: Boolean) {
-        settings.putBoolean(SHOW_CHAT, showChat)
+        observableSettings.putBoolean(SHOW_CHAT, showChat)
     }
 
     fun getShowChat(): Boolean {
-        return settings.getBoolean(SHOW_CHAT, true)
+        return observableSettings.getBoolean(SHOW_CHAT, SHOW_CHAT_DEFAULT)
     }
 
     @OptIn(ExperimentalSettingsApi::class)
     fun getShowChatFlow(): Flow<Boolean> {
-        return observableSettings.getBooleanFlow(SHOW_CHAT, true)
+        return observableSettings.getBooleanFlow(SHOW_CHAT, SHOW_CHAT_DEFAULT)
     }
 
 
     fun setShowFavorites(showChat: Boolean) {
-        settings.putBoolean(SHOW_FAVORITES, showChat)
+        observableSettings.putBoolean(SHOW_FAVORITES, showChat)
     }
 
     fun getShowFavorites(): Boolean {
-        return settings.getBoolean(SHOW_FAVORITES, true)
+        return observableSettings.getBoolean(SHOW_FAVORITES, SHOW_FAVORITES_DEFAULT)
     }
 
     @OptIn(ExperimentalSettingsApi::class)
     fun getShowFavoritesFlow(): Flow<Boolean> {
-        return observableSettings.getBooleanFlow(SHOW_FAVORITES, true)
+        return observableSettings.getBooleanFlow(SHOW_FAVORITES, SHOW_FAVORITES_DEFAULT)
     }
 
 }

@@ -1,4 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,12 +9,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqlDelight)
+//    alias(libs.plugins.composeHotReload)
 }
 
 sqldelight {
     databases {
         create("Database") {
             packageName.set("com.pras")
+            generateAsync.set(true)
         }
     }
 }
@@ -29,6 +33,11 @@ kotlin {
             }
         }
     }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xwasm-use-new-exception-proposal")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
     
     listOf(
         iosX64(),
@@ -39,11 +48,30 @@ kotlin {
             baseName = "ComposeApp"
             binaryOption("bundleId", "com.pras.slugcourses.SlugCoursesiOS")
             isStatic = false
-            export(libs.rinku)
         }
     }
 
     jvm("desktop")
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        moduleName = "composeApp"
+        browser {
+            val rootDirPath = project.rootDir.path
+            val projectDirPath = project.projectDir.path
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        // Serve sources to debug inside browser
+                        add(rootDirPath)
+                        add(projectDirPath)
+                    }
+                }
+            }
+        }
+        binaries.executable()
+    }
     
     sourceSets {
         
@@ -95,15 +123,16 @@ kotlin {
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.m3)
 
+            implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.noarg)
             implementation(libs.multiplatform.settings.coroutines)
-
-            implementation(libs.rinku)
-            implementation(libs.rinku.compose)
+            implementation(libs.multiplatform.settings.makeobservable)
 
             implementation(libs.koalaplot.core)
 
             implementation(libs.material.icons)
+
+            implementation(libs.coroutines.core)
         }
 
         desktopMain.dependencies {
@@ -116,6 +145,14 @@ kotlin {
             implementation(compose.desktop.macos_x64)
             implementation(compose.desktop.macos_arm64)
             implementation(libs.coroutines.swing)
+        }
+
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.cio)
+            implementation(libs.sqldelight.wasm)
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.1.0"))
+            implementation(npm("sql.js", "1.8.0"))
+            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
         }
     }
 }

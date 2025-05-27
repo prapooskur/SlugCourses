@@ -22,8 +22,6 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.pras.courses.Terms
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.compose.resources.painterResource
@@ -62,7 +60,7 @@ class HomeScreen : Screen {
         )
 
         val database = navScreenModel.uiState.value.database
-        val termFlow: Flow<List<Terms>> = database?.termsQueries?.selectAll()?.asFlow()?.mapToList(Dispatchers.IO) ?: emptyFlow()
+        val termFlow: Flow<List<Terms>> = database?.termsQueries?.selectAll()?.asFlow()?.mapToList(ioDispatcher) ?: emptyFlow()
         val termList: List<Terms> = (termFlow.collectAsState(defaultTermList).value).sortedByDescending { it.id }
 
         val termNames = termList.map { it.name }

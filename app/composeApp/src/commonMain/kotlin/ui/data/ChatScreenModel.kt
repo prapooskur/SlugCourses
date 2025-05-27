@@ -15,6 +15,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
+import ioDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -89,7 +90,7 @@ class ChatScreenModel : ScreenModel {
 
     fun sendMessage() {
         _uiState.value = _uiState.value.copy(active = true)
-        currentJob = screenModelScope.launch(Dispatchers.IO) {
+        currentJob = screenModelScope.launch(ioDispatcher) {
             try {
                 addMessage(ChatMessage(uiState.value.message, Author.USER))
                 clearMessage()

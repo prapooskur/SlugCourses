@@ -15,8 +15,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import co.touchlab.kermit.Logger
 import com.pras.Database
-import dev.theolm.rinku.DeepLink
-import dev.theolm.rinku.compose.ext.DeepLinkListener
+import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.*
@@ -37,6 +36,9 @@ data class NavigationItem(
 @Composable
 expect fun GetScreenSize(): IntSize
 
+// gah why can't they just have io wasm yet
+expect val ioDispatcher: CoroutineDispatcher
+
 val LocalScreenSize = compositionLocalOf<IntSize> { error("No Screen Size Info provided") }
 
 @OptIn(ExperimentalEncodingApi::class)
@@ -46,11 +48,6 @@ fun App(driverFactory: DriverFactory) {
     val database: Database = createDatabase(driverFactory)
 
     val settingsRepository = SettingsRepository()
-
-    var deepLink by remember { mutableStateOf<DeepLink?>(null) }
-    DeepLinkListener { deepLink = it }
-
-
 
     SlugCoursesTheme(
         darkTheme = when(settingsRepository.getThemeFlow().collectAsState(settingsRepository.getTheme()).value) {
@@ -112,43 +109,6 @@ fun App(driverFactory: DriverFactory) {
                         LaunchedEffect(Unit) {
                             screenModel.updateTerms()
                             screenModel.updateSuggestions()
-                        }
-
-                        LaunchedEffect(deepLink) {
-                            if (deepLink != null) {
-                                Logger.d(deepLink.toString(), tag="deeplink")
-                                val uriPattern = """slugcourses://detail/(\d+)/(\d+)/(.*)"""
-                                val uriRegex = Regex(uriPattern)
-                                if (deepLink?.data?.startsWith("https://pisa.ucsc.edu/class_search/index.php?action=detail&class_data=") == true) {
-                                    val url = deepLink?.data?.substring(startIndex = 35) ?: ""
-                                    val encodedData = deepLink?.data?.substring(startIndex = 70)?.replace("%3D", "=") ?: ""
-                                    val courseDataRaw = Base64.decode(encodedData).decodeToString()
-
-                                    val coursePattern = """:STRM";s:\d+:"(\d+)";.*:CLASS_NBR";s:\d+:"(\d+)""""
-                                    val regex = Regex(coursePattern)
-                                    val courseMatch = regex.find(courseDataRaw)
-
-                                    val courseData = Pair(courseMatch?.groupValues?.get(1) ?: "", courseMatch?.groupValues?.get(2) ?: "")
-                                    Logger.d("$encodedData $courseData", tag="deeplink")
-                                    navigator.push(
-                                        DetailedResultsScreen(
-                                            term=courseData.first,
-                                            courseNumber = courseData.second,
-                                            url = url
-                                        )
-                                    )
-                                } else if (uriRegex.containsMatchIn(deepLink?.data ?: "")) {
-                                    val uriMatch = uriRegex.find(deepLink?.data ?: "")
-                                    val courseData = Triple(uriMatch?.groupValues?.get(1) ?: "", uriMatch?.groupValues?.get(2) ?: "", uriMatch?.groupValues?.get(3) ?: "")
-                                    navigator.push(
-                                        DetailedResultsScreen(
-                                            term=courseData.first,
-                                            courseNumber = courseData.second,
-                                            url = courseData.third
-                                        )
-                                    )
-                                }
-                            }
                         }
 
                         Scaffold(
