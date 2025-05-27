@@ -1,4 +1,4 @@
-CREATE TABLE favorites (
+CREATE TABLE IF NOT EXISTS favorites (
   id TEXT PRIMARY KEY NOT NULL
 );
 

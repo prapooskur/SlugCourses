@@ -1,6 +1,8 @@
 package ui.data
 
 import api.*
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
@@ -161,7 +163,7 @@ class ResultsScreenModel : ScreenModel {
                 currentState.copy(
 //                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
                     currentState.listPane.copy(
-                        favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                        favoritesList = database.favoritesQueries.selectAll().awaitAsList()
                     )
                 )
             }
@@ -172,7 +174,7 @@ class ResultsScreenModel : ScreenModel {
 
     suspend fun handleFavorite(course: Course, database: Database) {
         withContext(ioDispatcher) {
-            if (database.favoritesQueries.select(course.id).executeAsOneOrNull().isNullOrEmpty()) {
+            if (database.favoritesQueries.select(course.id).awaitAsOneOrNull().isNullOrEmpty()) {
                 database.favoritesQueries.insert(course.id)
                 setFavoritesMessage("Favorited ${course.short_name}")
             } else {
@@ -184,7 +186,7 @@ class ResultsScreenModel : ScreenModel {
                 currentState.copy(
 //                    favoritesList = database.favoritesQueries.selectAll().executeAsList()
                     currentState.listPane.copy(
-                        favoritesList = database.favoritesQueries.selectAll().executeAsList()
+                        favoritesList = database.favoritesQueries.selectAll().awaitAsList()
                     )
                 )
             }

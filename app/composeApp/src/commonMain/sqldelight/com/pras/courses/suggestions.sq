@@ -1,4 +1,4 @@
-CREATE TABLE suggestions (
+CREATE TABLE IF NOT EXISTS suggestions (
   suggestion TEXT NOT NULL
 );
 

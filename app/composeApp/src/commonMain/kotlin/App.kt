@@ -3,6 +3,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
@@ -45,7 +46,19 @@ val LocalScreenSize = compositionLocalOf<IntSize> { error("No Screen Size Info p
 @Composable
 @Preview
 fun App(driverFactory: DriverFactory) {
-    val database: Database = createDatabase(driverFactory)
+    val databaseState = produceState<Database?>(initialValue = null, driverFactory) {
+        value = createDatabase(driverFactory)
+    }
+    val database = databaseState.value
+
+    // Show loading screen until database is ready
+    if (database == null) {
+        // You can show a splash/loading indicator here
+        Box(Modifier.fillMaxSize()) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        }
+        return
+    }
 
     val settingsRepository = SettingsRepository()
 
