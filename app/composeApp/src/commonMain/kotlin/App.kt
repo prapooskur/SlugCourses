@@ -53,7 +53,9 @@ fun App(driverFactory: DriverFactory) {
 
     if (database == null) {
         Surface(Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            Box(Modifier.fillMaxSize()) {     
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
         }
         return
     }
