@@ -23,7 +23,7 @@ data class NavUiState(
 )
 
 class NavigatorScreenModel : ScreenModel {
-    private val _uiState = MutableStateFlow(NavUiState(null, SettingsRepository()))
+    private val _uiState = MutableStateFlow(NavUiState(null, SettingsRepository))
     val uiState: StateFlow<NavUiState> = _uiState.asStateFlow()
 
     fun setDb(database: Database) {

@@ -61,7 +61,7 @@ fun App(driverFactory: DriverFactory) {
         return
     }
 
-    val settingsRepository = SettingsRepository()
+    val settingsRepository = SettingsRepository
 
     SlugCoursesTheme(
         darkTheme = when(settingsRepository.getThemeFlow().collectAsState(settingsRepository.getTheme()).value) {

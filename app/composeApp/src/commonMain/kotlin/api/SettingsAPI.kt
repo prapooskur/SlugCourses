@@ -15,32 +15,30 @@ enum class Theme {
     DARK
 }
 
-class SettingsRepository() {
+private const val THEME_KEY = "theme"
+private const val SHOW_CHAT = "show_chat"
+private const val SHOW_CHAT_DEFAULT = true
+private const val SHOW_FAVORITES = "show_favorites"
+private const val SHOW_FAVORITES_DEFAULT = true
+
+
+object SettingsRepository {
     private val settings: Settings by lazy { Settings() }
 //    private val observableSettings: ObservableSettings by lazy { settings as ObservableSettings }
     @OptIn(ExperimentalSettingsApi::class)
     private val observableSettings: ObservableSettings = settings.makeObservable()
 
-    private companion object {
-        const val THEME = "theme"
-        const val SHOW_CHAT = "show_chat"
-        const val SHOW_CHAT_DEFAULT = true
-        const val SHOW_FAVORITES = "show_favorites"
-        const val SHOW_FAVORITES_DEFAULT = true
-
-    }
-
     fun setTheme(theme: Theme) {
-        observableSettings.putInt(THEME, theme.ordinal)
+        observableSettings.putInt(THEME_KEY, theme.ordinal)
     }
 
     fun getTheme(): Theme {
-        return Theme.entries[observableSettings.getInt(THEME, defaultValue = Theme.SYSTEM.ordinal)]
+        return Theme.entries[observableSettings.getInt(THEME_KEY, defaultValue = Theme.SYSTEM.ordinal)]
     }
 
     @OptIn(ExperimentalSettingsApi::class)
     fun getThemeFlow(): Flow<Theme> {
-        return observableSettings.getIntFlow(THEME, defaultValue = Theme.SYSTEM.ordinal)
+        return observableSettings.getIntFlow(THEME_KEY, defaultValue = Theme.SYSTEM.ordinal)
             .map { intValue -> Theme.entries[intValue] }
     }
 
