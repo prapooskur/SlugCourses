@@ -1,3 +1,4 @@
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Surface
@@ -53,10 +54,8 @@ fun App(driverFactory: DriverFactory) {
     val database = databaseState.value
 
     if (database == null) {
-        Surface(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize()) {     
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
         return
     }
