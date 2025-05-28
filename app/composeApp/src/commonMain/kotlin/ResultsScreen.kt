@@ -57,7 +57,7 @@ data class ResultsScreen(
         val navScreenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
         val database = navScreenModel.uiState.value.database ?: throw Exception()
         when (LocalScreenSize.current.width) {
-            in 0..599 -> OnePane(screenModel, database, navigator)
+            in 0 until LARGE_SCREEN -> OnePane(screenModel, database, navigator)
             else -> TwoPane(screenModel, database, navigator)
         }
 

@@ -49,7 +49,7 @@ class FavoritesScreen : Screen {
         val favoriteFlow = database.favoritesQueries.selectAll().asFlow().mapToList(ioDispatcher).collectAsState(initial = emptySet())
 
         when (LocalScreenSize.current.width) {
-            in 0..599 -> {
+            in 0 until LARGE_SCREEN -> {
                 OnePane(
                     screenModel = screenModel,
                     favoriteFlow = favoriteFlow,

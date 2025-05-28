@@ -1,4 +1,5 @@
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.CoroutineDispatcher
@@ -7,8 +8,10 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 actual fun GetScreenSize(): IntSize {
     // return LocalWindowInfo.current.containerSize
-    val intSize = LocalWindowInfo.current.containerSize
-    return IntSize(intSize.width.toDp(), intSize.height.toDp())
+    return with(LocalDensity.current) {
+        val currentContainerSize = LocalWindowInfo.current.containerSize
+        IntSize(currentContainerSize.width.toDp().value.toInt(), currentContainerSize.height.toDp().value.toInt())
+    }
 }
 
 actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default

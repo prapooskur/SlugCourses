@@ -41,6 +41,7 @@ expect fun GetScreenSize(): IntSize
 expect val ioDispatcher: CoroutineDispatcher
 
 val LocalScreenSize = compositionLocalOf<IntSize> { error("No Screen Size Info provided") }
+const val LARGE_SCREEN = 600
 
 @OptIn(ExperimentalEncodingApi::class)
 @Composable
@@ -131,7 +132,7 @@ fun App(driverFactory: DriverFactory) {
 
                                 Row(Modifier.padding(paddingValues)) {
                                     // nav rail always visible on large screen
-                                    if (LocalScreenSize.current.width >= 600) {
+                                    if (LocalScreenSize.current.width >= LARGE_SCREEN) {
                                         NavRail(
                                             navigator = navigator,
                                             items = navItemList
@@ -147,7 +148,7 @@ fun App(driverFactory: DriverFactory) {
                                 }
                             },
                             bottomBar = {
-                                if (LocalScreenSize.current.width < 600 && (onTopDestination(navigator))) {
+                                if (LocalScreenSize.current.width < LARGE_SCREEN && (onTopDestination(navigator))) {
                                     BottomNavigationBar(navigator, navItemList)
                                 }
                             },
