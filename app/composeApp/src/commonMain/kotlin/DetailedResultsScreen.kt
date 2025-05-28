@@ -561,7 +561,6 @@ fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
     )
 
 
-    Logger.d(termList.toString(), tag="WTF")
     Box(
         Modifier
             .padding(12.dp)
@@ -611,7 +610,7 @@ fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
                 HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
                 LazyRow(Modifier.fillMaxWidth().heightIn(max=300.dp)) {
                     item {
-                        BuildGradesChart(courseInfo, gradesInfo[selectedTerm.value])
+                        BuildGradesChart(gradesInfo[selectedTerm.value])
                     }
                 }
 
@@ -622,7 +621,7 @@ fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
 
 @OptIn(ExperimentalKoalaPlotApi::class)
 @Composable
-private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
+private fun BuildGradesChart(gradeInfo: Grade) {
     val gradeList = listOf(
         gradeInfo.aPlus,
         gradeInfo.a,
@@ -702,9 +701,8 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
                 color = Color.LightGray
             ),
             xAxisLabels = { index ->
-                Logger.d("${index.toInt()}", tag="WTF")
                 // only display every other label if width is small
-                if (index.toInt() > 0 && (index.toInt() % 2 == 0 || LocalScreenSize.current.width.dp > 900.dp)) {
+                if (index.toInt() > 0) {
                     Column(Modifier.fillMaxWidth()) {
                         AxisLabel(gradeNameList[index.toInt()-1])
                     }
