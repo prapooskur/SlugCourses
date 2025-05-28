@@ -1,7 +1,7 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Surface
+import androidx.compose.material3.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +23,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import slugcourses.composeapp.generated.resources.*
 import ui.data.NavigatorScreenModel
 import ui.theme.SlugCoursesTheme
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 data class NavigationItem(
@@ -53,13 +52,6 @@ fun App(driverFactory: DriverFactory) {
     }
     val database = databaseState.value
 
-    if (database == null) {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
-        }
-        return
-    }
-
     val settingsRepository = SettingsRepository
 
     SlugCoursesTheme(
@@ -70,92 +62,105 @@ fun App(driverFactory: DriverFactory) {
         },
         dynamicColor = true,
     ) {
-        CompositionLocalProvider(LocalScreenSize provides GetScreenSize()) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Navigator(HomeScreen()) { navigator ->
-                        val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
-                        screenModel.setDb(database)
 
-                        val settingsRepository = screenModel.getSettingsRepository()
-                        val showChat = settingsRepository.getShowChatFlow().collectAsState(initial = settingsRepository.getShowChat()).value
-                        val showFavorites = settingsRepository.getShowFavoritesFlow().collectAsState(initial = settingsRepository.getShowFavorites()).value
+        // todo fix this so it isn't a big if else
+        // moving the null check outside of the theme creates a pretty obvious flash of unstyled content
+        if (database == null) {
+            Surface(color = MaterialTheme.colorScheme.background) {
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
+            }
+        } else {
+            CompositionLocalProvider(LocalScreenSize provides GetScreenSize()) {
 
-                        val navItemList = listOf(
-                            NavigationItem(
-                                name = "Home",
-                                route = HomeScreen(),
-                                selectedIcon = painterResource(Res.drawable.home_filled),
-                                icon = painterResource(Res.drawable.home_outlined),
-                                iconDescription = "Home",
-                                enabled = true
-                            ),
-                            NavigationItem(
-                                name = "Chat",
-                                route = ChatScreen(),
-                                selectedIcon = painterResource(Res.drawable.chat_filled),
-                                icon = painterResource(Res.drawable.chat_outlined),
-                                iconDescription = "Chat",
-                                enabled = showChat
-                            ),
-                            NavigationItem(
-                                name = "Favorites",
-                                route = FavoritesScreen(),
-                                selectedIcon = painterResource(Res.drawable.star_filled),
-                                icon = painterResource(Res.drawable.star),
-                                iconDescription = "Favorite",
-                                enabled = showFavorites
-                            ),
-                            NavigationItem(
-                                name = "Settings",
-                                route = SettingsScreen(),
-                                selectedIcon = painterResource(Res.drawable.settings_fill),
-                                icon = painterResource(Res.drawable.settings),
-                                iconDescription = "Settings",
-                                enabled = true
-                            ),
-                        )
 
-                        LaunchedEffect(Unit) {
-                            screenModel.updateTerms()
-                            screenModel.updateSuggestions()
-                        }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Navigator(HomeScreen()) { navigator ->
+                            val screenModel = navigator.rememberNavigatorScreenModel { NavigatorScreenModel() }
+                            screenModel.setDb(database)
 
-                        Scaffold(
-                            // custom insets necessary to render behind nav bar
-                            contentWindowInsets = WindowInsets(0.dp),
-                            content = { paddingValues ->
+                            val settingsRepository = screenModel.getSettingsRepository()
+                            val showChat = settingsRepository.getShowChatFlow().collectAsState(initial = settingsRepository.getShowChat()).value
+                            val showFavorites = settingsRepository.getShowFavoritesFlow().collectAsState(initial = settingsRepository.getShowFavorites()).value
 
-                                Row(Modifier.padding(paddingValues)) {
-                                    // nav rail always visible on large screen
-                                    if (LocalScreenSize.current.width >= LARGE_SCREEN) {
-                                        NavRail(
-                                            navigator = navigator,
-                                            items = navItemList
-                                        )
-                                    }
+                            val navItemList = listOf(
+                                NavigationItem(
+                                    name = "Home",
+                                    route = HomeScreen(),
+                                    selectedIcon = painterResource(Res.drawable.home_filled),
+                                    icon = painterResource(Res.drawable.home_outlined),
+                                    iconDescription = "Home",
+                                    enabled = true
+                                ),
+                                NavigationItem(
+                                    name = "Chat",
+                                    route = ChatScreen(),
+                                    selectedIcon = painterResource(Res.drawable.chat_filled),
+                                    icon = painterResource(Res.drawable.chat_outlined),
+                                    iconDescription = "Chat",
+                                    enabled = showChat
+                                ),
+                                NavigationItem(
+                                    name = "Favorites",
+                                    route = FavoritesScreen(),
+                                    selectedIcon = painterResource(Res.drawable.star_filled),
+                                    icon = painterResource(Res.drawable.star),
+                                    iconDescription = "Favorite",
+                                    enabled = showFavorites
+                                ),
+                                NavigationItem(
+                                    name = "Settings",
+                                    route = SettingsScreen(),
+                                    selectedIcon = painterResource(Res.drawable.settings_fill),
+                                    icon = painterResource(Res.drawable.settings),
+                                    iconDescription = "Settings",
+                                    enabled = true
+                                ),
+                            )
 
-                                    Box {
-                                        FadeTransition(navigator) { screen ->
-                                            // todo see if there's a better way to do this?
-                                            screen.Content()
+                            LaunchedEffect(Unit) {
+                                screenModel.updateTerms()
+                                screenModel.updateSuggestions()
+                            }
+
+                            Scaffold(
+                                // custom insets necessary to render behind nav bar
+                                contentWindowInsets = WindowInsets(0.dp),
+                                content = { paddingValues ->
+
+                                    Row(Modifier.padding(paddingValues)) {
+                                        // nav rail always visible on large screen
+                                        if (LocalScreenSize.current.width >= LARGE_SCREEN) {
+                                            NavRail(
+                                                navigator = navigator,
+                                                items = navItemList
+                                            )
+                                        }
+
+                                        Box {
+                                            FadeTransition(navigator) { screen ->
+                                                // todo see if there's a better way to do this?
+                                                screen.Content()
+                                            }
                                         }
                                     }
+                                },
+                                bottomBar = {
+                                    if (LocalScreenSize.current.width < LARGE_SCREEN && (onTopDestination(navigator))) {
+                                        BottomNavigationBar(navigator, navItemList)
+                                    }
+                                },
+                                snackbarHost = {
+                                    SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
                                 }
-                            },
-                            bottomBar = {
-                                if (LocalScreenSize.current.width < LARGE_SCREEN && (onTopDestination(navigator))) {
-                                    BottomNavigationBar(navigator, navItemList)
-                                }
-                            },
-                            snackbarHost = {
-                                SnackbarHost(hostState = screenModel.uiState.value.snackbarHostState)
-                            }
-                        )
+                            )
 
+                        }
                     }
                 }
             }

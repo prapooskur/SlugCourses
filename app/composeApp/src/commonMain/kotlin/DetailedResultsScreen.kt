@@ -609,8 +609,10 @@ fun CourseGradesBox(courseInfo: CourseInfo, gradesInfo: List<Grade>) {
                     }
                 }
                 HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
-                Row(Modifier.fillMaxWidth().heightIn(max=300.dp)) {
-                    BuildGradesChart(courseInfo, gradesInfo[selectedTerm.value])
+                LazyRow(Modifier.fillMaxWidth().heightIn(max=300.dp)) {
+                    item {
+                        BuildGradesChart(courseInfo, gradesInfo[selectedTerm.value])
+                    }
                 }
 
             }
@@ -670,14 +672,15 @@ private fun BuildGradesChart(courseInfo: CourseInfo, gradeInfo: Grade) {
 
     val barChartEntries = buildList<VerticalBarPlotEntry<Float, Float>> {
         gradeList.forEachIndexed { index, grade ->
-            if (index < 5)
-                add(DefaultVerticalBarPlotEntry((index + 1).toFloat()-0.3f, DefaultVerticalBarPosition(0f, grade.toFloat())))
+//            if (index < 5)
+            add(DefaultVerticalBarPlotEntry((index + 1).toFloat()-0.3f, DefaultVerticalBarPosition(0f, grade.toFloat())))
         }
     }
 
-    Logger.d("$gradeList ${gradeList.max()}", tag="WTF")
-
     ChartLayout(
+
+        //quite cursed but can't do this with a widthIn
+        modifier = Modifier.width(max(LocalScreenSize.current.width, 600).dp)
 //        modifier = paddingMod,
 //        title = { Text("Grade Distribution for ${courseInfo.primary_section.subject}${courseInfo.primary_section.class_nbr}") }
     ) {
