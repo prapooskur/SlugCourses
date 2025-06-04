@@ -45,9 +45,9 @@ def termToQuarterName(term : str) -> str:
         case "2222":
             return "Spring 2022"
 
-def populate(term: str):
-    terms = ["2258", "2254", "2252", "2250" "2248", "2244", "2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
-    if term:
+def populate(term: str = "-1"):
+    terms = ["2258", "2254", "2252", "2250", "2248", "2244", "2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
+    if term != "-1":
         terms = [term]
     print(f"updating cache with {terms}...")
     classNums = []
@@ -55,8 +55,11 @@ def populate(term: str):
     for term in terms:
         baseUrl = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_LIST.v1/"+term+"?dept="
 
-        allCourses = requests.get(baseUrl).json()
-        for value in allCourses.get('classes', []):
+        
+
+        allCourses = requests.get(baseUrl)
+        #print(allCourses.text)
+        for value in allCourses.json().get('classes', []):
 
             # Access the 'class_nbr' key
             class_nbr = value.get('class_nbr')
@@ -170,7 +173,7 @@ if __name__ == "__main__":
         parser.print_help()
         parser.exit()
 
-    if args.term and args.term > 9999 or args.term < 1000:
+    if args.term and (args.term > 9999 or args.term < 1000):
         print("term not valid")
         parser.exit()
 

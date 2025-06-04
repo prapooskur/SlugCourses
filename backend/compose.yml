@@ -2,7 +2,6 @@ services:
   pgvector:
     container_name: slugcourses_pgvector
     image: pgvector/pgvector:pg17
-    user: 1000:1000
     shm_size: 128mb
     environment:
       POSTGRES_PASSWORD: Overwrite-Catering5-Shredding-Curfew
