@@ -182,7 +182,7 @@ parser.add_argument("-a", "--all-terms", action="store_true", help="Scrape all t
 # Parse arguments
 args = parser.parse_args()
 
-term_list = [2248, 2244, 2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
+term_list = [2258, 2254, 2252, 2250, 2248, 2244, 2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
 
 if args.get_detail:
     print("getting detailed info")
@@ -204,7 +204,7 @@ elif args.term:
     else:
         print(f"{args.term} not in {term_list}")
 else:
-    terms = [2248]
+    terms = [term_list[0], term_list[1]]
     print("scraping " + str(terms))
     for term in terms:
         sections = queryPisa(term, args.get_detail)

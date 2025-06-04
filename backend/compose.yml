@@ -1,0 +1,15 @@
+services:
+  pgvector:
+    container_name: slugcourses_pgvector
+    image: pgvector/pgvector:pg17
+    user: 1000:1000
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: Overwrite-Catering5-Shredding-Curfew
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./pgvector:/var/lib/postgresql/data
+    ports:
+      - 34710:5432
+    restart: unless-stopped
+

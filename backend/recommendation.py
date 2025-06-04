@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import google.ai.generativelanguage as glm
 from pydantic import BaseModel
 from typing import List
@@ -15,7 +16,7 @@ from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
 from haystack_integrations.components.retrievers.pgvector import PgvectorKeywordRetriever, PgvectorEmbeddingRetriever
 from haystack.utils import Secret
 from haystack.components.rankers import TransformersSimilarityRanker
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # create app and load .env
 classRecommender = FastAPI(
@@ -23,10 +24,21 @@ classRecommender = FastAPI(
     redoc_url=None, # Disable redoc
 )
 
+
+origins = os.getenv("CORS_URLS")
+classRecommender.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origins],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # load API keys from .env
 load_dotenv()
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 PG_CONN_STRING = os.getenv("PG_CONN_STRING")
+SUPABASE_CONN_STRING = os.getenv("SUPABASE_CONN_STRING")
 
 
 prompt_template = '''
@@ -59,8 +71,10 @@ document_store = PgvectorDocumentStore(
 
 
 # create and warm up sentence embedder
-query_instruction = "Represent this sentence for searching relevant passages: "
-text_embedder = SentenceTransformersTextEmbedder(model="WhereIsAI/UAE-Large-V1", prefix=query_instruction)
+embeddings_model = os.getenv("EMBEDDINGS_MODEL")
+embeddings_query = os.getenv("EMBEDDINGS_QUERY")
+# query_instruction = "Represent this sentence for searching relevant passages: "
+text_embedder = SentenceTransformersTextEmbedder(model=embeddings_model, prefix=embeddings_query)
 text_embedder.warm_up()
 
 # create retrievers
@@ -98,6 +112,8 @@ def retrieve_general(input: str):
     # (5) merge vector-based docs and keyword-based docs, then rerank
     merged_docs = document_joiner.run([keyword_docs["documents"], embedding_docs["documents"]])
     ranked_docs = document_ranker.run(query = input, documents = merged_docs["documents"], top_k = 7)
+
+    print(ranked_docs)
 
     prompt_template = """
     Documents:
@@ -139,7 +155,7 @@ def retrieve_specific(sql_input: str):
     quarter	        The quarter a course is taught.
     department	    Abbreviation for the academic department offering the course (e.g., AM, ANTH, ART).
     course_number	The numerical part of the course code (e.g., 10, 130, 158).
-    course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, use '' instead.
+    course_letter	Optional letter suffix for course number. Always uppercase. If no letter was specified, do not include in query.
     section_number	Numerical code to distinguish different sections of the same course within a quarter. Stored as text. One-digit numbers have leading zeros.
     name	        The title of the course.
     instructor	    Name(s) of the professor(s) teaching the course.
@@ -158,21 +174,28 @@ def retrieve_specific(sql_input: str):
     notes           Notes about the course. If empty, the course has no notes.
     """
 
-    if not sql_input:
+    if not sql_input or sql_input is None or sql_input == "" or sql_input == "None":
         return "Function requires an input"
 
-    conn = psycopg2.connect(PG_CONN_STRING)
+    conn = psycopg2.connect(SUPABASE_CONN_STRING)
     conn.set_session(readonly=True)
 
     cur = conn.cursor()
     # sanitize input
-    sql_input = sql_input.replace("\"","'").replace("\\","")
+    sql_input = sql_input.replace("\"","'").replace("\\","").replace("\'","'")
+    # why does this happen?
+    sql_input = sql_input.replace('course_letter = " "', 'course_letter = ""').replace("course_letter = ' '","course_letter = ''")
+
     # force sorting order if not specified, unless it would break the query
     if "ORDER BY" not in sql_input and "DISTINCT" not in sql_input:
-        sql_input+=" ORDER BY quarter DESC, department ASC, course_number ASC, course_LETTER ASC, section_number ASC"
-    print("executing: "+sql_input)
+        sql_input+=" ORDER BY term DESC, department ASC, course_number ASC, course_LETTER ASC, section_number ASC"
+    # print("executing: "+sql_input)
 
-    cur.execute(sql_input)
+    try:
+        cur.execute(sql_input)
+    except psycopg2.Error as e:
+        print (f"Database error: {e}")
+
     output = cur.fetchall()
     print(f"retrieved: {output}")
     cur.close()
@@ -181,11 +204,14 @@ def retrieve_specific(sql_input: str):
 
 # create LLM
 init_message = """
-You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents. Use markdown in your replies.
-Quarters are ordered Fall 2023 -> Winter 2024 -> Spring 2024 -> Summer 2024. Use this order in your responses.
-The earliest quarter you have access to is Spring 2022. The current quarter is Summer 2024. The next quarter is Fall 2024. The Winter 2025 catalog is not currently available.
-Fall 2024 is currently open for enrollment. All other quarters are not.
-All data you have access to is public. Do not refuse to share data because of privacy concerns. If asked about course details (enrollment status/count, professor, etc.), check both the current and next quarters.
+You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents.
+Use markdown in your replies. Do not use markdown tables.
+Quarters are ordered Fall 2024 -> Winter 2025 -> Spring 2025 -> Summer 2025. Use this order in your responses.
+The earliest quarter you have access to is Spring 2022. The current quarter is Spring 2025.
+If asked a general question about courses, include all quarters in generated queries. If asked a specific question about a course (ie whether it's full), only include quarters that are open for enrollment.
+Use single quotes in generated queries.
+Fall 2025 is currently open for enrollment. All other quarters are not.
+All data you have access to is public. Do not refuse to share data because of privacy concerns. 
 """
 tool_list=[retrieve_general, retrieve_specific]
 tool_dict = {
@@ -194,9 +220,8 @@ tool_dict = {
 }
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel(
-    'gemini-1.5-flash-latest',
-    # too smart
-    #'gemini-1.5-flash-exp-0827',
+    'gemini-2.5-flash-preview-05-20',
+    #'gemini-1.5-flash-002',
     tools=tool_list, 
     system_instruction = init_message,
     generation_config = genai.types.GenerationConfig(
@@ -231,7 +256,6 @@ def get_stream_history(chat: Chat):
                 messages.append({"role":"user", "parts": [message.message]})
             case Author.FUNCTION:
                 fcall = json.loads(message.message)
-                print(fcall)
                 if "input" in fcall:
                     messages.append({
                         "role": "model",
@@ -247,7 +271,7 @@ def get_stream_history(chat: Chat):
                         ]
                     })
                 else:
-                    raise "Invalid function call type"
+                    raise ValueError("Invalid function call type")
             case _:
                 messages.append({"role":"model", "parts": [message.message]})
             
@@ -255,9 +279,23 @@ def get_stream_history(chat: Chat):
 
     print("messages: "+str(messages))
     # (7) Send prompt to LLM
-    response = model.generate_content(messages, tools = tool_list, stream = True)
+
+    # gemini's safety settings often trip on random content, so make them less aggressive
+    model_safety_settings = {
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_ONLY_HIGH
+        }
+    response = model.generate_content(
+        messages, 
+        tools = tool_list, 
+        stream = True,
+        safety_settings=model_safety_settings
+    )
 
     def stream_data():
+        new_response = None
         try:
             for chunk in response: 
                 fcall = False
@@ -300,13 +338,22 @@ def get_stream_history(chat: Chat):
                         # print(FuncResponse(name=fn.name, response=str(func_response)))
                         yield json.dumps({"name": fn.name, "response": str(func_response)})+"\n"
                 if fcall:
-                    new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600})
+                    new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600}, safety_settings=model_safety_settings)
                     for new_chunk in new_response:
-                        yield new_chunk.text
+                        if new_chunk.text:
+                            yield new_chunk.text
                 if not fcall and chunk.text:
                     yield chunk.text
         except Exception as e:
-            yield f"An error occured: {e}."
+            print(f"exception: {e}")
+            #print(response)
+            if new_response:
+                print(new_response)
+                print(new_response.candidates[0])
+                if new_response.candidates and new_response.candidates[0].finish_reason != 1:
+                    yield f"An error occured: {e}."
+                else:
+                    print(new_response.candidates[0].finish_reason, "ignoring previous stop code")
 
     return StreamingResponse(stream_data())
 
@@ -316,11 +363,11 @@ import random
 def get_suggestions():
     suggested_messages = [
         "Courses that fulfill the IM gen ed",
-        "Courses taught by Prof. Tantalo next quarter",
-        "Open CSE courses this summer",
-        "Is CSE 115a still open this fall?",
+        "Courses taught by Prof. Tantalo this quarter",
+        "Open CSE courses this winter",
+        "Is CSE 115a still open this winter?",
         "How many people are currently enrolled in CSE 130?",
-        "Which professors are teaching CSE 30 in fall?",
+        "Which professors are teaching CSE 30 in Winter 2025?",
         "What are the prerequisites for CSE 101?",
         "What time is ECON 1 held?",
         "Who teaches ECE 101?",
@@ -331,7 +378,7 @@ def get_suggestions():
         "List all quarters PHIL 9 was taught.",
         "List all professors for JRLC 1.",
         "Find artificial intelligence courses",
-        "Show available online courses for next quarter."
+        "Show available online courses for the current quarter."
     ]
     return suggested_messages
 

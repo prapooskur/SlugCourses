@@ -1,4 +1,4 @@
-import pickle, json, sys, os
+import pickle, json, sys, os, argparse
 from tqdm import trange, tqdm
 import requests
 import concurrent.futures
@@ -9,10 +9,19 @@ from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
 from haystack.document_stores.types.policy import DuplicatePolicy
 from haystack.utils import Secret
-import argparse
+from dotenv import load_dotenv
+from time import sleep
 
 def termToQuarterName(term : str) -> str:
     match term:
+        case "2258":
+            return "Fall 2025"
+        case "2254":
+            return "Summer 2025"
+        case "2252":
+            return "Spring 2025"
+        case "2250":
+            return "Winter 2025"
         case "2248":
             return "Fall 2024"
         case "2244":
@@ -36,9 +45,11 @@ def termToQuarterName(term : str) -> str:
         case "2222":
             return "Spring 2022"
 
-def populate():
-    print("updating cache...")
-    terms = ["2248", "2244", "2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
+def populate(term: str):
+    terms = ["2258", "2254", "2252", "2250" "2248", "2244", "2242", "2240", "2238", "2234", "2232", "2230", "2228", "2224", "2222"]
+    if term:
+        terms = [term]
+    print(f"updating cache with {terms}...")
     classNums = []
     addedNums = set()
     for term in terms:
@@ -64,27 +75,32 @@ def populate():
 
         # Define a function to fetch course data
         def fetch_course_data(course_input):
-            term = course_input[0]
-            baseurl = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/" + term + "/"
-            raw = requests.get(baseurl + course_input[1]).json()
-            detailedCourse = raw.get('primary_section')
+            try:
+                term = course_input[0]
+                baseurl = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/" + term + "/"
+                raw = requests.get(baseurl + course_input[1], timeout=30).json()
+                detailedCourse = raw.get('primary_section')
 
-            # Dupe protection
-            courseName = detailedCourse.get('subject')+detailedCourse.get('catalog_nbr')
-            if (courseName) not in unique_results:
-                unique_results.add(courseName)
-                course = Course(
-                    termToQuarterName(detailedCourse.get('strm')),
-                    detailedCourse.get('acad_career'),
-                    detailedCourse.get('subject'),
-                    detailedCourse.get('catalog_nbr'),
-                    detailedCourse.get('title_long'),
-                    detailedCourse.get('description'),
-                    detailedCourse.get('gened'),
-                    detailedCourse.get('requirements'),
-                    raw.get('notes'),
-                ).to_dict()
-                return course
+                # Dupe/ratelimit protection
+                courseName = detailedCourse.get('subject')+detailedCourse.get('catalog_nbr')
+                sleep(0.1)
+                if (courseName) not in unique_results:
+                    unique_results.add(courseName)
+                    course = Course(
+                        termToQuarterName(detailedCourse.get('strm')),
+                        detailedCourse.get('acad_career'),
+                        detailedCourse.get('subject'),
+                        detailedCourse.get('catalog_nbr'),
+                        detailedCourse.get('title_long'),
+                        detailedCourse.get('description'),
+                        detailedCourse.get('gened'),
+                        detailedCourse.get('requirements'),
+                        raw.get('notes'),
+                    ).to_dict()
+                    return course
+            except Exception as e:
+                print(f"Error fetching {course_input}: {str(e)}")
+                return None
 
         # Use tqdm for the progress bar
         results = list(tqdm(executor.map(fetch_course_data, classNums), total=len(classNums)))
@@ -105,9 +121,9 @@ def populate():
     jsonfile.close()
 
 
-embeddings_model = "WhereIsAI/UAE-Large-V1"
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
+    embeddings_model = os.getenv("EMBEDDINGS_MODEL")
     document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
     document_embedder.warm_up()
     documents_with_embeddings = document_embedder.run(documents)
@@ -115,8 +131,9 @@ def populate_embeddings(documents: list[Document]):
     pickle.dump(documents_with_embeddings, picklefile)
     picklefile.close()
 
-def populate_supabase_embeddings(documents: list[Document]):
-    print("updating supabase embeddings...")
+def populate_pgvector_embeddings(documents: list[Document]):
+    print("updating pgvector documents and embeddings...")
+    embeddings_model = os.getenv("EMBEDDINGS_MODEL")
     document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
     document_embedder.warm_up()
     embeddings = document_embedder.run(documents)
@@ -142,16 +159,26 @@ if __name__ == "__main__":
     
     parser.add_argument("-c", "--cache", action='store_true', help='store course data in pickle cache')
     parser.add_argument("-l", "--local-embed", action='store_true', help='generate embeddings from pickle cache and store locally')
-    parser.add_argument("-s", "--supabase-embed", action='store_true', help='generate embeddings from pickle cache and store in supabase')
+    parser.add_argument("-p", "--pgvector-embed", action='store_true', help='generate embeddings from pickle cache and store in pgvector database (requires local pickle cache)')
+
+    parser.add_argument("-t", "--term", type=int, default=None, help='pick a specific term to scrape')
 
     args = parser.parse_args()
+    load_dotenv()
 
-    if not args.cache and not args.local_embed and not args.supabase_embed:
+    if not args.cache and not args.local_embed and not args.pgvector_embed:
         parser.print_help()
         parser.exit()
 
+    if args.term and args.term > 9999 or args.term < 1000:
+        print("term not valid")
+        parser.exit()
+
     if args.cache:
-        populate()
+        if args.term:
+            populate(str(args.term))
+        else:
+            populate()
     
     if args.local_embed:
         file = open("cache/updatedclasses", mode="rb")
@@ -171,10 +198,11 @@ if __name__ == "__main__":
         
         populate_embeddings(documents)
     
-    if args.supabase_embed:
+    if args.pgvector_embed:
         with open("cache/updatedclasses", "rb") as file:
             detailed_info = pickle.load(file)
 
         documents = [Document(content=str(item)) for item in detailed_info]
-        populate_supabase_embeddings(documents)
+        # print(documents)
+        populate_pgvector_embeddings(documents)
 
