@@ -23,8 +23,11 @@ sqldelight {
 
 composeCompiler {
 //    enableStrongSkippingMode = true
-    featureFlags.add(ComposeFeatureFlag.OptimizeNonSkippingGroups)
-    featureFlags.add(ComposeFeatureFlag.StrongSkipping)
+    featureFlags = setOf(
+            ComposeFeatureFlag.StrongSkipping,
+            ComposeFeatureFlag.OptimizeNonSkippingGroups,
+        )
+
 }
 
 kotlin {
