@@ -212,6 +212,19 @@ data class ResultsScreen(
 
         Row(Modifier.fillMaxSize()) {
             // List pane
+            val listPaneModifier = if (LocalScreenSize.current.width < HUGE_SCREEN) {
+                Modifier.fillMaxHeight().weight(0.5f)
+            } else {
+                Modifier.fillMaxHeight().weight(1f)
+            }
+
+            val detailPaneModifier = if (LocalScreenSize.current.width < HUGE_SCREEN) {
+                Modifier.fillMaxHeight().weight(0.5f)
+            } else {
+                Modifier.fillMaxHeight().weight(2f)
+            }
+
+            Column(listPaneModifier) {
             var searchQuery by rememberSaveable{ mutableStateOf(query) }
             Column(Modifier.fillMaxHeight().weight(0.5f)) {
                 Scaffold(
@@ -319,7 +332,7 @@ data class ResultsScreen(
             }
 
             // Detail pane
-            Column(Modifier.fillMaxHeight().weight(0.5f)) {
+            Column(detailPaneModifier) {
                 val courseInfo = uiState.detailPane.courseInfo
                 Scaffold(
                     topBar = {

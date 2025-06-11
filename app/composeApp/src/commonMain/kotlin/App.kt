@@ -41,7 +41,9 @@ expect fun GetScreenSize(): IntSize
 expect val ioDispatcher: CoroutineDispatcher
 
 val LocalScreenSize = compositionLocalOf<IntSize> { error("No Screen Size Info provided") }
+// based on https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes
 const val LARGE_SCREEN = 600
+const val HUGE_SCREEN  = 840
 
 @OptIn(ExperimentalEncodingApi::class)
 @Composable
