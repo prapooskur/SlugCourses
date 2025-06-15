@@ -18,7 +18,7 @@ dependencies = [
     "sentence-transformers>=3.0.1,<4",
     "psycopg2-binary>=2.9.9,<3",
     "google-generativeai>=0.7.2,<0.8",
-    "torch~=2.7.1",
+    "torch~=2.7.0",
     "transformers[sentencepiece, torch]>=4.44.1,<5",
     "pgvector-haystack>=3.4.0",
 ]
@@ -28,7 +28,7 @@ package = false
 
 [[tool.uv.index]]
 name = "pytorch"
-url = "https://download.pytorch.org/whl/cu128"
+url = "https://download.pytorch.org/whl/cu118"
 explicit = true
 
 [tool.uv.sources]
