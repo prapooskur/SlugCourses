@@ -24,8 +24,11 @@ classRecommender = FastAPI(
     redoc_url=None, # Disable redoc
 )
 
+load_dotenv()
+
 
 origins = os.getenv("CORS_URLS")
+print(origins)
 classRecommender.add_middleware(
     CORSMiddleware,
     allow_origins=[origins],
@@ -35,7 +38,6 @@ classRecommender.add_middleware(
 )
 
 # load API keys from .env
-load_dotenv()
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 PG_CONN_STRING = os.getenv("PG_CONN_STRING")
 SUPABASE_CONN_STRING = os.getenv("SUPABASE_CONN_STRING")
@@ -169,7 +171,7 @@ def retrieve_specific(sql_input: str):
     status	        Whether the course is Open or Closed for enrollment.
     url	            Link to the course enrollment page.
     summer_session	Indicates which summer session a course belongs to (if applicable).
-    description     A description of the course and the topics it covers.
+    description     A description of the course and the topics it covers. This is quite long, so summarize it unless asked for a detailed description.
     requirements    The prerequisites for the course. If empty, the course has no prerequisites.
     notes           Notes about the course. If empty, the course has no notes.
     """
