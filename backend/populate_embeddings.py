@@ -11,6 +11,7 @@ from haystack.document_stores.types.policy import DuplicatePolicy
 from haystack.utils import Secret
 from dotenv import load_dotenv
 from time import sleep
+from haystack_integrations.components.embedders.google_genai import GoogleGenAIDocumentEmbedder
 
 def termToQuarterName(term : str) -> str:
     match term:
@@ -126,9 +127,10 @@ def populate(term: str = "-1"):
 
 def populate_embeddings(documents: list[Document]):
     print("updating embeddings...")
-    embeddings_model = os.getenv("EMBEDDINGS_MODEL")
-    document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
-    document_embedder.warm_up()
+    # embeddings_model = os.getenv("EMBEDDINGS_MODEL")
+    # document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
+    # document_embedder.warm_up()
+    document_embedder = GoogleGenAIDocumentEmbedder(api_key=Secret.from_env_var("GEMINI_KEY"))
     documents_with_embeddings = document_embedder.run(documents)
     picklefile = open("cache/classembeddings", mode="wb")
     pickle.dump(documents_with_embeddings, picklefile)
@@ -136,14 +138,15 @@ def populate_embeddings(documents: list[Document]):
 
 def populate_pgvector_embeddings(documents: list[Document]):
     print("updating pgvector documents and embeddings...")
-    embeddings_model = os.getenv("EMBEDDINGS_MODEL")
-    document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
-    document_embedder.warm_up()
+    # embeddings_model = os.getenv("EMBEDDINGS_MODEL")
+    # document_embedder = SentenceTransformersDocumentEmbedder(model=embeddings_model)
+    # document_embedder.warm_up()
+    document_embedder = GoogleGenAIDocumentEmbedder(api_key=Secret.from_env_var("GEMINI_KEY"))
     embeddings = document_embedder.run(documents)
     
     document_store = PgvectorDocumentStore(
         connection_string = Secret.from_env_var("PG_CONN_STRING"),
-        embedding_dimension=1024,
+        embedding_dimension=768,
         vector_function="cosine_similarity",
         recreate_table=False,
         search_strategy="hnsw",

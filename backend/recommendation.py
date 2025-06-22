@@ -6,17 +6,17 @@ from haystack.components.builders.prompt_builder import PromptBuilder
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
-import google.ai.generativelanguage as glm
+from google import genai
+from google.genai import types
 from pydantic import BaseModel
 from typing import List
 from enum import Enum
 from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
 from haystack_integrations.components.retrievers.pgvector import PgvectorKeywordRetriever, PgvectorEmbeddingRetriever
 from haystack.utils import Secret
-from haystack.components.rankers import TransformersSimilarityRanker
+from haystack.components.rankers import TransformersSimilarityRanker, SentenceTransformersSimilarityRanker
 from fastapi.middleware.cors import CORSMiddleware
+from haystack_integrations.components.embedders.google_genai import GoogleGenAIDocumentEmbedder, GoogleGenAITextEmbedder
 
 # create app and load .env
 classRecommender = FastAPI(
@@ -42,9 +42,7 @@ GEMINI_KEY = os.getenv("GEMINI_KEY")
 PG_CONN_STRING = os.getenv("PG_CONN_STRING")
 SUPABASE_CONN_STRING = os.getenv("SUPABASE_CONN_STRING")
 
-
 prompt_template = '''
-You are SlugBot, a helpful course assistant for UCSC students. 
 Given these documents, answer the question. 
 Assume the user is an undergraduate student and cannot take graduate classes without instructor permission.
 Documents:
@@ -66,18 +64,21 @@ Answer:'''
 # (1) intialize store
 document_store = PgvectorDocumentStore(
     connection_string = Secret.from_env_var("PG_CONN_STRING"),
-    embedding_dimension=1024,
+    embedding_dimension=768,
     vector_function="cosine_similarity",
     search_strategy="hnsw",
 )
 
 
 # create and warm up sentence embedder
-embeddings_model = os.getenv("EMBEDDINGS_MODEL")
-embeddings_query = os.getenv("EMBEDDINGS_QUERY")
-# query_instruction = "Represent this sentence for searching relevant passages: "
-text_embedder = SentenceTransformersTextEmbedder(model=embeddings_model, prefix=embeddings_query)
-text_embedder.warm_up()
+# embeddings_model = os.getenv("EMBEDDINGS_MODEL")
+# embeddings_query = os.getenv("EMBEDDINGS_QUERY")
+# embeddings_backend = "openvino"
+# # query_instruction = "Represent this sentence for searching relevant passages: "
+# text_embedder = SentenceTransformersTextEmbedder(model=embeddings_model, prefix=embeddings_query, backend=embeddings_backend)
+# text_embedder.warm_up()
+
+text_embedder = GoogleGenAITextEmbedder(api_key=Secret.from_env_var("GEMINI_KEY"))
 
 # create retrievers
 keyword_retriever = PgvectorKeywordRetriever(document_store=document_store)
@@ -123,7 +124,7 @@ def retrieve_general(input: str):
         {{ doc.content }}
     {% endfor %}
     """
-    prompt_builder = PromptBuilder(template=prompt_template)
+    prompt_builder = PromptBuilder(template=prompt_template, required_variables=["documents"])
     finalizedPrompt = prompt_builder.run(documents=ranked_docs["documents"])["prompt"]
     # print(mergedDocs["documents"])
     return finalizedPrompt
@@ -205,11 +206,11 @@ def retrieve_specific(sql_input: str):
     return output
 
 # create LLM
-init_message = """
+SYSTEM_PROMPT = """
 You are SlugBot, a helpful course assistant for UCSC students. Answer questions with the provided documents.
 Use markdown in your replies. Do not use markdown tables.
 Quarters are ordered Fall 2024 -> Winter 2025 -> Spring 2025 -> Summer 2025. Use this order in your responses.
-The earliest quarter you have access to is Spring 2022. The current quarter is Spring 2025.
+The earliest quarter you have access to is Spring 2022. The current quarter is Summer 2025.
 If asked a general question about courses, include all quarters in generated queries. If asked a specific question about a course (ie whether it's full), only include quarters that are open for enrollment.
 Use single quotes in generated queries.
 Fall 2025 is currently open for enrollment. All other quarters are not.
@@ -220,19 +221,42 @@ tool_dict = {
     "retrieve_general": retrieve_general,
     "retrieve_specific": retrieve_specific
 }
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel(
-    'gemini-2.5-flash-preview-05-20',
-    #'gemini-1.5-flash-002',
-    tools=tool_list, 
-    system_instruction = init_message,
-    generation_config = genai.types.GenerationConfig(
-        # Only one candidate for now.
-        candidate_count=1,
-        # limit temp for more deterministic responses
-        temperature=0.1
-    ),
-)
+
+client = genai.Client(api_key=GEMINI_KEY)
+
+# set model constants
+GEMINI_MODEL = 'gemini-2.5-flash'
+GEMINI_CONFIG = types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature= 0.1,
+                    safety_settings= [
+                        types.SafetySetting(
+                            category = types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+                            threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        ),
+                        types.SafetySetting(
+                            category = types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                            threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        ),
+                        types.SafetySetting(
+                            category = types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                            threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        ),
+                        types.SafetySetting(
+                            category = types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                            threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        ),
+                        types.SafetySetting(
+                            category = types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                            threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        ),
+                        # types.SafetySetting(
+                        #     category = types.HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+                        #     threshold = types.HarmBlockThreshold.BLOCK_ONLY_HIGH
+                        # ),
+                    ],
+                    tools = tool_list
+                )
 
 class Author(str, Enum):
     USER = "USER"
@@ -255,97 +279,87 @@ def get_stream_history(chat: Chat):
     for message in chat.messages[1:]:
         match (message.author):
             case Author.USER:
-                messages.append({"role":"user", "parts": [message.message]})
+                messages.append(types.Content(role="user", parts=[types.Part(text=message.message)]))
             case Author.FUNCTION:
                 fcall = json.loads(message.message)
                 if "input" in fcall:
-                    messages.append({
-                        "role": "model",
-                        "parts": [
-                            genai.protos.Part(function_call=genai.protos.FunctionCall(name=fcall["name"], args={"input": fcall["input"]}))
+                    messages.append(types.Content(
+                        role="model",
+                        parts=[
+                            types.Part(function_call=types.FunctionCall(name=fcall["name"], args={"input": fcall["input"]}))
                         ]
-                    })
+                    ))
                 elif "response" in fcall:
-                    messages.append({
-                        "role": "model",
-                        "parts": [
-                            genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fcall["name"], response={"result": fcall["response"]}))
+                    messages.append(types.Content(
+                        role="model",
+                        parts=[
+                            types.Part(function_response=types.FunctionCall(name=fcall["name"], response={"result": fcall["response"]}))
                         ]
-                    })
+                    ))
                 else:
                     raise ValueError("Invalid function call type")
             case _:
-                messages.append({"role":"model", "parts": [message.message]})
+                messages.append(types.Content(role="model", parts=[types.Part(text=message.message)]))
             
-    # finalized_messages[-1]["parts"] = [finalized_prompt]
 
     print("messages: "+str(messages))
     # (7) Send prompt to LLM
-
-    # gemini's safety settings often trip on random content, so make them less aggressive
-    model_safety_settings = {
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_ONLY_HIGH
-        }
-    response = model.generate_content(
-        messages, 
-        tools = tool_list, 
-        stream = True,
-        safety_settings=model_safety_settings
-    )
-
     def stream_data():
         new_response = None
         try:
-            for chunk in response: 
-                fcall = False
-                for part in chunk.parts:
-                    if fn := part.function_call:
-                        fcall = True
+            for chunk in client.models.generate_content_stream(
+                model = GEMINI_MODEL,
+                contents = messages,
+                config = GEMINI_CONFIG
+            ): 
+                # fcall = False
+                # for part in chunk.parts:
+                #     if fn := part.function_call:
+                #         fcall = True
                         
-                        # print(fn) 
-                        # human-readable
-                        # args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
-                        # print(f"{fn.name}({args})")
+                #         # print(fn) 
+                #         # human-readable
+                #         # args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                #         # print(f"{fn.name}({args})")
 
-                        # since there's only one argument for both functions, just hardcode it
-                        # first item is always the input name so ignore
-                        func_args = ", ".join(f"{val}" for key, val in fn.args.items())
-                        print(f"{fn.name}({func_args})")
+                #         # since there's only one argument for both functions, just hardcode it
+                #         # first item is always the input name so ignore
+                #         func_args = ", ".join(f"{val}" for key, val in fn.args.items())
+                #         print(f"{fn.name}({func_args})")
 
-                        call_parts = [
-                            genai.protos.Part(function_call=genai.protos.FunctionCall(name=fn.name, args={"input": func_args}))
-                        ]
+                #         call_parts = [
+                #             genai.protos.Part(function_call=genai.protos.FunctionCall(name=fn.name, args={"input": func_args}))
+                #         ]
 
-                        call_message = {"role":"model", "parts": call_parts}
-                        messages.append(call_message)
+                #         call_message = {"role":"model", "parts": call_parts}
+                #         messages.append(call_message)
 
-                        # yield str(call_message)
-                        # print(FuncCall(name=fn.name, input=func_args))
-                        yield json.dumps({"name": fn.name, "input": str(func_args)})+"\n"
+                #         # yield str(call_message)
+                #         # print(FuncCall(name=fn.name, input=func_args))
+                #         yield json.dumps({"name": fn.name, "input": str(func_args)})+"\n"
 
-                        func_response = tool_dict[fn.name](func_args)
-                        # print(f"received: {func_response}") 
-                        response_parts = [
-                            genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
-                        ]
-                        #print(response_parts)
+                #         func_response = tool_dict[fn.name](func_args)
+                #         # print(f"received: {func_response}") 
+                #         response_parts = [
+                #             genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": func_response}))
+                #         ]
+                #         #print(response_parts)
 
-                        response_message = {"role":"model", "parts": response_parts}
-                        messages.append(response_message)
+                #         response_message = {"role":"model", "parts": response_parts}
+                #         messages.append(response_message)
 
-                        # yield str(response_message)
-                        # print(FuncResponse(name=fn.name, response=str(func_response)))
-                        yield json.dumps({"name": fn.name, "response": str(func_response)})+"\n"
-                if fcall:
-                    new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600}, safety_settings=model_safety_settings)
-                    for new_chunk in new_response:
-                        if new_chunk.text:
-                            yield new_chunk.text
-                if not fcall and chunk.text:
-                    yield chunk.text
+                #         # yield str(response_message)
+                #         # print(FuncResponse(name=fn.name, response=str(func_response)))
+                #         yield json.dumps({"name": fn.name, "response": str(func_response)})+"\n"
+                # if fcall:
+                #     new_response = model.generate_content(messages, tools = tool_list, stream = True, request_options={"timeout": 600}, safety_settings=model_safety_settings)
+                #     for new_chunk in new_response:
+                #         if new_chunk.text:
+                #             yield new_chunk.text
+                # if not fcall and chunk.text:
+                #     yield chunk.text
+                print(chunk)
+                yield chunk.text
         except Exception as e:
             print(f"exception: {e}")
             #print(response)
@@ -385,35 +399,35 @@ def get_suggestions():
     return suggested_messages
 
 #old endpoint (injects documents into prompt directly, only general search)
-@classRecommender.get("/")
-async def get_stream(userInput : str):
-    # (2) generate text embeddings based on user input
-    textEmbeddings = text_embedder.run(userInput)
+# @classRecommender.get("/")
+# async def get_stream(userInput : str):
+#     # (2) generate text embeddings based on user input
+#     textEmbeddings = text_embedder.run(userInput)
 
-    # (3) keyword based document search
-    bm25Docs = keyword_retriever.run(query=userInput)
+#     # (3) keyword based document search
+#     bm25Docs = keyword_retriever.run(query=userInput)
 
-    # (4) create embeddings for vector based document search
-    embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
+#     # (4) create embeddings for vector based document search
+#     embeddingDocs = embedding_retriever.run(query_embedding=textEmbeddings['embedding'])
 
-    # (5) merge vector-based docs and keyword-based docs
-    mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
+#     # (5) merge vector-based docs and keyword-based docs
+#     mergedDocs = document_joiner.run([bm25Docs["documents"], embeddingDocs["documents"]])
 
-    # return only the top 5 results (or length of the list, whichever is shortest)
-    #maxLength = min(len(mergedDocs["documents"]), 5)
-    #mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(maxLength)]
+#     # return only the top 5 results (or length of the list, whichever is shortest)
+#     #maxLength = min(len(mergedDocs["documents"]), 5)
+#     #mergedDocs["documents"] = [mergedDocs["documents"][i] for i in range(maxLength)]
 
 
-    # (6) put user input and list of documents into the prompt template
-    # finalizedPrompt -> string
-    prompt_builder = PromptBuilder(template=prompt_template)
-    finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"], question=userInput)["prompt"]
+#     # (6) put user input and list of documents into the prompt template
+#     # finalizedPrompt -> string
+#     prompt_builder = PromptBuilder(template=prompt_template)
+#     finalizedPrompt = prompt_builder.run(documents=mergedDocs["documents"], question=userInput)["prompt"]
 
-    # (7) Send prompt to LLM
-    response = model.generate_content(finalizedPrompt, stream=True)
+#     # (7) Send prompt to LLM
+#     response = model.generate_content(finalizedPrompt, stream=True)
 
-    def stream_data():
-        for chunk in response:
-            yield chunk.text
+#     def stream_data():
+#         for chunk in response:
+#             yield chunk.text
         
-    return StreamingResponse(stream_data())
+#     return StreamingResponse(stream_data())
