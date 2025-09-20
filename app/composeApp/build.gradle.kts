@@ -21,15 +21,6 @@ sqldelight {
     }
 }
 
-composeCompiler {
-//    enableStrongSkippingMode = true
-    featureFlags = setOf(
-            ComposeFeatureFlag.StrongSkipping,
-            ComposeFeatureFlag.OptimizeNonSkippingGroups,
-        )
-
-}
-
 kotlin {
     androidTarget {
         compilations.all {
