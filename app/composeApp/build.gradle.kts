@@ -31,8 +31,8 @@ kotlin {
     }
 
     compilerOptions {
-//        freeCompilerArgs.add("-Xwasm-use-new-exception-proposal")
         freeCompilerArgs.add("-Xexpect-actual-classes")
+//        jvmTarget.set(JvmTarget.JVM_17)
     }
     
     listOf(
@@ -42,7 +42,7 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
-            binaryOption("bundleId", "com.pras.slugcourses.SlugCoursesiOS")
+//            binaryOption("bundleId", "com.pras.slugcourses.SlugCoursesiOS")
             isStatic = false
         }
     }
@@ -192,7 +192,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildToolsVersion = "35.0.0 rc4"
+    buildToolsVersion = "36.0.0"
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
     }

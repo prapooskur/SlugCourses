@@ -224,8 +224,7 @@ data class ResultsScreen(
                 Modifier.fillMaxHeight().weight(2f)
             }
 
-            Column(listPaneModifier) {
-            var searchQuery by rememberSaveable{ mutableStateOf(query) }
+            var searchQuery by rememberSaveable { mutableStateOf(query) }
             Column(Modifier.fillMaxHeight().weight(0.5f)) {
                 Scaffold(
                     topBar = {
@@ -241,7 +240,7 @@ data class ResultsScreen(
                             onBack = {
                                 navigator.pop()
                             },
-                            modifier = Modifier.padding(bottom=8.dp).onGloballyPositioned { coordinates ->
+                            modifier = Modifier.padding(bottom = 8.dp).onGloballyPositioned { coordinates ->
                                 // Convert pixels to dp
                                 searchTopBarHeight = with(density) {
                                     coordinates.size.height.toDp()
@@ -258,8 +257,16 @@ data class ResultsScreen(
                                     val resultsQuery = screenModel.uiState.value.listPane.resultsQuery
 
                                     val splitQuery = resultsQuery.contains(" ")
-                                    val department = if (splitQuery) { resultsQuery.substringBefore(" ") } else { resultsQuery }
-                                    val courseNumber = if (splitQuery) { resultsQuery.substringAfter(" ") } else { resultsQuery }
+                                    val department = if (splitQuery) {
+                                        resultsQuery.substringBefore(" ")
+                                    } else {
+                                        resultsQuery
+                                    }
+                                    val courseNumber = if (splitQuery) {
+                                        resultsQuery.substringAfter(" ")
+                                    } else {
+                                        resultsQuery
+                                    }
 
                                     screenModel.clearError()
                                     screenModel.getCourses(
@@ -277,7 +284,10 @@ data class ResultsScreen(
                             },
                         )
 
-                        Box(Modifier.pullRefresh(pullRefreshState).padding(top = paddingValues.calculateTopPadding())) {
+                        Box(
+                            Modifier.pullRefresh(pullRefreshState)
+                                .padding(top = paddingValues.calculateTopPadding())
+                        ) {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize(),
@@ -351,7 +361,7 @@ data class ResultsScreen(
                         )
                     },
                     content = { paddingValues ->
-                        Box(Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding()+8.dp)) {
+                        Box(Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding() + 8.dp)) {
                             CourseDetailPane(
                                 courseInfo = courseInfo,
                                 gradesInfo = uiState.detailPane.gradeInfo,
@@ -363,7 +373,9 @@ data class ResultsScreen(
                                         Logger.d("updating detail", tag = TAG)
                                         screenModel.getCourseInfo(
                                             uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
-                                            uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
+                                            uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter(
+                                                "_"
+                                            )
                                         )
                                     } else {
                                         Logger.d("not updating, results empty", tag = TAG)
@@ -375,20 +387,18 @@ data class ResultsScreen(
                 )
             }
 
-        }
-
-        fun updateDetailData() {
-            if (uiState.listPane.resultsList.isNotEmpty() && uiState.listPane.listDataLoaded) {
+            fun updateDetailData() {
+                if (uiState.listPane.resultsList.isNotEmpty() && uiState.listPane.listDataLoaded) {
 //                Logger.d("selected "+uiState.listPane.resultsList[uiState.detailPane.selectedId].toString(), tag = TAG)
-                screenModel.getCourseInfo(
-                    uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
-                    uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
-                )
-                screenModel.setSelectedUrl(uiState.listPane.resultsList[uiState.detailPane.selectedId].url)
+                    screenModel.getCourseInfo(
+                        uiState.listPane.resultsList[uiState.detailPane.selectedId].term.toString(),
+                        uiState.listPane.resultsList[uiState.detailPane.selectedId].id.substringAfter("_")
+                    )
+                    screenModel.setSelectedUrl(uiState.listPane.resultsList[uiState.detailPane.selectedId].url)
+                }
             }
-        }
 
-        // when a course is selected, update data pane
+            // when a course is selected, update data pane
 //        LaunchedEffect(uiState.detailPane.selectedId) {
 //            updateDetailData()
 //        }
@@ -398,14 +408,17 @@ data class ResultsScreen(
 //            updateDetailData()
 //        }
 
-        LaunchedEffect(uiState.detailPane.selectedId, uiState.listPane.resultsList) {
-            if (uiState.detailPane.selectedId < uiState.listPane.resultsList.size) {
-                updateDetailData()
-            } else {
-                Logger.d("selectedId ${uiState.detailPane.selectedId} out of bounds of resultsList ${uiState.listPane.resultsList}", tag = TAG)
+            LaunchedEffect(uiState.detailPane.selectedId, uiState.listPane.resultsList) {
+                if (uiState.detailPane.selectedId < uiState.listPane.resultsList.size) {
+                    updateDetailData()
+                } else {
+                    Logger.d(
+                        "selectedId ${uiState.detailPane.selectedId} out of bounds of resultsList ${uiState.listPane.resultsList}",
+                        tag = TAG
+                    )
+                }
             }
         }
-        
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
