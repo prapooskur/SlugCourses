@@ -8,9 +8,17 @@ from tqdm import tqdm # optional, shows progress bar
 import argparse
 
 URL = "https://pisa.ucsc.edu/class_search/index.php"
+TERM_LIST_URL = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_TERMS.v1"
+
 PISA_API = "https://my.ucsc.edu/PSIGW/RESTListeningConnector/PSFT_CSPRD/SCX_CLASS_DETAIL.v1/"
 MAX_RESULTS = "2000"
 
+# query and get latest terms
+# schema: terms: list of {code: int, descsription: str, default: "Y" or "N"}
+def getLatestTerms() -> list[dict]:
+    response = requests.get(TERM_LIST_URL)
+    terms = json.loads(response.text)
+    return terms['terms']
 
 # takes in a single panel from BS4 and parses it into a dictionary
 # delegate used in the multithreading in queryPisa
@@ -167,45 +175,81 @@ def queryPisa(term: str, detailed: bool = False) -> list[dict]:
     return sections
             
 
+def main():
+    load_dotenv()
+    url: str = os.environ.get("SUPABASE_URL")
+    key: str = os.environ.get("SUPABASE_KEY")
+    supabase: Client = create_client(url, key)
 
-load_dotenv()
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
 
+    parser = argparse.ArgumentParser(description="Scrape and upsert course data.")
+    parser.add_argument("term", nargs="?", type=int, help="Specify a term to scrape.")
+    parser.add_argument("-g", "--get-detail", action="store_true", help="Get detailed info.")
+    parser.add_argument("-a", "--all-terms", action="store_true", help="Scrape all terms.")
+    parser.add_argument("-u", "--update-terms", action="store_true", help="Update term list.", default=True)
 
-parser = argparse.ArgumentParser(description="Scrape and upsert course data.")
-parser.add_argument("term", nargs="?", type=int, help="Specify a term to scrape.")
-parser.add_argument("-g", "--get-detail", action="store_true", help="Get detailed info.")
-parser.add_argument("-a", "--all-terms", action="store_true", help="Scrape all terms.")
+    # Parse arguments
+    args = parser.parse_args()
 
-# Parse arguments
-args = parser.parse_args()
+    # term_list = [2260, 2258, 2254, 2252, 2250, 2248, 2244, 2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
+    stored_term_list_raw = supabase.table("terms").select("term_id").execute()
+    stored_term_list = []
+    print(stored_term_list_raw)
+    for term in stored_term_list_raw.data:
+        print(term)
+        stored_term_list.append(term["term_id"])
 
-term_list = [2258, 2254, 2252, 2250, 2248, 2244, 2242, 2240, 2238, 2234, 2232, 2230, 2228, 2224]
+    stored_term_list.sort(reverse=True)
 
-if args.get_detail:
-    print("getting detailed info")
+    print(stored_term_list)
+    new_pairs = []
 
-if args.term and args.all_terms:
-    print("specific term and all terms were selected, will scrape all terms")
+    if args.update_terms:
+        print("updating term list")
+        latest_terms = getLatestTerms()
+        for term in latest_terms:
+            code = int(term["code"])
+            desc_list = str(term["description"]).split()
+            # 2026 Winter Quarter to Winter 2026
+            desc = f"{desc_list[1]} {desc_list[0]}"
+            if code and code not in stored_term_list:
+                print("adding ", code)
+                stored_term_list.append(code)
+                new_pairs.append({"term_id": code, "term_name": desc})
+        
+        if len(new_pairs) > 0:
+            print("uploading ",new_pairs)
+            supabase.table("terms").upsert(new_pairs).execute()
+    
+    # get final term list
+    term_list = sorted(stored_term_list, reverse=True)
+    print(term_list)
 
-if args.all_terms:
-    print("getting every term")
-    for term in term_list:
-        print("scraping " + str(term))
-        sections = queryPisa(term, args.get_detail)
-        supabase.table("courses").upsert(sections).execute()
-elif args.term:
-    if args.term in term_list:
-        print("scraping specific term: " + str(args.term))
-        sections = queryPisa(args.term, args.get_detail)
-        supabase.table("courses").upsert(sections).execute()
+    if args.get_detail:
+        print("getting detailed info")
+
+    if args.term and args.all_terms:
+        print("specific term and all terms were selected, will scrape all terms")
+
+    if args.all_terms:
+        print("getting every term")
+        for term in term_list:
+            print("scraping " + str(term))
+            sections = queryPisa(term, args.get_detail)
+            supabase.table("courses").upsert(sections).execute()
+    elif args.term:
+        if args.term in term_list:
+            print("scraping specific term: " + str(args.term))
+            sections = queryPisa(args.term, args.get_detail)
+            supabase.table("courses").upsert(sections).execute()
+        else:
+            print(f"{args.term} not in {term_list}")
     else:
-        print(f"{args.term} not in {term_list}")
-else:
-    terms = [term_list[0], term_list[1]]
-    print("scraping " + str(terms))
-    for term in terms:
-        sections = queryPisa(term, args.get_detail)
-        supabase.table("courses").upsert(sections).execute()
+        terms = [term_list[0], term_list[1]]
+        print("scraping " + str(terms))
+        for term in terms:
+            sections = queryPisa(term, args.get_detail)
+            supabase.table("courses").upsert(sections).execute()
+
+if __name__ == "__main__":
+    main()
