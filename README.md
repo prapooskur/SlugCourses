@@ -10,7 +10,7 @@ Like students at every university, the four of us have to sign up for courses at
 * The interface was clearly designed to be navigated with a mouse and not a touch screen
 
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="pisa current mobile interface">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/pisasearch.gif?token=GHSAT0AAAAAACNEB4YKNME6MHLKXNX4ZFA6ZNNJK7Q" width=30% height=30% alt="pisa current mobile interface">
 
 
 We believe that we could make an improved version of the class search website's mobile interface, making it accessible to mobile users who want to access the UCSC catalogue anytime and anywhere. 
@@ -23,24 +23,24 @@ Among other things, we also realized was that finding classes among the 1500+ co
 The app we created allows users to search for classes intuitively in a simple and easy to navigate interface.
 
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/search%20for%20cse%20100.gif?token=GHSAT0AAAAAACNEB4YKHNOCL26SAKTVI6UKZNNKKLQ" width=30% height=30% alt="searhing for a class">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/search%20for%20cse%20100.gif?token=GHSAT0AAAAAACNEB4YKHNOCL26SAKTVI6UKZNNKKLQ" width=30% height=30% alt="searhing for a class">
 
 
 The results page presents information in a similarly easy-to-read manner. Tapping on any result brings up a more detailed results page. If the user still wants even more details, they can tap on a button to take them to Pisa's page for it.
 
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/result%20to%20pisa.gif?token=GHSAT0AAAAAACNEB4YKX3HN53QZYM5ZE2ROZNNKLFA" width=30% height=30% alt="result to pisa">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/result%20to%20pisa.gif?token=GHSAT0AAAAAACNEB4YKX3HN53QZYM5ZE2ROZNNKLFA" width=30% height=30% alt="result to pisa">
 
 
 Advanced filters on the main search page also allow for more fine tuned results.
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/ge%20filter%20search.gif?token=GHSAT0AAAAAACNEB4YLWR7EOFOWV7HAZ7G4ZNNKMLA" width=30% height=30% alt="result to pisa">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/ge%20filter%20search.gif?token=GHSAT0AAAAAACNEB4YLWR7EOFOWV7HAZ7G4ZNNKMLA" width=30% height=30% alt="result to pisa">
 
 
 The integrated LLM-based chatbot can be talked to via a button on the bottom navigation bar. It can be asked questions about courses to take.
 
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/llm%20response.gif?token=GHSAT0AAAAAACNEB4YKS6WCKMTIZLAO4FBMZNNKN4A" width=30% height=30% alt="llm response">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/llm%20response.gif?token=GHSAT0AAAAAACNEB4YKS6WCKMTIZLAO4FBMZNNKN4A" width=30% height=30% alt="llm response">
 
 
 ## How we built it
@@ -49,9 +49,9 @@ First, we set our sights on creating a database of all UCSC courses. To do this,
 
 
 <div>
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/database.png?token=GHSAT0AAAAAACNEB4YKNYNHEGD46ICC6PECZNNJ5GQ" width=100% height=30% alt="pisa current mobile interface">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/database.png?token=GHSAT0AAAAAACNEB4YKNYNHEGD46ICC6PECZNNJ5GQ" width=100% height=30% alt="pisa current mobile interface">
 
-<img src="https://raw.githubusercontent.com/prapooskur/CruzHacks-2024-Project/main/images/search%20results.png?token=GHSAT0AAAAAACNEB4YLVEQNQYC23QKGYMQYZNNJ6FQ" width=30% height=30% alt="pisa current mobile interface">
+<img src="https://raw.githubusercontent.com/prapooskur/SlugCourses/main/images/search%20results.png?token=GHSAT0AAAAAACNEB4YLVEQNQYC23QKGYMQYZNNJ6FQ" width=30% height=30% alt="pisa current mobile interface">
 </div>
 
 Next up was the LLM chatbot. The model we chose was Google's [Gemini](https://blog.google/technology/ai/google-gemini-ai/), the same model that powers Bard, Google's ChatGPT competitor. Now we couldn't simply give it our entire database and tell it to extract the most relevant courses (though that didn't stop us from trying). We needed a way to extract the classes that closely matched the user's input query, whether that be a question ("What astronomy courses are offered?") or an imperative statement ("Recommend me classes about chemistry"). In order to do this, we decided on [Haystack](https://haystack.deepset.ai/), an open source Python framework for implementing retrieval-augmented generation. We wrote Python code that pulled our entire repository of course data into a single file. Using Haystack, we wrote a seven-stage pipeline for getting user input:
